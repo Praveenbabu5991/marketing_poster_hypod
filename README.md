@@ -43,18 +43,26 @@ GOOGLE_API_KEY=your-google-api-key-here
 ### 2. Build and start
 
 ```bash
-make build
 make up
 ```
 
-This starts:
-- **PostgreSQL** on port 5432
-- **Backend API** on port 8000
-- **Frontend** on port 3000
+This single command will:
+1. Build Docker images for backend and frontend
+2. Start PostgreSQL, Backend, and Frontend containers
+3. Run database migrations automatically on first start
+
+Services:
+- **Frontend** — [http://localhost:3000](http://localhost:3000)
+- **Backend API** — http://localhost:8000
+- **PostgreSQL** — localhost:5432
 
 ### 3. Open the app
 
 Navigate to [http://localhost:3000](http://localhost:3000)
+
+1. Create a brand (name, logo, colors, tone)
+2. Select an agent (Single Post, Carousel, Campaign, etc.)
+3. Start chatting — the agent generates content with your brand identity
 
 ### 4. Stop
 
@@ -103,7 +111,7 @@ make test           Run backend tests
 make test-cov       Run backend tests with coverage
 make migrate        Run database migrations
 make build          Build all Docker images
-make up             Start all services (postgres + backend + frontend)
+make up             Build + start all services + run migrations
 make down           Stop all services
 make logs           Follow backend logs
 make logs-all       Follow all service logs
