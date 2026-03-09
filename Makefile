@@ -26,7 +26,7 @@ test: ## Run backend tests
 test-cov: ## Run backend tests with coverage
 	cd backend && uv run pytest tests/ -v --cov=app --cov=agents --cov=brand --cov-report=html
 
-migrate: ## Run database migrations
+migrate: ## Run database migrations (local)
 	cd backend && uv run alembic upgrade head
 
 # --- Docker ---
@@ -34,8 +34,13 @@ migrate: ## Run database migrations
 build: ## Build all Docker images
 	docker compose build
 
-up: ## Start all services (postgres + backend + frontend)
-	docker compose up -d
+up: ## Build, start all services, and run migrations
+	docker compose up -d --build
+	@echo ""
+	@echo "Services starting..."
+	@echo "  PostgreSQL: localhost:5432"
+	@echo "  Backend:    http://localhost:8000 (migrations run automatically)"
+	@echo "  Frontend:   http://localhost:3000"
 
 down: ## Stop all services
 	docker compose down
@@ -48,8 +53,7 @@ logs-all: ## Follow all service logs
 
 restart: ## Rebuild and restart all services
 	docker compose down
-	docker compose build
-	docker compose up -d
+	docker compose up -d --build
 
 # --- Cleanup ---
 
