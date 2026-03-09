@@ -229,7 +229,7 @@ def generate_video(
                             pass
 
             if ref_images:
-                gen_kwargs["reference_images"] = ref_images[:3]
+                config_kwargs["reference_images"] = ref_images[:3]
                 if negative_prompt:
                     enhanced_prompt += f"\nAvoid: {negative_prompt}"
                     gen_kwargs["prompt"] = enhanced_prompt

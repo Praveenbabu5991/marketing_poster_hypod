@@ -1,5 +1,6 @@
 """Alembic environment configuration."""
 
+import os
 from logging.config import fileConfig
 
 from alembic import context
@@ -10,6 +11,14 @@ from app.models.brand import Brand  # noqa: F401
 from app.models.session import Session  # noqa: F401
 
 config = context.config
+
+# Override sqlalchemy.url with DATABASE_URL env var if set.
+# Convert async driver (asyncpg) to sync driver (psycopg) for migrations.
+db_url = os.environ.get("DATABASE_URL")
+if db_url:
+    sync_url = db_url.replace("postgresql+asyncpg://", "postgresql+psycopg://")
+    config.set_main_option("sqlalchemy.url", sync_url)
+
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
