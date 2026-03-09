@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.schemas.session import SessionCreate, SessionResponse
+from app.schemas.session import SessionCreate, SessionResponse, SessionUpdate
 from app.security.dependencies import require_authenticated_user
 from app.security.models import UserDetails
 from app.services import session_service
@@ -44,6 +44,21 @@ async def get_session(
     db: AsyncSession = Depends(get_db),
 ):
     session = await session_service.get_session(db, session_id, user.user_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return session
+
+
+@router.patch("/{session_id}", response_model=SessionResponse)
+async def update_session(
+    session_id: UUID,
+    data: SessionUpdate,
+    user: UserDetails = Depends(require_authenticated_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if data.title is None:
+        raise HTTPException(status_code=400, detail="Nothing to update")
+    session = await session_service.update_session_title(db, session_id, user.user_id, data.title)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
     return session

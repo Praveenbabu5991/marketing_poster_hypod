@@ -21,6 +21,14 @@ class BrandContext:
     product_images: list[str] = field(default_factory=list)
 
     @property
+    def primary_color(self) -> str:
+        return self.colors[0] if self.colors else ""
+
+    @property
+    def secondary_color(self) -> str:
+        return self.colors[1] if len(self.colors) > 1 else self.primary_color
+
+    @property
     def is_complete(self) -> bool:
         return bool(self.name and self.logo_path and self.colors and self.tone)
 
@@ -39,6 +47,7 @@ class BrandContext:
 
     def to_prompt_text(self) -> str:
         """Formatted string for injection into agent system prompts."""
+        additional = self.colors[2:] if len(self.colors) > 2 else []
         return (
             f"Brand Name: {self.name}\n"
             f"Industry: {self.industry}\n"
@@ -46,7 +55,9 @@ class BrandContext:
             f"Tone/Voice: {self.tone}\n"
             f"Target Audience: {self.target_audience}\n"
             f"Products/Services: {self.products_services}\n"
-            f"Brand Colors: {', '.join(self.colors) if self.colors else 'Not set'}\n"
+            f"Primary Color: {self.primary_color or 'Not set'}\n"
+            f"Secondary Color: {self.secondary_color or 'Not set'}\n"
+            f"Additional Colors: {', '.join(additional) if additional else 'None'}\n"
             f"Logo Path: {self.logo_path or 'Not uploaded'}\n"
             f"Product Images: {', '.join(self.product_images) if self.product_images else 'None'}"
         )

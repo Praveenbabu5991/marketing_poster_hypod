@@ -17,6 +17,13 @@ export function createSession(data: SessionCreate): Promise<Session> {
   });
 }
 
+export function updateSession(id: string, data: { title: string }): Promise<Session> {
+  return fetchApi<Session>(`/api/v1/sessions/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+}
+
 export function deleteSession(id: string): Promise<void> {
   return fetchApi<void>(`/api/v1/sessions/${id}`, { method: 'DELETE' });
 }

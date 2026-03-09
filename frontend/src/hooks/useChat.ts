@@ -236,9 +236,144 @@ export function useChat(sessionId: string | undefined) {
     [sessionId, streaming, persistMessages],
   );
 
+  /** Send a message without showing a user bubble — used for the initial "start" trigger. */
+  const sendHidden = useCallback(
+    async (text: string) => {
+      if (!sessionId || !text.trim() || streaming) return;
+
+      setStreaming(true);
+
+      const controller = new AbortController();
+      abortRef.current = controller;
+
+      const assistantId = nextId();
+      let assistantAdded = false;
+
+      try {
+        const res = await fetchChatSSE(sessionId, text.trim(), controller.signal);
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({ detail: res.statusText }));
+          throw new Error(body.detail || `Chat failed: ${res.status}`);
+        }
+
+        const reader = res.body!.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+
+          const parts = buffer.split('\n\n');
+          buffer = parts.pop()!;
+
+          for (const part of parts) {
+            const line = part.trim();
+            if (!line.startsWith('data: ')) continue;
+
+            let event: SSEEvent;
+            try {
+              event = JSON.parse(line.slice(6));
+            } catch {
+              continue;
+            }
+
+            const stripStatus = (msgs: ChatMessage[]) =>
+              msgs.filter((m) => m.role !== 'status');
+
+            switch (event.type) {
+              case 'text': {
+                const textContent = typeof event.content === 'string'
+                  ? event.content
+                  : String(event.content ?? '');
+                if (!textContent) break;
+                if (!assistantAdded) {
+                  assistantAdded = true;
+                  setMessages((prev) => [
+                    ...stripStatus(prev),
+                    { id: assistantId, role: 'assistant', content: textContent },
+                  ]);
+                } else {
+                  setMessages((prev) =>
+                    stripStatus(prev).map((m) =>
+                      m.id === assistantId
+                        ? { ...m, content: m.content + textContent }
+                        : m,
+                    ),
+                  );
+                }
+                break;
+              }
+              case 'tool_start': {
+                const toolId = nextId();
+                setMessages((prev) => [
+                  ...stripStatus(prev),
+                  { id: toolId, role: 'tool', content: event.message, toolName: event.tool, toolActive: true },
+                ]);
+                break;
+              }
+              case 'tool_end': {
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.role === 'tool' && m.toolName === event.tool && m.toolActive
+                      ? { ...m, toolActive: false }
+                      : m,
+                  ),
+                );
+                assistantAdded = false;
+                break;
+              }
+              case 'interactive': {
+                const intId = nextId();
+                setMessages((prev) => [
+                  ...stripStatus(prev),
+                  { id: intId, role: 'assistant', content: event.content.message, interactive: event.content },
+                ]);
+                break;
+              }
+              case 'status': {
+                setMessages((prev) => [
+                  ...stripStatus(prev),
+                  { id: nextId(), role: 'status', content: event.message },
+                ]);
+                break;
+              }
+              case 'error': {
+                setMessages((prev) => [
+                  ...stripStatus(prev),
+                  { id: nextId(), role: 'error', content: event.content },
+                ]);
+                break;
+              }
+              case 'done':
+                setMessages((prev) => stripStatus(prev));
+                break;
+            }
+          }
+        }
+      } catch (err: unknown) {
+        if (err instanceof DOMException && err.name === 'AbortError') {
+          // cancelled
+        } else {
+          setMessages((prev) => [
+            ...prev,
+            { id: nextId(), role: 'error', content: err instanceof Error ? err.message : 'Stream failed' },
+          ]);
+        }
+      } finally {
+        setStreaming(false);
+        abortRef.current = null;
+        setTimeout(persistMessages, 50);
+      }
+    },
+    [sessionId, streaming, persistMessages],
+  );
+
   const cancel = useCallback(() => {
     abortRef.current?.abort();
   }, []);
 
-  return { messages, streaming, sendMessage, cancel, setMessages };
+  return { messages, streaming, sendMessage, sendHidden, cancel, setMessages };
 }

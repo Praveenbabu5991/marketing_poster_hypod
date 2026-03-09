@@ -12,6 +12,10 @@ class SessionCreate(BaseModel):
     agent_type: str = Field(..., max_length=50)
 
 
+class SessionUpdate(BaseModel):
+    title: Optional[str] = Field(None, max_length=255)
+
+
 class SessionResponse(BaseModel):
     id: UUID
     user_id: UUID

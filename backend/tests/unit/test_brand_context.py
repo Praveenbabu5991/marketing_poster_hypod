@@ -42,7 +42,23 @@ class TestBrandContext:
         assert "TestBrand" in text
         assert "Fashion" in text
         assert "luxurious" in text
-        assert "#1a1a2e, #e94560" in text
+        assert "Primary Color: #1a1a2e" in text
+        assert "Secondary Color: #e94560" in text
+
+    def test_primary_secondary_color_properties(self):
+        bc = BrandContext(colors=["#1a1a2e", "#e94560", "#333333"])
+        assert bc.primary_color == "#1a1a2e"
+        assert bc.secondary_color == "#e94560"
+
+    def test_primary_color_single(self):
+        bc = BrandContext(colors=["#1a1a2e"])
+        assert bc.primary_color == "#1a1a2e"
+        assert bc.secondary_color == "#1a1a2e"  # falls back to primary
+
+    def test_primary_color_empty(self):
+        bc = BrandContext(colors=[])
+        assert bc.primary_color == ""
+        assert bc.secondary_color == ""
 
     def test_to_dict_and_from_dict(self):
         bc = BrandContext(

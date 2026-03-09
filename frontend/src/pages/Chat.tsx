@@ -9,12 +9,10 @@ import { listAgents } from '../api/agents';
 import { uploadProductInChat } from '../api/client';
 import type { Session, Brand, Agent } from '../types';
 
+/** Agents that auto-send "start" to trigger a welcome message from the backend. */
+const AUTO_START_AGENTS = new Set(['single_post']);
+
 const AGENT_PROMPTS: Record<string, string[]> = {
-  single_post: [
-    'Describe the post topic or theme (e.g. "summer sale announcement")',
-    'Mention the platform if you have a preference (Instagram, Facebook, etc.)',
-    'Any specific style or mood you want?',
-  ],
   carousel: [
     'What story or topic should the carousel cover?',
     'How many slides do you want? (3-10)',
@@ -44,15 +42,17 @@ const AGENT_PROMPTS: Record<string, string[]> = {
 
 export function Chat() {
   const { sessionId } = useParams<{ sessionId: string }>();
-  const { messages, streaming, sendMessage } = useChat(sessionId);
+  const { messages, streaming, sendMessage, sendHidden } = useChat(sessionId);
   const bottomRef = useRef<HTMLDivElement>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [brand, setBrand] = useState<Brand | null>(null);
   const [agent, setAgent] = useState<Agent | null>(null);
+  const sentStartRef = useRef(false);
 
   // Fetch session → brand → agent details on mount
   useEffect(() => {
     if (!sessionId) return;
+    sentStartRef.current = false;
     getSession(sessionId)
       .then((s) => {
         setSession(s);
@@ -66,6 +66,16 @@ export function Chat() {
       })
       .catch(console.error);
   }, [sessionId]);
+
+  // Auto-send "start" for agents that support welcome messages
+  useEffect(() => {
+    if (!session || !brand || !agent) return;
+    if (sentStartRef.current) return;
+    if (messages.length > 0) return;
+    if (!AUTO_START_AGENTS.has(session.agent_type)) return;
+    sentStartRef.current = true;
+    sendHidden('start');
+  }, [session, brand, agent, messages.length, sendHidden]);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -123,17 +133,15 @@ export function Chat() {
 
       {/* Messages */}
       <div className="min-h-0 flex-1 overflow-y-auto py-4">
-        {/* Welcome card — shown when no messages yet */}
-        {messages.length === 0 && brand && agent && (
+        {/* Welcome card — shown for non-auto-start agents when no messages yet */}
+        {messages.length === 0 && brand && agent && !AUTO_START_AGENTS.has(session?.agent_type ?? '') && (
           <div className="mx-auto max-w-2xl px-4 py-8">
             <div className="rounded-xl border border-border bg-bg-card p-6 space-y-5">
-              {/* Agent intro */}
               <div>
                 <h2 className="text-xl font-bold text-text-primary">{agent.name} Agent</h2>
                 <p className="mt-1 text-sm text-text-muted">{agent.description}</p>
               </div>
 
-              {/* Brand context summary */}
               <div className="rounded-lg bg-bg-elevated p-4 space-y-2">
                 <h3 className="text-sm font-semibold text-text-primary">Brand Context Loaded</h3>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
@@ -194,7 +202,6 @@ export function Chat() {
                 </div>
               </div>
 
-              {/* Prompts / guidance */}
               {prompts.length > 0 && (
                 <div>
                   <h3 className="text-sm font-semibold text-text-primary mb-2">

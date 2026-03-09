@@ -38,7 +38,10 @@ async def list_sessions(
     brand_id: Optional[UUID] = None,
     agent_type: Optional[str] = None,
 ) -> list[Session]:
-    query = select(Session).where(Session.user_id == user_id)
+    query = select(Session).where(
+        Session.user_id == user_id,
+        Session.status != "archived",
+    )
     if brand_id:
         query = query.where(Session.brand_id == brand_id)
     if agent_type:
@@ -46,6 +49,18 @@ async def list_sessions(
     query = query.order_by(Session.updated_at.desc())
     result = await db.execute(query)
     return list(result.scalars().all())
+
+
+async def update_session_title(
+    db: AsyncSession, session_id: UUID, user_id: UUID, title: str
+) -> Session | None:
+    session = await get_session(db, session_id, user_id)
+    if not session:
+        return None
+    session.title = title
+    await db.flush()
+    await db.refresh(session)
+    return session
 
 
 async def archive_session(db: AsyncSession, session_id: UUID, user_id: UUID) -> bool:

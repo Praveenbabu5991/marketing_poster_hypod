@@ -102,13 +102,15 @@ def generate_image(
         colors_list = [c.strip() for c in brand_colors.split(",") if c.strip()] if brand_colors else []
         primary_color = colors_list[0] if colors_list else "#000000"
 
+        secondary_color = colors_list[1] if len(colors_list) > 1 else primary_color
+
         color_section = ""
         if colors_list:
             color_section = f"""
-COLOR PALETTE (MUST USE PROMINENTLY):
-- PRIMARY: {primary_color} — dominant color in the image
-- SECONDARY: {', '.join(colors_list[1:4])}
-- Overall color mood must reflect {primary_color}
+COLOR RULES:
+- PRIMARY COLOR ({primary_color}): Use as the dominant color in backgrounds, key elements, and design accents
+- SECONDARY COLOR ({secondary_color}): Use for supporting elements, text backgrounds, and contrast areas
+- The overall color scheme MUST clearly reflect these brand colors
 """
 
         style_map = {
@@ -146,9 +148,9 @@ STYLE: {style_desc}
 {f"OCCASION: {occasion}" if occasion else ""}
 {text_section}
 
-CRITICAL: Image MUST prominently feature {primary_color}.
-Aspect ratio: 4:5 (Instagram optimal). Ultra high resolution.
-{f"Include {brand_name} logo subtly in bottom-right corner." if logo_path else ""}
+CRITICAL: The overall color scheme MUST clearly reflect {primary_color} and {secondary_color}.
+Aspect ratio: 1:1 square (1080x1080 pixels). Instagram post format. Ultra high resolution.
+{f"LOGO: I am attaching the actual brand logo image file. Place THIS EXACT attached logo image in the bottom-right corner of the design. Make it clearly visible and properly sized (not tiny). Do NOT create, draw, generate, or invent any logo — use ONLY the attached logo image file exactly as provided." if logo_path else ""}
 Create a scroll-stopping, magazine-quality image."""
 
         from google.genai import types

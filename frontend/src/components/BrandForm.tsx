@@ -8,6 +8,25 @@ interface Props {
   loading: boolean;
 }
 
+const INDUSTRIES = [
+  'Technology',
+  'Fashion & Apparel',
+  'Food & Beverage',
+  'Health & Wellness',
+  'Beauty & Cosmetics',
+  'Education',
+  'Finance & Banking',
+  'Real Estate',
+  'Travel & Hospitality',
+  'Automotive',
+  'Entertainment & Media',
+  'Sports & Fitness',
+  'Home & Living',
+  'E-commerce & Retail',
+  'Non-Profit & Social',
+  'Other',
+];
+
 const TONES = [
   'professional',
   'casual',
@@ -29,6 +48,8 @@ export function BrandForm({ initial, onSubmit, loading }: Props) {
   const [logoPath, setLogoPath] = useState(initial?.logo_path ?? '');
   const [logoUrl, setLogoUrl] = useState(initial?.logo_path ? toDisplayUrl(initial.logo_path) : '');
   const [colors, setColors] = useState<string[]>(initial?.colors ?? []);
+  const [primaryColor, setPrimaryColor] = useState(initial?.colors?.[0] ?? '#000000');
+  const [secondaryColor, setSecondaryColor] = useState(initial?.colors?.[1] ?? '#ffffff');
   const [productImages, setProductImages] = useState<string[]>(initial?.product_images ?? []);
   const [productUrls, setProductUrls] = useState<string[]>(() => {
     if (!initial?.product_images) return [];
@@ -50,7 +71,11 @@ export function BrandForm({ initial, onSubmit, loading }: Props) {
       const res = await uploadLogo(file);
       setLogoPath(res.logo_path);
       setLogoUrl(res.url);
-      if (res.colors.length > 0) setColors(res.colors);
+      if (res.colors.length > 0) {
+        setPrimaryColor(res.colors[0]);
+        setSecondaryColor(res.colors[1] ?? res.colors[0]);
+        setColors([res.colors[0], res.colors[1] ?? res.colors[0], ...res.colors.slice(2)]);
+      }
     } finally {
       setUploading(false);
     }
@@ -72,8 +97,19 @@ export function BrandForm({ initial, onSubmit, loading }: Props) {
     setProductUrls((prev) => prev.filter((_, i) => i !== index));
   }
 
+  function handlePrimaryChange(hex: string) {
+    setPrimaryColor(hex);
+    setColors((prev) => [hex, prev[1] ?? secondaryColor, ...prev.slice(2)]);
+  }
+
+  function handleSecondaryChange(hex: string) {
+    setSecondaryColor(hex);
+    setColors((prev) => [prev[0] ?? primaryColor, hex, ...prev.slice(2)]);
+  }
+
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    const allColors = [primaryColor, secondaryColor, ...colors.slice(2)];
     onSubmit({
       name,
       industry: industry || undefined,
@@ -82,7 +118,7 @@ export function BrandForm({ initial, onSubmit, loading }: Props) {
       target_audience: targetAudience || undefined,
       products_services: productsServices || undefined,
       logo_path: logoPath || undefined,
-      colors,
+      colors: allColors,
       product_images: productImages,
     });
   }
@@ -107,13 +143,18 @@ export function BrandForm({ initial, onSubmit, loading }: Props) {
       {/* Industry */}
       <div>
         <label className="mb-1 block text-sm font-medium text-text-primary">Industry</label>
-        <input
-          type="text"
+        <select
           value={industry}
           onChange={(e) => setIndustry(e.target.value)}
-          maxLength={100}
           className="w-full rounded-lg border border-border bg-bg-page px-4 py-2.5 text-text-primary focus:border-accent focus:outline-none"
-        />
+        >
+          <option value="">Select industry...</option>
+          {INDUSTRIES.map((ind) => (
+            <option key={ind} value={ind}>
+              {ind}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Overview */}
@@ -172,40 +213,94 @@ export function BrandForm({ initial, onSubmit, loading }: Props) {
       {/* Logo Upload */}
       <div>
         <label className="mb-1 block text-sm font-medium text-text-primary">Logo</label>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) handleLogoUpload(file);
-          }}
-          className="text-sm text-text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-accent file:px-4 file:py-2 file:text-sm file:text-white file:cursor-pointer"
-        />
-        {logoUrl && (
-          <img
-            src={logoUrl}
-            alt="Logo preview"
-            className="mt-2 h-16 rounded border border-border object-contain"
+        {logoUrl ? (
+          <div className="flex items-center gap-4">
+            <div className="group relative">
+              <img
+                src={logoUrl}
+                alt="Logo preview"
+                className="h-16 rounded border border-border object-contain"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setLogoPath('');
+                  setLogoUrl('');
+                }}
+                className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
+              >
+                x
+              </button>
+            </div>
+            <label className="cursor-pointer rounded-lg border border-border bg-bg-elevated px-4 py-2 text-sm text-text-primary transition-colors hover:bg-bg-page">
+              Change Logo
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleLogoUpload(file);
+                }}
+              />
+            </label>
+          </div>
+        ) : (
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleLogoUpload(file);
+            }}
+            className="text-sm text-text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-accent file:px-4 file:py-2 file:text-sm file:text-white file:cursor-pointer"
           />
         )}
       </div>
 
-      {/* Colors */}
-      {colors.length > 0 && (
-        <div>
-          <label className="mb-1 block text-sm font-medium text-text-primary">
-            Extracted Colors
-          </label>
-          <div className="flex gap-2">
-            {colors.map((c, i) => (
-              <div key={i} className="flex items-center gap-1 rounded border border-border px-2 py-1">
-                <div className="h-5 w-5 rounded" style={{ backgroundColor: c }} />
-                <span className="text-xs text-text-muted">{c}</span>
-              </div>
-            ))}
+      {/* Brand Colors */}
+      <div>
+        <label className="mb-1 block text-sm font-medium text-text-primary">Brand Colors</label>
+        <div className="flex gap-6">
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              value={primaryColor}
+              onChange={(e) => handlePrimaryChange(e.target.value)}
+              className="h-10 w-10 cursor-pointer rounded border border-border bg-bg-page"
+            />
+            <div>
+              <div className="text-xs font-medium text-text-primary">Primary</div>
+              <div className="text-xs text-text-muted">{primaryColor}</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              value={secondaryColor}
+              onChange={(e) => handleSecondaryChange(e.target.value)}
+              className="h-10 w-10 cursor-pointer rounded border border-border bg-bg-page"
+            />
+            <div>
+              <div className="text-xs font-medium text-text-primary">Secondary</div>
+              <div className="text-xs text-text-muted">{secondaryColor}</div>
+            </div>
           </div>
         </div>
-      )}
+        {colors.length > 2 && (
+          <div className="mt-2">
+            <span className="text-xs text-text-muted">Additional extracted colors:</span>
+            <div className="mt-1 flex gap-2">
+              {colors.slice(2).map((c, i) => (
+                <div key={i} className="flex items-center gap-1 rounded border border-border px-2 py-1">
+                  <div className="h-4 w-4 rounded" style={{ backgroundColor: c }} />
+                  <span className="text-xs text-text-muted">{c}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Product Images */}
       <div>
