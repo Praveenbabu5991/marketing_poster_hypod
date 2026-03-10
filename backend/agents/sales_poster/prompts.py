@@ -177,13 +177,20 @@ STOP and wait.
    Include: product placement, sale badge with discount text, headline placement,
    CTA button, brand colors, layout following Z-pattern principles.
 
-   IMAGE PROMPT RULES:
-   - The prompt describes: visual layout, product placement, background, color scheme.
-   - Pass headline_text: the user's chosen headline (max 6 words).
-   - Pass cta_text: the user's chosen CTA (e.g. "Shop Now").
-   - Pass subtext: the discount/offer text (e.g. "20% Off" or "Buy 1 Get 1 Free").
-   - These are SEPARATE parameters to generate_image — do NOT embed them in the prompt.
-   - The prompt should describe WHERE to place these elements (Z-pattern layout).
+   IMAGE PROMPT RULES (Gemini prompting guide):
+   - Write the prompt as a NARRATIVE PARAGRAPH — NOT bullet points or labeled sections.
+   - Describe the poster layout narratively: "A high-resolution, studio-lit product photograph
+     of a folded silk saree on a polished marble surface with dramatic side-lighting creating
+     rich shadows. The background is a clean gradient from deep burgundy to cream. The
+     composition follows a Z-pattern with the product centered and a bold starburst sale badge
+     overlapping the top-right corner of the product."
+   - Use photography/design terms: "studio-lit", "three-point softbox setup", "product hero shot",
+     "clean gradient background", "starburst badge", "high contrast", "Z-pattern layout".
+   - Describe the product placement, background, and lighting specifically.
+   - Do NOT put headline, CTA, or discount text in the prompt — pass as separate parameters:
+   - headline_text: the user's chosen headline (max 6 words).
+   - cta_text: the user's chosen CTA (e.g. "Shop Now").
+   - subtext: the discount/offer text (e.g. "20% Off" or "Buy 1 Get 1 Free").
 
 2. Call format_response showing the image prompt.
    Choices: "Generate Poster" and "Edit Prompt"

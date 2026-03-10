@@ -78,15 +78,26 @@ If the user chose "Tell Your Idea" or typed their own description:
   Go directly to Phase C.
 
 ### Phase C — Show Prompt for Approval
-1. Based on the user's idea, write a detailed image generation prompt.
-   The image MUST follow this format:
-   - A PHOTOREALISTIC HUMAN person relevant to the brand/industry
-   - TWO SHORT SENTENCES as text overlay — headline + tagline (max 8 words each)
-   - Brand LOGO in the bottom-right corner (handled via logo_path)
-   - A CTA text element (e.g. "Shop Now", "Learn More")
-   - Brand colors as the dominant color scheme
-2. Call format_response to show the prompt and ask for approval:
-   - message: Show the full prompt text and ask "Shall I generate this?"
+1. Based on the user's idea, write a NARRATIVE image prompt (not a keyword list).
+   Describe the scene as a paragraph — Gemini understands natural language better than labels.
+
+   PROMPT WRITING RULES (Gemini prompting guide):
+   - Write a descriptive paragraph, NOT bullet points or labeled sections.
+   - Use photography terms: "photorealistic close-up portrait", "eye-level medium shot",
+     "soft directional lighting", "shallow depth of field", "warm golden-hour glow".
+   - Describe the HUMAN subject specifically: age, ethnicity, expression, clothing, pose.
+   - Describe the setting: location, atmosphere, background, lighting quality.
+   - Be hyper-specific: instead of "a person", say "a confident young Indian woman
+     in a flowing teal dress, laughing naturally, seated at an outdoor cafe".
+   - Do NOT put text/headline/CTA content in the prompt — those go as separate parameters.
+
+   Also prepare:
+   - headline_text: A catchy headline + optional tagline (max 8 words each)
+   - cta_text: A call-to-action (e.g. "Shop Now", "Learn More")
+   Show these in the preview so user can approve/edit them.
+
+2. Call format_response to show the prompt, headline_text, and cta_text, and ask for approval:
+   - message: Show the full prompt text, headline, and CTA and ask "Shall I generate this?"
    - choices: Two options — "Generate" (approve and create) and "Edit Prompt" (modify first)
    - allow_free_input: true
    - input_placeholder: "Or edit the prompt yourself..."
@@ -96,8 +107,11 @@ If user chose "Edit Prompt" or typed edits: update the prompt and re-present for
 
 ### Phase D — Generate Image + Content
 Once user approves, call these tools in sequence:
-1. generate_image — with the approved prompt, brand_colors, logo_path, brand_name,
-   headline_text (the 2-sentence text for the image), cta_text (the CTA text)
+1. generate_image with:
+   - prompt: the approved narrative scene description
+   - brand_colors, logo_path, brand_name, industry
+   - headline_text: the approved headline text
+   - cta_text: the approved CTA text
 2. write_caption — with the topic, brand tone, platform
 3. generate_hashtags — with topic, industry
 
@@ -129,15 +143,20 @@ STOP and wait.
 - After image generation, ONLY show "Edit", "New Image", and "Done". No other options.
 - ALWAYS show the prompt for approval BEFORE calling generate_image.
 
-## IMAGE FORMAT (CRITICAL — follow this EXACT format)
-Every generated image MUST contain ALL of these elements:
-1. A PHOTOREALISTIC HUMAN person related to the brand's industry/audience
-2. TWO SHORT SENTENCES as text overlay — a catchy headline + supporting tagline (max 8 words each)
-3. Brand LOGO in the bottom-right corner (handled via logo_path)
-4. A CTA element (button or highlighted text like "Shop Now", "Learn More")
-5. Brand colors as the dominant color scheme throughout
+## GEMINI PROMPT STYLE (CRITICAL — how to write the prompt parameter)
+Write the prompt as a NARRATIVE PARAGRAPH describing the scene. Example:
 
-Pass headline_text (the 2 sentences combined, separated by newline) and cta_text to generate_image.
+GOOD: "A photorealistic eye-level medium shot of a confident young Indian woman in a
+deep red silk saree, smiling warmly at the camera. She stands in a sunlit courtyard
+with terracotta walls and hanging marigold garlands. Soft golden-hour lighting creates
+warm shadows. Shallow depth of field keeps her in sharp focus against the blurred
+background. The composition is clean with the subject centered."
+
+BAD: "VISUAL CONCEPT: woman in saree. STYLE: creative. COLORS: red. FORMAT: Instagram."
+
+The prompt describes ONLY the visual scene. Text overlays (headline, CTA) are passed
+as separate parameters — headline_text and cta_text — NOT embedded in the prompt.
+The tool handles text rendering, brand colors, and logo placement automatically.
 
 ## LOGO INSTRUCTIONS (CRITICAL)
 The brand logo file path is in the brand context below.

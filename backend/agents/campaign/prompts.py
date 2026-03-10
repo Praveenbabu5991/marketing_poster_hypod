@@ -121,10 +121,15 @@ For each post, do these sub-steps:
 
 E1. SHOW PROMPT: Call format_response showing "Week X — Post Y of Z: [Topic]" and the exact image prompt.
 
-    IMAGE PROMPT RULES (for generate_image):
-    - Each post image MUST contain text overlays — a headline and a CTA.
-    - The prompt describes: visual concept, human subject, composition, brand colors.
-    - Separately pass headline_text and cta_text as parameters (NOT embedded in the prompt).
+    IMAGE PROMPT RULES (Gemini prompting guide):
+    - Write the prompt as a NARRATIVE PARAGRAPH describing the scene — NOT bullet points or labels.
+    - Use photography terms: "photorealistic eye-level medium shot", "soft directional lighting",
+      "shallow depth of field", "warm golden-hour glow", "tight composition".
+    - Describe the HUMAN subject specifically: age, ethnicity, expression, clothing, pose, action.
+    - Describe the setting: location, atmosphere, background, lighting quality.
+    - Be hyper-specific: instead of "woman with product", say "a confident young Indian woman
+      in an elegant emerald green dress, holding the product at eye level, smiling warmly".
+    - Do NOT put headline or CTA text in the prompt — those go as separate parameters.
     - headline_text: A catchy headline for this post (max 8 words). Example: "Dress Bold, Feel Amazing"
     - cta_text: A call-to-action text. Example: "Shop Now", "Save This", "Follow for More"
     - Show the headline_text and cta_text in the prompt preview so user can approve/edit them.
@@ -185,17 +190,21 @@ Handle responses:
 - The "start" trigger is sent automatically by the frontend, not by the user.
 - When user selects by number ("1", "2", "3"), map to the corresponding choice.
 
-## IMAGE FORMAT (CRITICAL — every campaign post image MUST follow this)
-Each generated post image MUST contain ALL of these elements:
-1. A PHOTOREALISTIC HUMAN person related to the brand's industry/audience
-2. A HEADLINE text overlay — short, catchy, max 8 words (passed via headline_text parameter)
-3. A CTA text element — button or highlighted text (passed via cta_text parameter)
-4. Brand LOGO in the bottom-right corner (handled via logo_path)
-5. Brand colors as the dominant color scheme throughout
+## GEMINI PROMPT STYLE (CRITICAL — how to write the prompt parameter)
+Write the prompt as a NARRATIVE PARAGRAPH describing the scene. Example:
 
-The image prompt should describe the visual concept (human subject, composition, setting).
-The headline_text and cta_text are passed as SEPARATE parameters to generate_image — do NOT
-embed them in the prompt itself. The tool will overlay them on the image.
+GOOD: "A photorealistic eye-level medium shot of a confident young Indian woman in a
+deep red silk saree, smiling warmly at the camera. She stands in a sunlit courtyard
+with terracotta walls and hanging marigold garlands. Soft golden-hour lighting creates
+warm shadows. Shallow depth of field keeps her in sharp focus against the blurred
+background. The composition is clean with the subject centered."
+
+BAD: "VISUAL CONCEPT: woman in saree. STYLE: creative. COLORS: red. FORMAT: Instagram."
+
+The prompt describes ONLY the visual scene (human, setting, lighting, composition).
+Text overlays (headline, CTA) are passed as separate parameters — headline_text and
+cta_text — NOT embedded in the prompt. The tool handles text rendering, brand colors,
+and logo placement automatically.
 
 ## LOGO INSTRUCTIONS (CRITICAL)
 The brand logo file path is in the brand context below.

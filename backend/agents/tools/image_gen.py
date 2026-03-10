@@ -1,6 +1,11 @@
 """Image generation tools using Gemini API.
 
 Adapted from v2 — wrapped with LangChain @tool decorator.
+Prompt construction follows official Gemini image generation guide:
+  - Narrative descriptive paragraphs (not keyword lists)
+  - Text rendering instructions placed prominently
+  - Photography terms (camera, lens, lighting)
+  - aspect_ratio and image_size via API config
 """
 
 import concurrent.futures
@@ -71,6 +76,126 @@ def _format_error(error: Exception, context: str = "") -> dict:
     return {"status": "error", "message": message}
 
 
+def _build_narrative_prompt(
+    prompt: str,
+    brand_name: str,
+    brand_colors: str,
+    style: str,
+    industry: str,
+    occasion: str,
+    headline_text: str,
+    subtext: str,
+    cta_text: str,
+    has_logo: bool,
+    user_image_instructions: str,
+) -> str:
+    """Build a narrative Gemini prompt following official prompting guide.
+
+    Key principles from the guide:
+    1. Describe the scene narratively, not as keyword lists
+    2. Text rendering instructions placed prominently and early
+    3. Use photography terms (camera, lens, lighting)
+    4. Provide context and intent
+    5. Be hyper-specific about details
+    """
+    colors_list = [c.strip() for c in brand_colors.split(",") if c.strip()] if brand_colors else []
+    primary = colors_list[0] if colors_list else "#000000"
+    secondary = colors_list[1] if len(colors_list) > 1 else primary
+    all_colors = ", ".join(colors_list[:4]) if colors_list else ""
+
+    style_map = {
+        "creative": "artistic and visually striking",
+        "professional": "clean, corporate, and polished",
+        "playful": "fun, vibrant, and energetic",
+        "minimal": "simple, clean, and focused with generous whitespace",
+        "bold": "strong, impactful, and attention-grabbing with high contrast",
+    }
+    style_desc = style_map.get(style, style_map["creative"])
+
+    # --- Part 1: Text rendering (guide says: generate the text first) ---
+    text_paragraph = ""
+    if headline_text or subtext or cta_text:
+        text_parts = []
+        if headline_text:
+            text_parts.append(
+                f'Display the headline text "{headline_text}" in large, bold sans-serif font '
+                f"as the most prominent text element on the image"
+            )
+        if subtext:
+            text_parts.append(
+                f'Below the headline, display the supporting text "{subtext}" in a smaller, '
+                f"lighter weight font"
+            )
+        if cta_text:
+            text_parts.append(
+                f'Include a call-to-action that reads "{cta_text}" styled as a tappable button '
+                f"with rounded corners and solid fill, placed in the lower portion of the image"
+            )
+        text_paragraph = (
+            "The image must contain the following text rendered clearly and legibly. "
+            + ". ".join(text_parts) + ". "
+            "Display ONLY the exact text in quotes — do not add, change, or omit any words. "
+        )
+        if all_colors:
+            text_paragraph += (
+                f"All text colors must use the brand palette ({all_colors}) or white/black "
+                f"for contrast. The headline should use {primary} or white on a contrasting "
+                f"background. The CTA button fill should use {secondary} with white or "
+                f"{primary} text. "
+            )
+
+    # --- Part 2: Scene description (narrative, with photography terms) ---
+    brand_label = brand_name or "a brand"
+    industry_label = industry or "general"
+
+    scene_paragraph = (
+        f"Create a premium, scroll-stopping social media image for {brand_label} "
+        f"in the {industry_label} industry. "
+        f"The visual style should be {style_desc}. "
+    )
+    if occasion:
+        scene_paragraph += f"The theme is {occasion}. "
+    scene_paragraph += (
+        f"The scene should be: {prompt}. "
+        "Use a photorealistic, eye-level medium shot with soft directional lighting "
+        "that creates depth and dimension. The composition should have a single strong "
+        "focal point with high contrast between the subject and background. "
+    )
+
+    # --- Part 3: Brand color palette (narrative, not bullet list) ---
+    color_paragraph = ""
+    if colors_list:
+        color_paragraph = (
+            f"The entire color scheme must unmistakably reflect the brand identity. "
+            f"Use {primary} as the dominant color for backgrounds and major design elements. "
+            f"Use {secondary} for supporting elements, accent borders, and contrast areas. "
+            f"The full brand palette is {all_colors} — these colors should be instantly "
+            f"recognizable as this brand's content. "
+        )
+
+    # --- Part 4: Logo (high-fidelity preservation, per guide template #5) ---
+    logo_paragraph = ""
+    if has_logo:
+        logo_paragraph = (
+            "I am attaching the brand logo image file. Using the provided logo image, "
+            "place this EXACT logo in the bottom-right corner of the design. Ensure the "
+            "logo features remain completely unchanged — do not redraw, recreate, or "
+            "generate any logo. The logo should be clearly visible and properly sized. "
+        )
+
+    # --- Part 5: User images (combining multiple images, per guide template #4) ---
+    user_img_paragraph = ""
+    if user_image_instructions:
+        user_img_paragraph = (
+            f"I am also attaching product/reference images. {user_image_instructions}. "
+            "Preserve the product's appearance, colors, and details faithfully. "
+        )
+
+    # Assemble in the optimal order: text first, then scene, then brand details
+    full_prompt = text_paragraph + scene_paragraph + color_paragraph + logo_paragraph + user_img_paragraph
+    return full_prompt.strip()
+
+
 @tool
 def generate_image(
     prompt: str,
@@ -85,12 +210,13 @@ def generate_image(
     cta_text: str = "",
     user_images: str = "",
     user_image_instructions: str = "",
+    aspect_ratio: str = "1:1",
     output_dir: str = "",
 ) -> dict:
     """Generate a social media post image using Gemini.
 
     Args:
-        prompt: Visual concept description.
+        prompt: Narrative description of the visual scene and composition.
         brand_name: Brand/company name.
         brand_colors: Comma-separated hex color codes.
         logo_path: Path to brand logo to incorporate.
@@ -102,6 +228,7 @@ def generate_image(
         cta_text: Call-to-action text.
         user_images: Comma-separated paths to user-uploaded images.
         user_image_instructions: How to use user images.
+        aspect_ratio: Image aspect ratio (1:1, 4:5, 16:9, 9:16). Default 1:1.
         output_dir: Directory to save image.
     """
     _, IMAGE_MODEL, _, GENERATED_DIR = _get_config()
@@ -110,75 +237,34 @@ def generate_image(
     try:
         client = _get_client()
 
-        colors_list = [c.strip() for c in brand_colors.split(",") if c.strip()] if brand_colors else []
-        primary_color = colors_list[0] if colors_list else "#000000"
+        has_logo = bool(logo_path and os.path.exists(logo_path))
 
-        secondary_color = colors_list[1] if len(colors_list) > 1 else primary_color
-
-        color_section = ""
-        if colors_list:
-            all_colors = ", ".join(colors_list[:4])
-            color_section = f"""
-COLOR RULES (CRITICAL — brand palette must dominate the entire design):
-- PRIMARY COLOR ({primary_color}): Use for backgrounds, major design elements, and headline text color or headline background
-- SECONDARY COLOR ({secondary_color}): Use for supporting elements, text backgrounds, accent borders, and contrast areas
-- FULL PALETTE: {all_colors}
-- TEXT COLORS: All text on the image (headline, tagline, CTA) MUST use colors from the brand palette ({all_colors}) or white/black for contrast against brand-colored backgrounds. NEVER use random colors for text.
-- CTA BUTTON: Use {secondary_color} or a contrasting brand color as the CTA button fill, with white or {primary_color} text
-- The overall color scheme MUST clearly reflect these brand colors — the image should be instantly recognizable as this brand's content
-"""
-
-        style_map = {
-            "creative": "Artistic, imaginative, visually striking",
-            "professional": "Clean, corporate, polished",
-            "playful": "Fun, vibrant, energetic",
-            "minimal": "Simple, clean, focused",
-            "bold": "Strong, impactful, attention-grabbing",
-        }
-        style_desc = style_map.get(style, style_map["creative"])
-
-        text_elements = []
-        if headline_text:
-            text_elements.append(f'Main headline (prominent): "{headline_text}"')
-        if subtext:
-            text_elements.append(f'Supporting text (smaller): "{subtext}"')
-        if cta_text:
-            text_elements.append(f'Call-to-action (button or highlighted): "{cta_text}"')
-
-        text_section = ""
-        if text_elements:
-            text_section = f"""
-EXACT TEXT ON IMAGE:
-{chr(10).join(f"- {t}" for t in text_elements)}
-Display ONLY the text in quotes. Make it legible with high contrast.
-TEXT STYLING: Use bold sans-serif font. Text colors MUST come from the brand palette ({primary_color}, {secondary_color}) or white/black for contrast. Headline should be large and prominent. CTA should look like a tappable button with brand-colored fill.
-"""
-
-        full_prompt = f"""Create a premium Instagram post image for {brand_name or 'a brand'}.
-
-VISUAL CONCEPT: {prompt}
-
-BRAND: {brand_name or 'Brand'} | Industry: {industry or 'General'}
-{color_section}
-STYLE: {style_desc}
-{f"OCCASION: {occasion}" if occasion else ""}
-{text_section}
-
-CRITICAL: The overall color scheme MUST clearly reflect {primary_color} and {secondary_color}.
-Aspect ratio: 1:1 square (1080x1080 pixels). Instagram post format. Ultra high resolution.
-{f"LOGO: I am attaching the actual brand logo image file. Place THIS EXACT attached logo image in the bottom-right corner of the design. Make it clearly visible and properly sized (not tiny). Do NOT create, draw, generate, or invent any logo — use ONLY the attached logo image file exactly as provided." if logo_path else ""}
-Create a scroll-stopping, magazine-quality image."""
+        full_prompt = _build_narrative_prompt(
+            prompt=prompt,
+            brand_name=brand_name,
+            brand_colors=brand_colors,
+            style=style,
+            industry=industry,
+            occasion=occasion,
+            headline_text=headline_text,
+            subtext=subtext,
+            cta_text=cta_text,
+            has_logo=has_logo,
+            user_image_instructions=user_image_instructions,
+        )
 
         from google.genai import types
 
         contents = [full_prompt]
 
-        if logo_path and os.path.exists(logo_path):
+        # Attach logo image (guide: high-fidelity detail preservation)
+        if has_logo:
             try:
                 contents.append(Image.open(logo_path))
             except Exception:
                 pass
 
+        # Attach user/product images (guide: combining multiple images)
         if user_images:
             for user_img_path in [p.strip() for p in user_images.split(",") if p.strip()][:5]:
                 if os.path.exists(user_img_path):
@@ -186,10 +272,12 @@ Create a scroll-stopping, magazine-quality image."""
                         contents.append(Image.open(user_img_path))
                     except Exception:
                         pass
-            if user_image_instructions:
-                contents[0] += f"\n\nUSER IMAGE INSTRUCTIONS:\n{user_image_instructions}"
 
         time.sleep(1)
+
+        # Validate aspect ratio
+        valid_ratios = {"1:1", "4:5", "5:4", "16:9", "9:16", "3:2", "2:3", "3:4", "4:3"}
+        ar = aspect_ratio if aspect_ratio in valid_ratios else "1:1"
 
         def make_request():
             return client.models.generate_content(
@@ -197,6 +285,9 @@ Create a scroll-stopping, magazine-quality image."""
                 contents=contents,
                 config=types.GenerateContentConfig(
                     response_modalities=["image", "text"],
+                    image_config=types.ImageConfig(
+                        aspect_ratio=ar,
+                    ),
                 ),
             )
 
@@ -222,6 +313,7 @@ Create a scroll-stopping, magazine-quality image."""
                     "url": f"/generated/{filename}",
                     "prompt_used": prompt,
                     "style": style,
+                    "aspect_ratio": ar,
                     "model": IMAGE_MODEL,
                 }
 
@@ -256,10 +348,13 @@ def edit_image(
 
         from google.genai import types
 
-        edit_prompt = f"""Edit this image with the following changes:
-{edit_instruction}
-
-Keep the overall composition and brand elements. Only modify what's requested."""
+        # Narrative edit prompt (guide: describe the change conversationally)
+        edit_prompt = (
+            f"Using the provided image, please make the following changes: "
+            f"{edit_instruction}. "
+            f"Keep everything else in the image exactly the same, preserving the "
+            f"original style, lighting, composition, and brand elements."
+        )
 
         time.sleep(1)
 

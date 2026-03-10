@@ -108,17 +108,19 @@ For each slide (Slide 1, Slide 2, ... Slide N), do these sub-steps:
 E1. SHOW PROMPT: Call format_response showing "Slide X of Y: [Role] — [Headline]"
     and the exact image prompt.
 
-    IMAGE PROMPT RULES (for generate_image):
-    - Each slide is a DESIGNED GRAPHIC (like a social media template), NOT a photo.
-    - The prompt describes: background style, color scheme, layout, text placement.
-    - Include headline_text: the short text for this slide (under 20 words).
-    - Slide 1 (HOOK): Bold, large text, eye-catching background, curiosity-driven headline.
+    IMAGE PROMPT RULES (Gemini prompting guide):
+    - Write each slide prompt as a NARRATIVE PARAGRAPH — NOT bullet points or labeled sections.
+    - Each slide is a DESIGNED GRAPHIC (social media template style).
+    - Describe the composition narratively: "A clean, modern social media slide with a bold
+      headline centered on a gradient background transitioning from deep navy to soft teal.
+      The layout is minimal with generous whitespace and a subtle geometric pattern."
+    - Use design terms: "gradient background", "centered composition", "generous whitespace",
+      "bold sans-serif typography", "clean minimalist layout", "rounded accent shapes".
+    - Be hyper-specific about the visual style, not generic.
+    - Do NOT put the actual text content in the prompt — pass it as headline_text and cta_text.
+    - Slide 1 (HOOK): Bold, attention-grabbing design with strong visual contrast.
     - Middle slides: Clean layout, one idea, consistent style with Slide 1.
-    - Include "Swipe →" cue text on 1-2 middle slides where appropriate.
-    - Last slide (CTA): Strong CTA text like "Save this for later!", "Share with a friend!",
-      "Follow @brand for more!", or "Drop a comment below!"
-    - Brand colors as the dominant palette on EVERY slide.
-    - Logo in bottom-right corner on EVERY slide.
+    - Last slide (CTA): Strong call-to-action design with button-like element.
 
     Choices: "Generate This Slide" and "Edit Prompt"
     Set allow_free_input=true with placeholder "Or type a new prompt..."
