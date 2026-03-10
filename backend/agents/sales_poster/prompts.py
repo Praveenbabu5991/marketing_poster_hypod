@@ -67,18 +67,33 @@ When the user says "I have uploaded the product image" or similar:
 
 ### Phase B — Present Poster Concepts
 If the user chose "Suggest Ideas":
-  Based on brand context (products/services, tone, audience), create 3 poster concepts.
-  Call format_response with:
-  - message: A brief intro like "Here are 3 poster concepts for <brand>:"
-  - choices: THREE choices. IMPORTANT — put the concepts IN the choices, NOT in the message.
+1. Call get_upcoming_events to check upcoming calendar dates, festivals, holidays.
+2. Call search_web with the brand's industry/products to find current trends in that sector.
+3. Call get_trending_topics for the brand's industry.
+4. Generate exactly 6 poster concept ideas in THREE categories:
+
+   CALENDAR CONCEPTS (ideas 1-2): Based on upcoming events/holidays from get_upcoming_events.
+   Each must reference a specific date/event and describe a sale poster tied to that occasion
+   (e.g. "Holi Festival Sale", "Women's Day Special Offer").
+
+   BRAND CONCEPTS (ideas 3-4): Based on the brand's own story — use the Overview, Products/Services,
+   Target Audience, and Tone from brand context. These should highlight the brand's product strengths,
+   seasonal collections, or value propositions with a sale angle.
+
+   TRENDING CONCEPTS (ideas 5-6): Based on search_web and get_trending_topics results — what's currently
+   buzzing in the brand's industry/sector. Tie it back to a promotional poster concept.
+
+5. Call format_response with:
+  - message: A brief intro like "Here are 6 poster concepts for <brand>:"
+  - choices: SIX choices. IMPORTANT — put the concepts IN the choices, NOT in the message.
     Each choice must have:
-      id: "1", "2", or "3"
-      label: The concept name (e.g. "Flash Sale Banner")
+      id: "1" through "6"
+      label: Concept title (include the date for calendar ideas, or "[Brand]"/"[Trending]" prefix)
       description: 2-3 sentences about the poster style, layout, and sale angle
   - choice_type: "single_select"
   - allow_free_input: true
   - input_placeholder: "Or describe your own concept..."
-  STOP and wait.
+6. STOP and wait for user selection.
 
 If the user chose "Tell Your Concept" or typed their own:
   Use their concept directly. Go to Phase C.

@@ -18,12 +18,26 @@ Then STOP and wait for the user's response.
 
 ### Phase B — Idea Generation
 If the user chose "Suggest Ideas" or similar:
-1. Use search_web, get_trending_topics, and get_upcoming_events to research relevant content.
-2. Derive 3 carousel theme ideas from: the brand overview, calendar events, and seasonal/trending factors.
-3. Call format_response with 3 idea choices. Each choice must have an id, label (theme title),
-   and description (2-3 sentences about the carousel flow: Hook → Content → CTA).
+1. Call get_upcoming_events to check upcoming calendar dates, festivals, holidays.
+2. Call search_web with the brand's industry/products to find current trends in that sector.
+3. Call get_trending_topics for the brand's industry.
+4. Generate exactly 6 carousel theme ideas in THREE categories:
+
+   CALENDAR THEMES (ideas 1-2): Based on upcoming events/holidays. Each must reference
+   a specific date/event and describe a carousel flow: Hook slide → Content slides → CTA slide.
+
+   BRAND THEMES (ideas 3-4): Based on the brand's Overview, Products/Services, Target Audience,
+   and Tone. Showcase what makes the brand unique — product features, brand story, tips for the audience.
+
+   TRENDING THEMES (ideas 5-6): Based on search_web and get_trending_topics — what's currently
+   buzzing in the brand's industry. Tie it back to the brand's products or audience.
+
+5. Call format_response with 6 idea choices. Each choice must have:
+   - id: "1" through "6"
+   - label: Theme title (include date for calendar themes, or "[Brand]"/"[Trending]" prefix)
+   - description: 2-3 sentences about the carousel flow: Hook → Content → CTA
    Set allow_free_input=true so user can describe their own idea instead.
-4. STOP and wait for user selection.
+6. STOP and wait for user selection.
 
 If the user chose "Tell Your Idea" or typed their own idea directly:
 Skip research. Go directly to Phase C with their idea.

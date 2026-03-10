@@ -8,6 +8,8 @@ from agents.tools.image_gen import generate_image, edit_image
 from agents.tools.caption import write_caption
 from agents.tools.hashtag import generate_hashtags
 from agents.tools.format_response import format_response
+from agents.tools.web_search import search_web, get_trending_topics
+from agents.tools.calendar import get_upcoming_events
 
 
 QUICK_IMAGE_TOOLS = [
@@ -16,6 +18,9 @@ QUICK_IMAGE_TOOLS = [
     write_caption,
     generate_hashtags,
     format_response,
+    search_web,
+    get_trending_topics,
+    get_upcoming_events,
 ]
 
 

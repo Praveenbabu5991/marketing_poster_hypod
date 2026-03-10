@@ -69,15 +69,28 @@ When the user says "I have uploaded the product image" or similar:
 
 ### Phase B — Idea Generation
 If the user chose "Suggest Ideas":
-1. Use search_web and get_trending_topics to find marketing angles for the product.
-2. Present 3 video concepts showing a HUMAN interacting with the product:
-   - Person unboxing or trying the product
-   - Lifestyle shot: someone using the product in daily routine
-   - Cinematic reveal with a model showcasing the product
-3. Call format_response with 3 idea choices. Each choice: id, label (concept name),
-   description (camera movement, human interaction, setting).
-   Set allow_free_input=true.
-4. STOP and wait for user selection.
+1. Call get_upcoming_events to check upcoming calendar dates, festivals, holidays.
+2. Call search_web with the brand's industry/products to find current trends in that sector.
+3. Call get_trending_topics for the brand's industry.
+4. Generate exactly 6 video concept ideas in THREE categories:
+
+   CALENDAR CONCEPTS (ideas 1-2): Based on upcoming events/holidays from get_upcoming_events.
+   Each must reference a specific date/event and describe a product video tied to that occasion
+   (e.g. festive unboxing, holiday gifting, seasonal showcase with a HUMAN using the product).
+
+   BRAND CONCEPTS (ideas 3-4): Based on the brand's own story — use the Overview, Products/Services,
+   Target Audience, and Tone from brand context. These should highlight what makes the brand unique:
+   product features in action, brand story, behind-the-scenes, or customer experience.
+
+   TRENDING CONCEPTS (ideas 5-6): Based on search_web and get_trending_topics results — what's currently
+   buzzing in the brand's industry/sector. Tie it back to the product with a HUMAN interaction angle.
+
+5. Call format_response with 6 idea choices. Each choice must have:
+   - id: "1" through "6"
+   - label: Concept title (include the date for calendar ideas, or "[Brand]"/"[Trending]" prefix)
+   - description: 2-3 sentences about camera movement, human interaction, and setting
+   Set allow_free_input=true so user can describe their own idea instead.
+6. STOP and wait for user selection.
 
 If the user chose "Tell Your Idea" or typed their own:
 Skip research. Go directly to Phase C with their idea.

@@ -36,12 +36,26 @@ Then STOP and wait for the user's response.
 
 ### Phase B — Idea Generation
 If the user chose "Suggest Ideas" or similar:
-1. Use search_web, get_trending_topics, and get_upcoming_events to research relevant content.
-2. Derive 3 campaign theme ideas from: the brand overview, calendar events, and seasonal/trending factors.
-3. Call format_response with 3 idea choices. Each choice must have an id, label (theme title),
-   and description (2-3 sentences about the campaign concept and why it works).
+1. Call get_upcoming_events to check upcoming calendar dates, festivals, holidays.
+2. Call search_web with the brand's industry/products to find current trends in that sector.
+3. Call get_trending_topics for the brand's industry.
+4. Generate exactly 6 campaign theme ideas in THREE categories:
+
+   CALENDAR CAMPAIGNS (ideas 1-2): Based on upcoming events/holidays. Each must reference
+   a specific date/event and describe a multi-post campaign arc around it.
+
+   BRAND CAMPAIGNS (ideas 3-4): Based on the brand's Overview, Products/Services, Target Audience,
+   and Tone. Showcase brand story, product launches, customer education, behind-the-scenes content.
+
+   TRENDING CAMPAIGNS (ideas 5-6): Based on search_web and get_trending_topics — what's currently
+   buzzing in the brand's industry. Build a campaign around a trending topic tied to the brand.
+
+5. Call format_response with 6 idea choices. Each choice must have:
+   - id: "1" through "6"
+   - label: Campaign title (include date for calendar, or "[Brand]"/"[Trending]" prefix)
+   - description: 2-3 sentences about the campaign concept and why it works
    Set allow_free_input=true so user can describe their own idea instead.
-4. STOP and wait for user selection.
+6. STOP and wait for user selection.
 
 If the user chose "Tell Your Idea" or typed their own idea directly:
 Skip research. Use their idea and proceed to gather missing params.

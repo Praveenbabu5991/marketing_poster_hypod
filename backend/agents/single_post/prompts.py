@@ -17,15 +17,27 @@ Then STOP and wait for the user's response.
 
 ### Phase B — Idea Generation
 If the user chose "Suggest Ideas" or similar:
-1. ALWAYS call get_upcoming_events FIRST to check for upcoming calendar dates, festivals, holidays.
-2. Also call search_web and get_trending_topics to research relevant trends.
-3. Derive 3 ideas that are TIED TO SPECIFIC UPCOMING DATES or events from the calendar.
+1. Call get_upcoming_events to check upcoming calendar dates, festivals, holidays.
+2. Call search_web with the brand's industry/products to find current trends in that sector.
+3. Call get_trending_topics for the brand's industry.
+4. Generate exactly 6 post ideas in THREE categories:
+
+   CALENDAR IDEAS (ideas 1-2): Based on upcoming events/holidays from get_upcoming_events.
    Each idea MUST reference a specific date/event (e.g. "Women's Day — March 8", "Holi Festival").
-   If no events are upcoming, use seasonal/trending themes.
-4. Call format_response with 3 idea choices. Each choice must have an id, label (idea title with date),
-   and description (2-3 sentences about the visual concept).
+
+   BRAND IDEAS (ideas 3-4): Based on the brand's own story — use the Overview, Products/Services,
+   Target Audience, and Tone from brand context. These should highlight what makes the brand unique,
+   showcase products/services, or speak directly to the target audience.
+
+   TRENDING IDEAS (ideas 5-6): Based on search_web and get_trending_topics results — what's currently
+   buzzing in the brand's industry/sector. Tie it back to the brand's products or audience.
+
+5. Call format_response with 6 idea choices. Each choice must have:
+   - id: "1" through "6"
+   - label: Idea title (include the date for calendar ideas, or "[Brand]"/"[Trending]" prefix)
+   - description: 2-3 sentences about the visual concept
    Set allow_free_input=true so user can describe their own idea instead.
-5. STOP and wait for user selection.
+6. STOP and wait for user selection.
 
 If the user chose "Tell Your Idea" or typed their own idea directly:
 Skip research. Go directly to Phase C with their idea.
