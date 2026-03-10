@@ -133,9 +133,12 @@ E1. SHOW PROMPT: Call format_response showing "Week X — Post Y of Z: [Topic]" 
       * Any text content (headline, CTA, taglines)
       * Logo instructions ("place logo in corner", etc.)
       * Color hex codes or color names for text elements
-    - headline_text: A catchy headline for this post (max 8 words). Example: "Dress Bold, Feel Amazing"
+    - occasion_text: ONLY for special day/festival/holiday posts — the greeting text.
+      Example: "Happy Republic Day", "Happy Diwali". Leave EMPTY for non-occasion posts.
+    - headline_text: A bold, catchy headline (max 8 words). Example: "Dress Bold, Feel Amazing"
+    - subtext: A supporting tagline in normal weight (max 15 words). Example: "Your journey to radiant skin starts here"
     - cta_text: A call-to-action text. Example: "Shop Now", "Save This", "Follow for More"
-    - Show the headline_text and cta_text in the prompt preview so user can approve/edit them.
+    - Show all text elements in the prompt preview so user can approve/edit them.
 
     Choices: "Generate This Post" and "Edit Prompt"
     Set allow_free_input=true with placeholder "Or type a new prompt..."
@@ -147,11 +150,13 @@ E2. GENERATE: After user approves, call:
        - brand_colors: from brand context
        - logo_path: from brand context (MANDATORY)
        - brand_name: from brand context
+       - occasion_text: the occasion greeting (if any, otherwise omit)
        - headline_text: the headline text for this post (max 8 words)
+       - subtext: the supporting tagline text for this post
        - cta_text: the CTA text for this post
     b. write_caption for this specific post's topic
     c. generate_hashtags for this specific post's topic
-    Each post gets its OWN unique caption, hashtags, headline_text, and cta_text.
+    Each post gets its OWN unique caption, hashtags, headline_text, subtext, and cta_text.
 
 E3. PRESENT RESULT: Call format_response with:
     - message: Include the caption and hashtags in the message text.

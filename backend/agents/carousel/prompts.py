@@ -131,7 +131,10 @@ E1. SHOW PROMPT: Call format_response showing "Slide X of Y: [Role] — [Headlin
 
 E2. GENERATE: After user approves, call generate_image with these parameters FOR EVERY SLIDE:
     - prompt: the approved prompt (visual/layout description)
-    - headline_text: the text content for this slide (under 20 words)
+    - occasion_text: ONLY for the FIRST slide if the carousel is about a special day/festival
+      (e.g. "Happy Republic Day"). Leave empty for non-occasion carousels.
+    - headline_text: the bold headline for this slide (max 8 words)
+    - subtext: supporting text for this slide in normal weight (max 15 words)
     - cta_text: for the LAST slide, pass the CTA text (e.g. "Save this!", "Follow for more!")
       For middle slides, you can pass a swipe cue like "Swipe →" as cta_text.
     - brand_colors: the brand colors from context

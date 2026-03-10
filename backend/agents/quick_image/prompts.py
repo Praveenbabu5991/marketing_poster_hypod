@@ -91,13 +91,16 @@ If the user chose "Tell Your Idea" or typed their own description:
      in a flowing teal dress, laughing naturally, seated at an outdoor cafe".
    - Do NOT put text/headline/CTA content in the prompt — those go as separate parameters.
 
-   Also prepare:
-   - headline_text: A catchy headline + optional tagline (max 8 words each)
+   Also prepare text elements for the image:
+   - occasion_text: ONLY for special day/festival/holiday posts — the greeting text.
+     Example: "Happy Republic Day", "Happy Diwali". Leave EMPTY for non-occasion posts.
+   - headline_text: A bold, catchy headline (max 8 words). Example: "Global Beauty, Indian Pride"
+   - subtext: A supporting tagline in normal weight (max 15 words). Example: "Your journey to radiant skin starts here"
    - cta_text: A call-to-action (e.g. "Shop Now", "Learn More")
-   Show these in the preview so user can approve/edit them.
+   Show all in the preview so user can approve/edit them.
 
-2. Call format_response to show the prompt, headline_text, and cta_text, and ask for approval:
-   - message: Show the full prompt text, headline, and CTA and ask "Shall I generate this?"
+2. Call format_response to show the prompt and all text elements, and ask for approval:
+   - message: Show the full prompt, occasion_text (if any), headline, subtext, and CTA
    - choices: Two options — "Generate" (approve and create) and "Edit Prompt" (modify first)
    - allow_free_input: true
    - input_placeholder: "Or edit the prompt yourself..."
@@ -110,7 +113,9 @@ Once user approves, call these tools in sequence:
 1. generate_image with:
    - prompt: the approved narrative scene description
    - brand_colors, logo_path, brand_name, industry
+   - occasion_text: the occasion greeting (if any, otherwise omit)
    - headline_text: the approved headline text
+   - subtext: the approved supporting tagline text
    - cta_text: the approved CTA text
 2. write_caption — with the topic, brand tone, platform
 3. generate_hashtags — with topic, industry

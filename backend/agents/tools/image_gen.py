@@ -83,6 +83,7 @@ def _build_narrative_prompt(
     style: str,
     industry: str,
     occasion: str,
+    occasion_text: str,
     headline_text: str,
     subtext: str,
     cta_text: str,
@@ -114,8 +115,13 @@ def _build_narrative_prompt(
 
     # --- Part 1: Text rendering (guide says: generate the text first) ---
     text_paragraph = ""
-    if headline_text or subtext or cta_text:
+    if occasion_text or headline_text or subtext or cta_text:
         text_parts = []
+        if occasion_text:
+            text_parts.append(
+                f'At the top of the image, display the occasion greeting "{occasion_text}" '
+                f"in an elegant, decorative font with a festive or celebratory feel"
+            )
         if headline_text:
             text_parts.append(
                 f'Display the headline text "{headline_text}" in large, bold sans-serif font '
@@ -205,6 +211,7 @@ def generate_image(
     style: str = "creative",
     industry: str = "",
     occasion: str = "",
+    occasion_text: str = "",
     headline_text: str = "",
     subtext: str = "",
     cta_text: str = "",
@@ -223,6 +230,7 @@ def generate_image(
         style: Visual style (creative, professional, playful, minimal, bold).
         industry: Brand industry/niche.
         occasion: Special occasion/event theme.
+        occasion_text: Festive greeting text for special days (e.g. "Happy Republic Day").
         headline_text: Main headline text for the image.
         subtext: Supporting tagline text.
         cta_text: Call-to-action text.
@@ -246,6 +254,7 @@ def generate_image(
             style=style,
             industry=industry,
             occasion=occasion,
+            occasion_text=occasion_text,
             headline_text=headline_text,
             subtext=subtext,
             cta_text=cta_text,

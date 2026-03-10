@@ -72,6 +72,7 @@ export function BrandForm({ initial, onSubmit, loading }: Props) {
   const [selectedPalette, setSelectedPalette] = useState<string | null>(
     initial?.colors?.length ? null : defaultPalette.name,
   );
+  const [logoColors, setLogoColors] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
 
   function toDisplayUrl(path: string): string {
@@ -91,13 +92,38 @@ export function BrandForm({ initial, onSubmit, loading }: Props) {
       setLogoPath(res.logo_path);
       setLogoUrl(res.url);
       if (res.colors.length > 0) {
-        setPrimaryColor(res.colors[0]);
-        setSecondaryColor(res.colors[1] ?? res.colors[0]);
-        setColors([res.colors[0], res.colors[1] ?? res.colors[0], ...res.colors.slice(2)]);
+        setLogoColors(res.colors);
+        setSelectedPalette(null);
+        // Auto-select first two as primary/secondary
+        const p = res.colors[0];
+        const s = res.colors[1] ?? res.colors[0];
+        setPrimaryColor(p);
+        setSecondaryColor(s);
+        setColors([p, s, ...res.colors.slice(2)]);
       }
     } finally {
       setUploading(false);
     }
+  }
+
+  function handleLogoColorClick(hex: string) {
+    let p = primaryColor;
+    let s = secondaryColor;
+
+    if (p === hex) {
+      // Already primary → swap: make it secondary, promote secondary to primary
+      p = s;
+      s = hex;
+    } else {
+      // Set as secondary (primary stays, secondary changes)
+      s = hex;
+    }
+
+    setPrimaryColor(p);
+    setSecondaryColor(s);
+    setSelectedPalette(null);
+    const remaining = logoColors.filter((c) => c !== p && c !== s);
+    setColors([p, s, ...remaining]);
   }
 
   function handlePaletteSelect(palette: typeof COLOR_PALETTES[number]) {
@@ -250,6 +276,7 @@ export function BrandForm({ initial, onSubmit, loading }: Props) {
                 onClick={() => {
                   setLogoPath('');
                   setLogoUrl('');
+                  setLogoColors([]);
                 }}
                 className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
               >
@@ -286,9 +313,52 @@ export function BrandForm({ initial, onSubmit, loading }: Props) {
       <div>
         <label className="mb-1 block text-sm font-medium text-text-primary">Brand Colors</label>
 
+        {/* Colors extracted from logo */}
+        {logoColors.length > 0 && (
+          <div className="mb-3">
+            <span className="text-xs text-text-muted">Colors from your logo — click to set primary & secondary:</span>
+            <div className="mt-1.5 flex flex-wrap gap-2">
+              {logoColors.map((c, i) => {
+                const isPrimary = primaryColor === c;
+                const isSecondary = secondaryColor === c;
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => handleLogoColorClick(c)}
+                    className={`relative flex flex-col items-center gap-1 rounded-lg border-2 p-2 transition-all ${
+                      isPrimary
+                        ? 'border-accent bg-bg-elevated shadow-sm'
+                        : isSecondary
+                          ? 'border-blue-400 bg-bg-elevated shadow-sm'
+                          : 'border-border hover:border-text-muted'
+                    }`}
+                  >
+                    <div
+                      className="h-8 w-8 rounded-md"
+                      style={{ backgroundColor: c }}
+                    />
+                    <span className="text-[10px] text-text-muted">{c}</span>
+                    {isPrimary && (
+                      <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[8px] font-bold text-white">
+                        P
+                      </span>
+                    )}
+                    {isSecondary && (
+                      <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-blue-400 text-[8px] font-bold text-white">
+                        S
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Color Palette Presets */}
         <div className="mb-3">
-          <span className="text-xs text-text-muted">Choose a palette:</span>
+          <span className="text-xs text-text-muted">{logoColors.length > 0 ? 'Or choose a preset palette:' : 'Choose a palette:'}</span>
           <div className="mt-1.5 grid grid-cols-4 gap-2">
             {COLOR_PALETTES.map((palette) => (
               <button
