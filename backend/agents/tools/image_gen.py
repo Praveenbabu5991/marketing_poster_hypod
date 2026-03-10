@@ -117,11 +117,15 @@ def generate_image(
 
         color_section = ""
         if colors_list:
+            all_colors = ", ".join(colors_list[:4])
             color_section = f"""
-COLOR RULES:
-- PRIMARY COLOR ({primary_color}): Use as the dominant color in backgrounds, key elements, and design accents
-- SECONDARY COLOR ({secondary_color}): Use for supporting elements, text backgrounds, and contrast areas
-- The overall color scheme MUST clearly reflect these brand colors
+COLOR RULES (CRITICAL — brand palette must dominate the entire design):
+- PRIMARY COLOR ({primary_color}): Use for backgrounds, major design elements, and headline text color or headline background
+- SECONDARY COLOR ({secondary_color}): Use for supporting elements, text backgrounds, accent borders, and contrast areas
+- FULL PALETTE: {all_colors}
+- TEXT COLORS: All text on the image (headline, tagline, CTA) MUST use colors from the brand palette ({all_colors}) or white/black for contrast against brand-colored backgrounds. NEVER use random colors for text.
+- CTA BUTTON: Use {secondary_color} or a contrasting brand color as the CTA button fill, with white or {primary_color} text
+- The overall color scheme MUST clearly reflect these brand colors — the image should be instantly recognizable as this brand's content
 """
 
         style_map = {
@@ -146,7 +150,8 @@ COLOR RULES:
             text_section = f"""
 EXACT TEXT ON IMAGE:
 {chr(10).join(f"- {t}" for t in text_elements)}
-Display ONLY the text in quotes. Make it legible with good contrast.
+Display ONLY the text in quotes. Make it legible with high contrast.
+TEXT STYLING: Use bold sans-serif font. Text colors MUST come from the brand palette ({primary_color}, {secondary_color}) or white/black for contrast. Headline should be large and prominent. CTA should look like a tappable button with brand-colored fill.
 """
 
         full_prompt = f"""Create a premium Instagram post image for {brand_name or 'a brand'}.

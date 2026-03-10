@@ -120,15 +120,30 @@ If posts per week is missing: call format_response asking how many posts per wee
 For each post, do these sub-steps:
 
 E1. SHOW PROMPT: Call format_response showing "Week X — Post Y of Z: [Topic]" and the exact image prompt.
+
+    IMAGE PROMPT RULES (for generate_image):
+    - Each post image MUST contain text overlays — a headline and a CTA.
+    - The prompt describes: visual concept, human subject, composition, brand colors.
+    - Separately pass headline_text and cta_text as parameters (NOT embedded in the prompt).
+    - headline_text: A catchy headline for this post (max 8 words). Example: "Dress Bold, Feel Amazing"
+    - cta_text: A call-to-action text. Example: "Shop Now", "Save This", "Follow for More"
+    - Show the headline_text and cta_text in the prompt preview so user can approve/edit them.
+
     Choices: "Generate This Post" and "Edit Prompt"
     Set allow_free_input=true with placeholder "Or type a new prompt..."
     STOP and wait for approval.
 
 E2. GENERATE: After user approves, call:
-    a. generate_image with the approved prompt, brand_colors, logo_path, brand_name
+    a. generate_image with:
+       - prompt: the approved visual concept prompt
+       - brand_colors: from brand context
+       - logo_path: from brand context (MANDATORY)
+       - brand_name: from brand context
+       - headline_text: the headline text for this post (max 8 words)
+       - cta_text: the CTA text for this post
     b. write_caption for this specific post's topic
     c. generate_hashtags for this specific post's topic
-    Each post gets its OWN unique caption and hashtags.
+    Each post gets its OWN unique caption, hashtags, headline_text, and cta_text.
 
 E3. PRESENT RESULT: Call format_response with:
     - message: Include the caption and hashtags in the message text.
@@ -169,6 +184,18 @@ Handle responses:
 - Maintain consistent brand identity (colors, logo, tone) across ALL posts.
 - The "start" trigger is sent automatically by the frontend, not by the user.
 - When user selects by number ("1", "2", "3"), map to the corresponding choice.
+
+## IMAGE FORMAT (CRITICAL — every campaign post image MUST follow this)
+Each generated post image MUST contain ALL of these elements:
+1. A PHOTOREALISTIC HUMAN person related to the brand's industry/audience
+2. A HEADLINE text overlay — short, catchy, max 8 words (passed via headline_text parameter)
+3. A CTA text element — button or highlighted text (passed via cta_text parameter)
+4. Brand LOGO in the bottom-right corner (handled via logo_path)
+5. Brand colors as the dominant color scheme throughout
+
+The image prompt should describe the visual concept (human subject, composition, setting).
+The headline_text and cta_text are passed as SEPARATE parameters to generate_image — do NOT
+embed them in the prompt itself. The tool will overlay them on the image.
 
 ## LOGO INSTRUCTIONS (CRITICAL)
 The brand logo file path is in the brand context below.

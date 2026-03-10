@@ -127,6 +127,8 @@ E1. SHOW PROMPT: Call format_response showing "Slide X of Y: [Role] — [Headlin
 E2. GENERATE: After user approves, call generate_image with these parameters FOR EVERY SLIDE:
     - prompt: the approved prompt (visual/layout description)
     - headline_text: the text content for this slide (under 20 words)
+    - cta_text: for the LAST slide, pass the CTA text (e.g. "Save this!", "Follow for more!")
+      For middle slides, you can pass a swipe cue like "Swipe →" as cta_text.
     - brand_colors: the brand colors from context
     - logo_path: the EXACT logo path from brand context (MANDATORY — NEVER omit on ANY slide)
     - brand_name: the brand name
