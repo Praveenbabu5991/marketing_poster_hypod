@@ -5,6 +5,7 @@ When the orchestrator calls format_response, the graph routes to END.
 """
 
 import json
+from typing import Optional
 
 from langchain_core.tools import tool
 
@@ -12,11 +13,11 @@ from langchain_core.tools import tool
 @tool
 def format_response(
     message: str,
-    choices: str = "",
+    choices: Optional[list[dict]] = None,
     choice_type: str = "single_select",
     allow_free_input: bool = True,
     input_placeholder: str = "Or type your own...",
-    media: str = "",
+    media: Optional[dict] = None,
 ) -> dict:
     """Build an interactive response for the UI.
 
@@ -26,7 +27,7 @@ def format_response(
 
     Args:
         message: The text message to display to the user.
-        choices: JSON string of choices list. Each choice:
+        choices: List of choice objects. Each choice:
             [{"id": "1", "label": "Option A", "description": "Details..."}]
         choice_type: UI rendering type:
             "single_select" — radio buttons (pick one)
@@ -35,7 +36,7 @@ def format_response(
             "menu" — dropdown menu
         allow_free_input: Whether to show a free text input below choices.
         input_placeholder: Placeholder text for the free input field.
-        media: JSON string of media to display:
+        media: Media object to display:
             {"image_path": "/path/to/image.png"} or
             {"video_path": "/path/to/video.mp4"}
     """
@@ -50,18 +51,23 @@ def format_response(
     }
 
     if choices:
-        try:
-            parsed = json.loads(choices) if isinstance(choices, str) else choices
-            result["choices"] = parsed
-            result["has_choices"] = bool(parsed)
-        except (json.JSONDecodeError, TypeError):
-            pass
+        # Handle both list and JSON string (backwards compat)
+        if isinstance(choices, str):
+            try:
+                choices = json.loads(choices)
+            except (json.JSONDecodeError, TypeError):
+                choices = []
+        result["choices"] = choices
+        result["has_choices"] = bool(choices)
 
     if media:
-        try:
-            parsed_media = json.loads(media) if isinstance(media, str) else media
-            result["media"] = parsed_media
-        except (json.JSONDecodeError, TypeError):
-            pass
+        # Handle both dict and JSON string (backwards compat)
+        if isinstance(media, str):
+            try:
+                media = json.loads(media)
+            except (json.JSONDecodeError, TypeError):
+                media = None
+        if media:
+            result["media"] = media
 
     return result
