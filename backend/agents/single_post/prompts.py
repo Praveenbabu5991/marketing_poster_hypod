@@ -107,7 +107,8 @@ Once user approves, call these tools in sequence:
 Then call format_response with:
 - message: Include the caption and hashtags
 - choices: THREE options — "Edit" (edit the image), "Create New" (start over with a new idea), "Done" (finished)
-- media: the image_path from generate_image result
+- media: Pass the image_path from generate_image result as: {"image_path": "<the path>"}
+  This is CRITICAL — without media the user cannot see the generated image.
 - allow_free_input: true
 - input_placeholder: "Describe what to change..."
 

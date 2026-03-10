@@ -132,7 +132,8 @@ E2. GENERATE: After user approves, call generate_image with these parameters FOR
     - brand_name: the brand name
     Do NOT generate caption/hashtags yet.
 
-E3. PRESENT RESULT: Call format_response showing the generated slide with media image_path.
+E3. PRESENT RESULT: Call format_response with media set to: {"image_path": "<path from generate_image>"}
+    This is CRITICAL — without media the user cannot see the generated slide.
     - If NOT the last slide: choices "Looks Good, Next Slide!", "Regenerate This Slide", "Edit This Slide"
     - If the LAST slide: choices "Finish Carousel", "Regenerate This Slide", "Edit This Slide"
     Set allow_free_input=true.

@@ -62,7 +62,15 @@ async def stream_agent(
                     if node_name == "orchestrator":
                         # Ensure content is a string (Gemini can return list of parts)
                         content = chunk.content
-                        if not isinstance(content, str):
+                        if isinstance(content, list):
+                            text_parts = []
+                            for part in content:
+                                if isinstance(part, str):
+                                    text_parts.append(part)
+                                elif isinstance(part, dict) and part.get("type") == "text":
+                                    text_parts.append(part.get("text", ""))
+                            content = "".join(text_parts)
+                        elif not isinstance(content, str):
                             content = str(content)
                         yield _sse_event({
                             "type": "text",

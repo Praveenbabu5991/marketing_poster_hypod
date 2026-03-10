@@ -75,6 +75,15 @@ def build_agent_graph(
                 print(f"[ORCH] attempt={attempt+1}/{max_retries} retrying after {delay}s...", file=sys.stderr, flush=True)
                 time.sleep(delay)
             response = llm_with_tools.invoke(messages)
+            # Gemini can return content as a list of parts — normalize to string
+            if isinstance(response.content, list):
+                text_parts = []
+                for part in response.content:
+                    if isinstance(part, str):
+                        text_parts.append(part)
+                    elif isinstance(part, dict) and part.get("type") == "text":
+                        text_parts.append(part.get("text", ""))
+                response.content = "".join(text_parts)
             has_content = bool(response.content and response.content.strip())
             has_tools = bool(response.tool_calls) if hasattr(response, 'tool_calls') else False
             if has_content or has_tools:

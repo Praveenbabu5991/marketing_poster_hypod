@@ -130,7 +130,10 @@ E2. GENERATE: After user approves, call:
     c. generate_hashtags for this specific post's topic
     Each post gets its OWN unique caption and hashtags.
 
-E3. PRESENT RESULT: Call format_response showing the post with media image_path, caption, and hashtags.
+E3. PRESENT RESULT: Call format_response with:
+    - message: Include the caption and hashtags in the message text.
+    - media: Pass the image_path from generate_image result as: {"image_path": "<the path>"}
+      This is CRITICAL — without media the user cannot see the generated image.
     - If NOT the last post: choices "Next Post", "Regenerate", "New Caption", "Edit Post"
     - If the LAST post: choices "Finish Campaign", "Regenerate", "New Caption", "Edit Post"
     Set allow_free_input=true.

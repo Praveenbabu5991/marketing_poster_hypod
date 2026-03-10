@@ -77,8 +77,7 @@ If Product Images has actual file paths:
   - message: A welcome greeting for the brand that shows the existing product image and asks
     whether to use it or upload a new one.
     (e.g. "Hi! I'm your Product Video agent for <brand>. I found this product image from before. Would you like to use it or upload a new one?")
-  - media: Show the first product image so the user can see it.
-    Set media to the first product image path from brand context.
+  - media: Pass the first product image path as: {"image_path": "<the path from brand context>"}
   - choices: Three options —
     "Use This Image" (proceed with the shown product image),
     "Upload New Image" (user will upload a different product image),
@@ -110,7 +109,7 @@ When the user says "I have uploaded the product image" or similar:
   with the uploaded image visible, then proceed to offer "Suggest Ideas" / "Tell Your Idea".
   Call format_response with:
   - message: "Great! I can see your product image. How would you like to start?"
-  - media: Show the latest product image path from brand context (last item in the list).
+  - media: Pass the latest product image path as: {"image_path": "<the path from brand context>"}
   - choices: Two options — "Suggest Ideas" and "Tell Your Idea"
   - choice_type: "single_select"
   - allow_free_input: true
@@ -174,7 +173,8 @@ Once user approves, call these tools:
 
 Then call format_response with:
 - message: Include the caption and hashtags
-- media: video_path from generate_video result (use video_path NOT image_path)
+- media: Pass the video_path from generate_video result as: {"video_path": "<the path>"}
+  This is CRITICAL — without media the user cannot see the generated video. Use video_path NOT image_path.
 - choices: "New Prompt" (try different prompt), "Different Concept" (back to ideas), "New Caption", "Done"
 - allow_free_input: true
 

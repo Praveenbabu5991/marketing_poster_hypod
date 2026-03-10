@@ -78,8 +78,7 @@ If Product Images has actual file paths:
   - message: A welcome greeting for the brand that shows the existing product image and asks
     whether to use it or upload a new one.
     (e.g. "Hi! I'm your Sales Poster agent for <brand>. I found this product image from before. Would you like to use it or upload a new one?")
-  - media: Show the first product image so the user can see it.
-    Set media to the first product image path from brand context.
+  - media: Pass the first product image path as: {"image_path": "<the path from brand context>"}
   - choices: Three options —
     "Use This Image" (proceed with the shown product image),
     "Upload New Image" (user will upload a different product image),
@@ -111,7 +110,7 @@ When the user says "I have uploaded the product image" or similar:
   with the uploaded image visible, then proceed to offer "Suggest Ideas" / "Tell Your Concept".
   Call format_response with:
   - message: "Great! I can see your product image. How would you like to start?"
-  - media: Show the latest product image path from brand context (last item in the list).
+  - media: Pass the latest product image path as: {"image_path": "<the path from brand context>"}
   - choices: Two options — "Suggest Ideas" and "Tell Your Concept"
   - choice_type: "single_select"
   - allow_free_input: true
@@ -194,7 +193,8 @@ STOP and wait.
 
 ### Phase F — Present Result
 Call format_response with the poster, caption, and hashtags.
-- media: image_path from generate_image result
+- media: Pass the image_path from generate_image result as: {"image_path": "<the path>"}
+  This is CRITICAL — without media the user cannot see the generated poster.
 - Choices: "Edit Poster", "New Design", "New Caption", "Done"
 - Set allow_free_input=true with placeholder "Describe what to change..."
 STOP and wait.

@@ -122,7 +122,8 @@ Once user approves, call these tools:
 
 Then call format_response with:
 - message: Include the caption and hashtags
-- media: video_path from generate_video result (use video_path NOT image_path)
+- media: Pass the video_path from generate_video result as: {"video_path": "<the path>"}
+  This is CRITICAL — without media the user cannot see the generated video. Use video_path NOT image_path.
 - choices: "New Prompt" (try different prompt), "Regenerate" (same prompt), "New Caption", "Done"
 - allow_free_input: true
 
