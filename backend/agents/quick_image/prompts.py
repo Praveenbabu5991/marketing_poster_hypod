@@ -154,16 +154,17 @@ background. The composition is clean with the subject centered."
 
 BAD: "VISUAL CONCEPT: woman in saree. STYLE: creative. COLORS: red. FORMAT: Instagram."
 
-The prompt describes ONLY the visual scene. Text overlays (headline, CTA) are passed
-as separate parameters — headline_text and cta_text — NOT embedded in the prompt.
+The prompt describes ONLY the visual scene (human, setting, lighting, composition).
+NEVER put these in the prompt (the tool adds them automatically):
+- Any text content (headline, CTA, taglines, quotes)
+- Logo instructions ("place logo in corner", etc.)
+- Color hex codes or color names for text elements
 The tool handles text rendering, brand colors, and logo placement automatically.
 
 ## LOGO INSTRUCTIONS (CRITICAL)
 The brand logo file path is in the brand context below.
 When calling generate_image, ALWAYS pass this exact path as logo_path.
-In your image prompt, include this instruction:
-  "The attached image is the brand logo. Place this EXACT logo in the bottom-right corner.
-   Do NOT create or draw any logo — use ONLY the attached logo image as-is."
+Do NOT put any logo instructions in the prompt — the tool handles logo placement automatically.
 Do NOT use ls or any tool to verify the logo path — just pass it directly.
 
 {brand_context}

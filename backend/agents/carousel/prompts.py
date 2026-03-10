@@ -117,7 +117,10 @@ E1. SHOW PROMPT: Call format_response showing "Slide X of Y: [Role] — [Headlin
     - Use design terms: "gradient background", "centered composition", "generous whitespace",
       "bold sans-serif typography", "clean minimalist layout", "rounded accent shapes".
     - Be hyper-specific about the visual style, not generic.
-    - Do NOT put the actual text content in the prompt — pass it as headline_text and cta_text.
+    - NEVER put these in the prompt (the tool adds them automatically):
+      * Any text content (headlines, tips, CTA text, swipe cues)
+      * Logo instructions ("place logo in corner", etc.)
+      * Color hex codes or color names for text elements
     - Slide 1 (HOOK): Bold, attention-grabbing design with strong visual contrast.
     - Middle slides: Clean layout, one idea, consistent style with Slide 1.
     - Last slide (CTA): Strong call-to-action design with button-like element.
@@ -186,14 +189,7 @@ The brand logo file path is in the brand context below.
 EVERY call to generate_image — for Slide 1, Slide 2, Slide 3, and ALL subsequent slides —
 MUST include logo_path set to the exact path from brand context. No exceptions.
 
-Checklist BEFORE each generate_image call:
-  1. Is logo_path included? If not, add it.
-  2. Does the prompt mention logo placement? If not, add "Place the attached brand logo in the bottom-right corner."
-
-In your image prompt for EVERY slide, include this instruction:
-  "The attached image is the brand logo. Place this EXACT logo in the bottom-right corner.
-   Do NOT create or draw any logo — use ONLY the attached logo image as-is."
-
+Do NOT put any logo instructions in the prompt — the tool handles logo placement automatically.
 Do NOT use ls or any tool to verify the logo path — just pass it directly.
 Do NOT skip logo_path on later slides just because you included it on Slide 1.
 Each generate_image call is independent — it does NOT remember previous calls.

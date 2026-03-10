@@ -172,24 +172,29 @@ Call format_response to ask what discount or offer to feature.
 STOP and wait.
 
 ### Phase F — Show Prompt and Generate
-1. Based on the headline, CTA, discount/offer, and product, write a detailed image prompt.
-   Include: product placement, sale badge with discount text, headline placement,
-   CTA button, brand colors, layout following Z-pattern principles.
+1. Based on the product, write an image prompt that describes ONLY the visual scene.
 
    IMAGE PROMPT RULES (Gemini prompting guide):
    - Write the prompt as a NARRATIVE PARAGRAPH — NOT bullet points or labeled sections.
-   - Describe the poster layout narratively: "A high-resolution, studio-lit product photograph
-     of a folded silk saree on a polished marble surface with dramatic side-lighting creating
-     rich shadows. The background is a clean gradient from deep burgundy to cream. The
-     composition follows a Z-pattern with the product centered and a bold starburst sale badge
-     overlapping the top-right corner of the product."
-   - Use photography/design terms: "studio-lit", "three-point softbox setup", "product hero shot",
-     "clean gradient background", "starburst badge", "high contrast", "Z-pattern layout".
-   - Describe the product placement, background, and lighting specifically.
-   - Do NOT put headline, CTA, or discount text in the prompt — pass as separate parameters:
-   - headline_text: the user's chosen headline (max 6 words).
-   - cta_text: the user's chosen CTA (e.g. "Shop Now").
-   - subtext: the discount/offer text (e.g. "20% Off" or "Buy 1 Get 1 Free").
+   - Describe ONLY: product placement, background, lighting, composition, atmosphere.
+   - Use photography terms: "studio-lit", "three-point softbox setup", "product hero shot",
+     "clean gradient background", "high contrast", "dramatic side-lighting".
+   - Example GOOD prompt: "A high-resolution, studio-lit product photograph of a folded
+     silk saree on a polished marble surface with dramatic side-lighting creating rich
+     shadows. The background is a clean gradient. The product is centered with space
+     around it for text overlays. Shallow depth of field keeps focus on the fabric texture."
+   - NEVER put these in the prompt (the tool adds them automatically):
+     * Any text content (headline, CTA, discount, "20% OFF", etc.)
+     * Logo instructions ("place logo in corner", etc.)
+     * Color hex codes or color names for text/badges
+     * Sale badges, starburst shapes, or discount graphics
+   - The prompt is ONLY the visual scene — product, background, lighting, composition.
+   - All text, colors, badges, and logo are handled by the generate_image tool parameters.
+
+   Separate parameters to pass to generate_image:
+   - headline_text: the user's chosen headline (max 6 words)
+   - cta_text: the user's chosen CTA (e.g. "Shop Now")
+   - subtext: the discount/offer text (e.g. "20% Off" or "Buy 1 Get 1 Free")
 
 2. Call format_response showing the image prompt.
    Choices: "Generate Poster" and "Edit Prompt"
@@ -245,9 +250,7 @@ Handle responses:
 ## LOGO INSTRUCTIONS (CRITICAL)
 The brand logo file path is in the brand context below.
 When calling generate_image, ALWAYS pass this exact path as logo_path.
-In your image prompt, include this instruction:
-  "The attached image is the brand logo. Place this EXACT logo in the bottom-right corner.
-   Do NOT create or draw any logo — use ONLY the attached logo image as-is."
+Do NOT put any logo instructions in the prompt — the tool handles logo placement automatically.
 Do NOT use ls or any tool to verify the logo path — just pass it directly.
 
 {brand_context}

@@ -129,7 +129,10 @@ E1. SHOW PROMPT: Call format_response showing "Week X — Post Y of Z: [Topic]" 
     - Describe the setting: location, atmosphere, background, lighting quality.
     - Be hyper-specific: instead of "woman with product", say "a confident young Indian woman
       in an elegant emerald green dress, holding the product at eye level, smiling warmly".
-    - Do NOT put headline or CTA text in the prompt — those go as separate parameters.
+    - NEVER put these in the prompt (the tool adds them automatically):
+      * Any text content (headline, CTA, taglines)
+      * Logo instructions ("place logo in corner", etc.)
+      * Color hex codes or color names for text elements
     - headline_text: A catchy headline for this post (max 8 words). Example: "Dress Bold, Feel Amazing"
     - cta_text: A call-to-action text. Example: "Shop Now", "Save This", "Follow for More"
     - Show the headline_text and cta_text in the prompt preview so user can approve/edit them.
@@ -202,16 +205,16 @@ background. The composition is clean with the subject centered."
 BAD: "VISUAL CONCEPT: woman in saree. STYLE: creative. COLORS: red. FORMAT: Instagram."
 
 The prompt describes ONLY the visual scene (human, setting, lighting, composition).
-Text overlays (headline, CTA) are passed as separate parameters — headline_text and
-cta_text — NOT embedded in the prompt. The tool handles text rendering, brand colors,
-and logo placement automatically.
+NEVER put these in the prompt (the tool adds them automatically):
+- Any text content (headline, CTA, taglines, quotes)
+- Logo instructions ("place logo in corner", etc.)
+- Color hex codes or color names for text elements
+The tool handles text rendering, brand colors, and logo placement automatically.
 
 ## LOGO INSTRUCTIONS (CRITICAL)
 The brand logo file path is in the brand context below.
 When calling generate_image, ALWAYS pass this exact path as logo_path.
-In your image prompt, include this instruction:
-  "The attached image is the brand logo. Place this EXACT logo in the bottom-right corner.
-   Do NOT create or draw any logo — use ONLY the attached logo image as-is."
+Do NOT put any logo instructions in the prompt — the tool handles logo placement automatically.
 Do NOT use ls or any tool to verify the logo path — just pass it directly.
 
 {brand_context}
