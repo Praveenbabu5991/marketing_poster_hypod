@@ -22,7 +22,7 @@ def _get_client():
     return genai.Client(api_key=api_key)
 
 
-def _retry_with_backoff(func, max_retries: int = 3, base_delay: float = 1.0):
+def _retry_with_backoff(func, max_retries: int = 4, base_delay: float = 2.0):
     last_error = None
     for attempt in range(max_retries):
         try:
@@ -60,7 +60,11 @@ Focus on: key facts, actionable takeaways, relevant trends."""
         return {"status": "success", "query": query, "insights": result}
 
     except Exception as e:
-        return {"status": "error", "message": f"Search failed: {str(e)[:200]}"}
+        return {
+            "status": "error",
+            "message": f"Search temporarily unavailable. Use your knowledge of the brand to suggest ideas instead.",
+            "query": query,
+        }
 
 
 @tool
@@ -107,4 +111,8 @@ Be specific and practical."""
         }
 
     except Exception as e:
-        return {"status": "error", "message": f"Trend research failed: {str(e)[:200]}"}
+        return {
+            "status": "error",
+            "message": f"Trend research temporarily unavailable. Use your knowledge of the {industry} industry to suggest ideas instead.",
+            "industry": industry,
+        }

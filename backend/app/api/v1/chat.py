@@ -100,14 +100,14 @@ async def upload_product_in_chat(
     with open(file_path, "wb") as f:
         f.write(content)
 
-    # Add to brand's product_images
+    # Replace brand's product_images with the new upload.
+    # In sales poster / product video context, the user works on ONE product
+    # at a time. Uploading a new image means "use this one instead".
     brand = await brand_service.get_brand(db, session.brand_id, user.user_id)
     if not brand:
         raise HTTPException(status_code=404, detail="Brand not found")
 
-    current_images = list(brand.product_images or [])
-    current_images.append(str(file_path))
-    brand.product_images = current_images
+    brand.product_images = [str(file_path)]
     await db.flush()
     await db.refresh(brand)
 

@@ -1,4 +1,4 @@
-"""Tests that each of the 6 agent graphs builds correctly."""
+"""Tests that each of the 7 agent graphs builds correctly."""
 
 from unittest.mock import MagicMock
 
@@ -57,18 +57,26 @@ class TestAgentGraphs:
         compiled = graph.compile()
         assert compiled is not None
 
+    def test_quick_image_graph_builds(self):
+        from agents.quick_image.graph import build_quick_image_graph
+        graph = build_quick_image_graph(_make_mock_llm())
+        assert graph is not None
+        compiled = graph.compile()
+        assert compiled is not None
+
 
 class TestAgentRegistry:
 
-    def test_agent_configs_has_six_agents(self):
+    def test_agent_configs_has_seven_agents(self):
         from agents.registry import AGENT_CONFIGS
-        assert len(AGENT_CONFIGS) == 6
+        assert len(AGENT_CONFIGS) == 7
         assert "single_post" in AGENT_CONFIGS
         assert "carousel" in AGENT_CONFIGS
         assert "campaign" in AGENT_CONFIGS
         assert "sales_poster" in AGENT_CONFIGS
         assert "motion_graphics" in AGENT_CONFIGS
         assert "product_video" in AGENT_CONFIGS
+        assert "quick_image" in AGENT_CONFIGS
 
     def test_product_agents_require_product_images(self):
         from agents.registry import AGENT_CONFIGS

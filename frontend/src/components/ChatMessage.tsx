@@ -34,6 +34,14 @@ export function ChatMessage({ message, isLastInteractive, onInteractiveSelect }:
     return (
       <div className="flex justify-end px-4 py-2">
         <div className="max-w-[75%] rounded-2xl rounded-br-md bg-accent px-4 py-3 text-sm text-white">
+          {message.imageUrl && (
+            <img
+              src={message.imageUrl}
+              alt="Uploaded product"
+              className="mb-2 max-w-full rounded-lg"
+              style={{ maxHeight: 200 }}
+            />
+          )}
           {message.content}
         </div>
       </div>

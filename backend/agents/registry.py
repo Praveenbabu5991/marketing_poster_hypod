@@ -45,6 +45,12 @@ AGENT_CONFIGS = {
         "icon": "video",
         "requires_product_images": True,
     },
+    "quick_image": {
+        "name": "Quick Image",
+        "description": "Generate images instantly from a description — no approval steps",
+        "icon": "zap",
+        "requires_product_images": False,
+    },
 }
 
 
@@ -93,5 +99,8 @@ def get_agent_graph(agent_type: str) -> StateGraph:
     elif agent_type == "product_video":
         from agents.product_video.graph import build_product_video_graph
         return build_product_video_graph(llm)
+    elif agent_type == "quick_image":
+        from agents.quick_image.graph import build_quick_image_graph
+        return build_quick_image_graph(llm)
     else:
         raise ValueError(f"Unknown agent type: {agent_type}")

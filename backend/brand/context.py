@@ -2,8 +2,28 @@
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, field
 from typing import Optional
+
+
+def _resolve_path(path: str | None) -> str | None:
+    """Resolve a storage path to an absolute filesystem path.
+
+    Handles paths stored as /uploads/... (missing /app prefix)
+    by prepending /app if needed (Docker container layout).
+    """
+    if not path:
+        return path
+    # Already absolute and exists — use as-is
+    if os.path.exists(path):
+        return path
+    # Try prepending /app for Docker container volume mount
+    if path.startswith("/uploads/") or path.startswith("/generated/"):
+        candidate = f"/app{path}"
+        if os.path.exists(candidate):
+            return candidate
+    return path
 
 
 @dataclass
@@ -79,29 +99,31 @@ class BrandContext:
     def from_dict(cls, data: dict) -> BrandContext:
         if not data:
             return cls()
+        raw_images = data.get("product_images", [])
         return cls(
             name=data.get("name", ""),
             industry=data.get("industry", ""),
             overview=data.get("overview", ""),
             tone=data.get("tone", ""),
-            logo_path=data.get("logo_path"),
+            logo_path=_resolve_path(data.get("logo_path")),
             colors=data.get("colors", []),
             target_audience=data.get("target_audience", ""),
             products_services=data.get("products_services", ""),
-            product_images=data.get("product_images", []),
+            product_images=[_resolve_path(p) or p for p in raw_images],
         )
 
     @classmethod
     def from_db_model(cls, brand) -> BrandContext:
         """Create from SQLAlchemy Brand model."""
+        raw_images = brand.product_images or []
         return cls(
             name=brand.name,
             industry=brand.industry or "",
             overview=brand.overview or "",
             tone=brand.tone,
-            logo_path=brand.logo_path,
+            logo_path=_resolve_path(brand.logo_path),
             colors=brand.colors or [],
             target_audience=brand.target_audience or "",
             products_services=brand.products_services or "",
-            product_images=brand.product_images or [],
+            product_images=[_resolve_path(p) or p for p in raw_images],
         )

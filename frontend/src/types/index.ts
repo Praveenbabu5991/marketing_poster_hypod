@@ -97,6 +97,7 @@ export interface ChatMessage {
   interactive?: InteractiveResponse;
   toolName?: string;
   toolActive?: boolean;
+  imageUrl?: string;
 }
 
 export interface LogoUploadResponse {

@@ -9,40 +9,20 @@ import { listAgents } from '../api/agents';
 import { uploadProductInChat } from '../api/client';
 import type { Session, Brand, Agent } from '../types';
 
-/** Agents that auto-send "start" to trigger a welcome message from the backend. */
-const AUTO_START_AGENTS = new Set(['single_post']);
-
-const AGENT_PROMPTS: Record<string, string[]> = {
-  carousel: [
-    'What story or topic should the carousel cover?',
-    'How many slides do you want? (3-10)',
-    'Any specific call-to-action for the last slide?',
-  ],
-  campaign: [
-    'What is the campaign goal? (awareness, sales, engagement, etc.)',
-    'How many weeks should the campaign run?',
-    'Any key dates or events to align with?',
-  ],
-  sales_poster: [
-    'What product or offer should be featured?',
-    'Include pricing details or discount percentage',
-    'Any specific CTA? (e.g. "Shop Now", "Limited Time")',
-  ],
-  motion_graphics: [
-    'What is the video about? (product launch, promo, announcement)',
-    'Preferred duration? (5-15 seconds)',
-    'Any specific visual style? (minimal, energetic, elegant)',
-  ],
-  product_video: [
-    'Which product should be showcased?',
-    'What key features to highlight?',
-    'Any preferred video style? (cinematic, lifestyle, studio)',
-  ],
-};
+/** All agents auto-send "start" to trigger a welcome message from the backend. */
+const AUTO_START_AGENTS = new Set([
+  'single_post',
+  'carousel',
+  'campaign',
+  'sales_poster',
+  'motion_graphics',
+  'product_video',
+  'quick_image',
+]);
 
 export function Chat() {
   const { sessionId } = useParams<{ sessionId: string }>();
-  const { messages, streaming, sendMessage, sendHidden } = useChat(sessionId);
+  const { messages, streaming, sendMessage, sendHidden, setMessages } = useChat(sessionId);
   const bottomRef = useRef<HTMLDivElement>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [brand, setBrand] = useState<Brand | null>(null);
@@ -100,9 +80,17 @@ export function Chat() {
     if (!sessionId || uploading) return;
     setUploading(true);
     try {
-      await uploadProductInChat(sessionId, file);
-      // After upload succeeds, send a message so the agent knows
-      sendMessage('I have uploaded the product image');
+      const res = await uploadProductInChat(sessionId, file);
+      // Show the uploaded image in the conversation as a user message
+      const uploadMsg: import('../types').ChatMessage = {
+        id: `upload-${Date.now()}`,
+        role: 'user',
+        content: 'I have uploaded the product image',
+        imageUrl: res.url,
+      };
+      setMessages((prev) => [...prev, uploadMsg]);
+      // Send the text message to the agent (without adding another user bubble)
+      sendHidden('I have uploaded the product image');
     } catch (err) {
       console.error('Upload failed:', err);
     } finally {
@@ -112,8 +100,6 @@ export function Chat() {
 
   // Show upload button for agents that use product images
   const showUpload = session?.agent_type === 'sales_poster' || session?.agent_type === 'product_video';
-
-  const prompts = session ? AGENT_PROMPTS[session.agent_type] ?? [] : [];
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -133,98 +119,6 @@ export function Chat() {
 
       {/* Messages */}
       <div className="min-h-0 flex-1 overflow-y-auto py-4">
-        {/* Welcome card — shown for non-auto-start agents when no messages yet */}
-        {messages.length === 0 && brand && agent && !AUTO_START_AGENTS.has(session?.agent_type ?? '') && (
-          <div className="mx-auto max-w-2xl px-4 py-8">
-            <div className="rounded-xl border border-border bg-bg-card p-6 space-y-5">
-              <div>
-                <h2 className="text-xl font-bold text-text-primary">{agent.name} Agent</h2>
-                <p className="mt-1 text-sm text-text-muted">{agent.description}</p>
-              </div>
-
-              <div className="rounded-lg bg-bg-elevated p-4 space-y-2">
-                <h3 className="text-sm font-semibold text-text-primary">Brand Context Loaded</h3>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
-                  <div className="text-text-muted">Brand</div>
-                  <div className="text-text-primary">{brand.name}</div>
-
-                  {brand.industry && (
-                    <>
-                      <div className="text-text-muted">Industry</div>
-                      <div className="text-text-primary">{brand.industry}</div>
-                    </>
-                  )}
-
-                  <div className="text-text-muted">Tone</div>
-                  <div className="text-text-primary capitalize">{brand.tone}</div>
-
-                  {brand.target_audience && (
-                    <>
-                      <div className="text-text-muted">Audience</div>
-                      <div className="text-text-primary">{brand.target_audience}</div>
-                    </>
-                  )}
-
-                  {brand.products_services && (
-                    <>
-                      <div className="text-text-muted">Products</div>
-                      <div className="text-text-primary truncate">{brand.products_services}</div>
-                    </>
-                  )}
-
-                  <div className="text-text-muted">Logo</div>
-                  <div className="text-text-primary">
-                    {brand.logo_path ? 'Uploaded' : 'Not set'}
-                  </div>
-
-                  <div className="text-text-muted">Colors</div>
-                  <div className="flex items-center gap-1.5">
-                    {brand.colors.length > 0 ? (
-                      brand.colors.map((c, i) => (
-                        <div
-                          key={i}
-                          className="h-4 w-4 rounded-sm border border-border"
-                          style={{ backgroundColor: c }}
-                          title={c}
-                        />
-                      ))
-                    ) : (
-                      <span className="text-text-muted">Not set</span>
-                    )}
-                  </div>
-
-                  <div className="text-text-muted">Product Images</div>
-                  <div className="text-text-primary">
-                    {brand.product_images.length > 0
-                      ? `${brand.product_images.length} uploaded`
-                      : 'None'}
-                  </div>
-                </div>
-              </div>
-
-              {prompts.length > 0 && (
-                <div>
-                  <h3 className="text-sm font-semibold text-text-primary mb-2">
-                    To get started, tell me:
-                  </h3>
-                  <ul className="space-y-1.5">
-                    {prompts.map((p, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-text-muted">
-                        <span className="mt-0.5 text-accent">&#x25B8;</span>
-                        {p}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              <p className="text-xs text-text-muted border-t border-border pt-3">
-                The agent already has your full brand context — just describe what you want to create.
-              </p>
-            </div>
-          </div>
-        )}
-
         {/* Loading state before session/brand loads */}
         {messages.length === 0 && !brand && (
           <div className="flex h-full items-center justify-center text-text-muted">

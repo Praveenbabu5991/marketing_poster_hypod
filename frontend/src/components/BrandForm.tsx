@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import type { Brand, BrandCreate } from '../types';
-import { uploadLogo, uploadProductImage } from '../api/brands';
+import { uploadLogo } from '../api/brands';
 
 interface Props {
   initial?: Brand;
@@ -28,6 +28,7 @@ const INDUSTRIES = [
 ];
 
 const TONES = [
+  'creative',
   'professional',
   'casual',
   'playful',
@@ -38,29 +39,47 @@ const TONES = [
   'authoritative',
 ];
 
+const COLOR_PALETTES: { name: string; colors: string[] }[] = [
+  { name: 'Sunset',     colors: ['#FF6B6B', '#FEC89A', '#FFD93D', '#C1FFD7'] },
+  { name: 'Ocean',      colors: ['#0077B6', '#00B4D8', '#90E0EF', '#CAF0F8'] },
+  { name: 'Forest',     colors: ['#2D6A4F', '#40916C', '#52B788', '#95D5B2'] },
+  { name: 'Purple',     colors: ['#7209B7', '#9D4EDD', '#C77DFF', '#E0AAFF'] },
+  { name: 'Coral',      colors: ['#FF6B6B', '#F472B6', '#FB7185', '#FECDD3'] },
+  { name: 'Midnight',   colors: ['#1A1B2E', '#2D3154', '#6366F1', '#A5B4FC'] },
+  { name: 'Golden',     colors: ['#B8860B', '#DAA520', '#FFD700', '#FFF8DC'] },
+  { name: 'Monochrome', colors: ['#1A1A1A', '#4A4A4A', '#7A7A7A', '#DADADA'] },
+];
+
 export function BrandForm({ initial, onSubmit, loading }: Props) {
   const [name, setName] = useState(initial?.name ?? '');
   const [industry, setIndustry] = useState(initial?.industry ?? '');
   const [overview, setOverview] = useState(initial?.overview ?? '');
-  const [tone, setTone] = useState(initial?.tone ?? 'professional');
+  const [tone, setTone] = useState(initial?.tone ?? 'creative');
   const [targetAudience, setTargetAudience] = useState(initial?.target_audience ?? '');
   const [productsServices, setProductsServices] = useState(initial?.products_services ?? '');
   const [logoPath, setLogoPath] = useState(initial?.logo_path ?? '');
   const [logoUrl, setLogoUrl] = useState(initial?.logo_path ? toDisplayUrl(initial.logo_path) : '');
-  const [colors, setColors] = useState<string[]>(initial?.colors ?? []);
-  const [primaryColor, setPrimaryColor] = useState(initial?.colors?.[0] ?? '#000000');
-  const [secondaryColor, setSecondaryColor] = useState(initial?.colors?.[1] ?? '#ffffff');
-  const [productImages, setProductImages] = useState<string[]>(initial?.product_images ?? []);
-  const [productUrls, setProductUrls] = useState<string[]>(() => {
-    if (!initial?.product_images) return [];
-    return initial.product_images.map((p) => toDisplayUrl(p));
-  });
+  const defaultPalette = COLOR_PALETTES[0]; // Sunset
+  const [colors, setColors] = useState<string[]>(
+    initial?.colors?.length ? initial.colors : defaultPalette.colors.map((c) => c.toLowerCase()),
+  );
+  const [primaryColor, setPrimaryColor] = useState(
+    initial?.colors?.[0] ?? defaultPalette.colors[0].toLowerCase(),
+  );
+  const [secondaryColor, setSecondaryColor] = useState(
+    initial?.colors?.[1] ?? defaultPalette.colors[1].toLowerCase(),
+  );
+  const [selectedPalette, setSelectedPalette] = useState<string | null>(
+    initial?.colors?.length ? null : defaultPalette.name,
+  );
   const [uploading, setUploading] = useState(false);
 
   function toDisplayUrl(path: string): string {
-    const genIdx = path.indexOf('/generated/');
+    // Extract relative URL from absolute container paths like /app/uploads/logos/...
+    // or already-relative paths like /uploads/logos/...
+    const genIdx = path.lastIndexOf('/generated/');
     if (genIdx !== -1) return path.slice(genIdx);
-    const uplIdx = path.indexOf('/uploads/');
+    const uplIdx = path.lastIndexOf('/uploads/');
     if (uplIdx !== -1) return path.slice(uplIdx);
     return path;
   }
@@ -81,35 +100,41 @@ export function BrandForm({ initial, onSubmit, loading }: Props) {
     }
   }
 
-  async function handleProductUpload(file: File) {
-    setUploading(true);
-    try {
-      const res = await uploadProductImage(file);
-      setProductImages((prev) => [...prev, res.image_path]);
-      setProductUrls((prev) => [...prev, res.url]);
-    } finally {
-      setUploading(false);
-    }
-  }
-
-  function removeProduct(index: number) {
-    setProductImages((prev) => prev.filter((_, i) => i !== index));
-    setProductUrls((prev) => prev.filter((_, i) => i !== index));
+  function handlePaletteSelect(palette: typeof COLOR_PALETTES[number]) {
+    setSelectedPalette(palette.name);
+    const p = palette.colors[0].toLowerCase();
+    const s = palette.colors[1].toLowerCase();
+    setPrimaryColor(p);
+    setSecondaryColor(s);
+    setColors(palette.colors.map((c) => c.toLowerCase()));
   }
 
   function handlePrimaryChange(hex: string) {
     setPrimaryColor(hex);
-    setColors((prev) => [hex, prev[1] ?? secondaryColor, ...prev.slice(2)]);
+    setSelectedPalette(null);
+    setColors((prev) => {
+      const next = [...prev];
+      next[0] = hex;
+      if (next.length < 2) next.push(secondaryColor);
+      return next;
+    });
   }
 
   function handleSecondaryChange(hex: string) {
     setSecondaryColor(hex);
-    setColors((prev) => [prev[0] ?? primaryColor, hex, ...prev.slice(2)]);
+    setSelectedPalette(null);
+    setColors((prev) => {
+      const next = [...prev];
+      if (next.length < 1) next.push(primaryColor);
+      if (next.length < 2) next.push(hex);
+      else next[1] = hex;
+      return next;
+    });
   }
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    const allColors = [primaryColor, secondaryColor, ...colors.slice(2)];
+    const allColors = colors.length >= 2 ? [...colors] : [primaryColor, secondaryColor];
     onSubmit({
       name,
       industry: industry || undefined,
@@ -119,7 +144,6 @@ export function BrandForm({ initial, onSubmit, loading }: Props) {
       products_services: productsServices || undefined,
       logo_path: logoPath || undefined,
       colors: allColors,
-      product_images: productImages,
     });
   }
 
@@ -261,7 +285,39 @@ export function BrandForm({ initial, onSubmit, loading }: Props) {
       {/* Brand Colors */}
       <div>
         <label className="mb-1 block text-sm font-medium text-text-primary">Brand Colors</label>
-        <div className="flex gap-6">
+
+        {/* Color Palette Presets */}
+        <div className="mb-3">
+          <span className="text-xs text-text-muted">Choose a palette:</span>
+          <div className="mt-1.5 grid grid-cols-4 gap-2">
+            {COLOR_PALETTES.map((palette) => (
+              <button
+                key={palette.name}
+                type="button"
+                onClick={() => handlePaletteSelect(palette)}
+                className={`flex flex-col items-center gap-1 rounded-lg border p-2 transition-colors ${
+                  selectedPalette === palette.name
+                    ? 'border-accent bg-bg-elevated'
+                    : 'border-border hover:border-text-muted'
+                }`}
+              >
+                <div className="flex gap-0.5">
+                  {palette.colors.map((c, i) => (
+                    <div
+                      key={i}
+                      className="h-5 w-5 rounded-sm"
+                      style={{ backgroundColor: c }}
+                    />
+                  ))}
+                </div>
+                <span className="text-[10px] text-text-muted">{palette.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <span className="text-xs text-text-muted">Or pick custom colors:</span>
+        <div className="mt-1.5 flex gap-6">
           <div className="flex items-center gap-2">
             <input
               type="color"
@@ -289,49 +345,15 @@ export function BrandForm({ initial, onSubmit, loading }: Props) {
         </div>
         {colors.length > 2 && (
           <div className="mt-2">
-            <span className="text-xs text-text-muted">Additional extracted colors:</span>
+            <span className="text-xs text-text-muted">Full palette:</span>
             <div className="mt-1 flex gap-2">
-              {colors.slice(2).map((c, i) => (
+              {colors.map((c, i) => (
                 <div key={i} className="flex items-center gap-1 rounded border border-border px-2 py-1">
                   <div className="h-4 w-4 rounded" style={{ backgroundColor: c }} />
                   <span className="text-xs text-text-muted">{c}</span>
                 </div>
               ))}
             </div>
-          </div>
-        )}
-      </div>
-
-      {/* Product Images */}
-      <div>
-        <label className="mb-1 block text-sm font-medium text-text-primary">Product Images</label>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) handleProductUpload(file);
-          }}
-          className="text-sm text-text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-bg-elevated file:px-4 file:py-2 file:text-sm file:text-text-primary file:cursor-pointer"
-        />
-        {productUrls.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-2">
-            {productUrls.map((url, i) => (
-              <div key={i} className="group relative">
-                <img
-                  src={url}
-                  alt={`Product ${i + 1}`}
-                  className="h-20 w-20 rounded border border-border object-cover"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeProduct(i)}
-                  className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
-                >
-                  x
-                </button>
-              </div>
-            ))}
           </div>
         )}
       </div>
