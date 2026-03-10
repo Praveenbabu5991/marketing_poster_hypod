@@ -97,7 +97,11 @@ Skip research. Go directly to Phase C with their idea.
    Important prompt rules for Veo:
    - Do NOT include text, titles, words, or letters in the prompt — Veo cannot render text.
    - Focus on visual motion: camera movements, transitions, lighting changes.
-   - Include brand color palette references.
+   - WEAVE brand colors INTO the scene description — don't just list hex codes.
+     Example: "The scene is bathed in warm coral (#FF6B6B) lighting, with deep navy
+     (#1A1B2E) shadows and accent elements in soft gold (#DAA520)."
+     Describe colors in props, clothing, backgrounds, lighting gels, set design.
+   - Mention the brand name and product naturally in the scene context.
    - Keep prompt 50-175 words.
 
 2. Call format_response showing the video prompt and settings.

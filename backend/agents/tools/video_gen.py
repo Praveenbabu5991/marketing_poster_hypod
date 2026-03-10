@@ -147,23 +147,28 @@ def generate_video(
             "duration_seconds": clamped_duration,
         }
 
-        enhanced_prompt = prompt
-        brand_parts = []
-        if brand_name:
-            brand_parts.append(f"This marketing video is for {brand_name}.")
+        # Build narrative brand enhancement (not flat metadata)
         colors_list = [c.strip() for c in brand_colors.split(",") if c.strip()] if brand_colors else []
+        primary = colors_list[0] if colors_list else ""
+        secondary = colors_list[1] if len(colors_list) > 1 else ""
+
+        brand_narrative = []
         if colors_list:
-            brand_parts.append(f"Brand color palette: {', '.join(colors_list[:3])}.")
-        if company_overview:
-            brand_parts.append(f"Company: {company_overview}")
+            color_str = ", ".join(colors_list[:3])
+            brand_narrative.append(
+                f"The entire color palette of the scene must reflect the brand colors "
+                f"({color_str}). Use {primary} as the dominant tone in backgrounds, "
+                f"clothing, props, or lighting gels."
+                + (f" Use {secondary} as accent color in secondary elements." if secondary else "")
+            )
+        if brand_name:
+            brand_narrative.append(f"This is a marketing video for {brand_name}.")
         if target_audience:
-            brand_parts.append(f"Target audience: {target_audience}")
-        if products_services:
-            brand_parts.append(f"Products/services: {products_services}")
-        if cta_text:
-            brand_parts.append(f"Call-to-action theme: {cta_text}")
-        if brand_parts:
-            enhanced_prompt = prompt.rstrip() + "\nBrand identity: " + " ".join(brand_parts)
+            brand_narrative.append(f"The human subject should match the target audience: {target_audience}.")
+
+        enhanced_prompt = prompt.rstrip()
+        if brand_narrative:
+            enhanced_prompt += " " + " ".join(brand_narrative)
 
         base_negatives = "text, titles, captions, words, letters, watermarks, subtitles"
         if negative_prompt:

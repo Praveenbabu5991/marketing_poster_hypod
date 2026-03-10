@@ -153,7 +153,11 @@ STOP and wait.
    [Camera + lens] + [Human + product] + [Action] + [Setting + atmosphere] + [Style]
    - Product images are reference assets (Mode A) — Veo preserves product appearance.
    - Focus on HUMAN INTERACTION with the product.
-   - Include brand colors for setting/lighting.
+   - WEAVE brand colors INTO the scene description — don't just list hex codes.
+     Example: "The woman wears a dress in deep coral (#FF6B6B), standing in a room
+     with navy (#1A1B2E) accent walls and warm gold (#DAA520) ambient lighting."
+     Describe colors in clothing, backgrounds, props, lighting, set design.
+   - Mention the brand name naturally in the scene context.
    - Do NOT include text/titles/words — Veo cannot render text.
 
 2. Call format_response showing the video prompt and settings.
