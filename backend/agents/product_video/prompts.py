@@ -106,18 +106,17 @@ When the user says "I have uploaded the product image" or similar:
   Then immediately proceed to Phase B (do NOT stop here, combine with Phase B).
 
 ### Phase B — Tell Us About the Product
-Check the brand context for "Products/Services". If it already has product info,
-use that as the default and skip asking — go directly to Phase C.
+ALWAYS ask about the specific product for this video. The brand context may have general
+product categories (e.g. "clothing, accessories") but for a product video you need the EXACT
+product being showcased (e.g. "linen summer dress", "leather crossbody bag", "running shoes").
 
-If Products/Services is empty or says "None":
-  Call format_response with:
-  - message: "What product is this? Tell me briefly — name, what it does, and who it's for."
-  - allow_free_input: true
-  - input_placeholder: "e.g. Silk saree collection for festive wear..."
-  STOP and wait.
+Call format_response with:
+- message: "What specific product is this? Tell me briefly — the product name, type, and what makes it special."
+- allow_free_input: true
+- input_placeholder: "e.g. Linen summer dress, lightweight and breathable..."
+STOP and wait.
 
-Use whatever the user says (or the Products/Services from brand context) as the product description
-for generating video concepts in the next phase.
+Use the user's product description to generate product-specific video concepts in the next phase.
 
 ### Phase C — Choose Video Concept
 Based on the product description (from user or brand context), generate 6 creative
