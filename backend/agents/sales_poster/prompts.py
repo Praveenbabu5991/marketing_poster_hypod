@@ -24,11 +24,14 @@ posters featuring product images with pricing, discount badges, and CTAs.
    - Sale price: 1.5-2x larger, bold, vibrant color (red or brand accent).
    - Show savings explicitly: "Save Rs.500" or "You Save 40%".
 
-4. PRODUCT IMAGE:
-   - Hero shot, not plain product photo — show in context or with creative lighting.
-   - Product occupies 30-50% of poster area.
-   - Product should face inward toward the CTA, not toward the edge.
-   - High-quality, well-lit images only.
+4. HUMAN + PRODUCT (Default Visual Style):
+   - ALWAYS show a PHOTOREALISTIC HUMAN person using, wearing, holding, or showcasing the product.
+   - Human-product interaction creates authenticity and emotional connection.
+   - The human should match the brand's target audience (age, style, vibe).
+   - Show genuine expressions — confidence, delight, satisfaction.
+   - Product must be clearly visible and prominent (30-50% of poster area).
+   - Human facing inward toward the CTA, not toward the edge.
+   - Lifestyle context: show the product in a real-world setting, not isolated on white.
 
 5. CTA BUTTON:
    - Looks like a tappable button — rounded rectangle, solid fill, clear border.
@@ -129,10 +132,10 @@ HEADLINE RULES:
   or how it makes the buyer feel. Generic headlines like "Big Sale" are NOT allowed.
 - Mix styles: emotional appeal, benefit-driven, curiosity, urgency, wordplay.
 - Match the brand tone from brand context.
-- Example for silk sarees: "Drape the Elegance", "Silk That Speaks Style",
-  "Festive Glow, Unmatched Grace", "Tradition Woven in Luxury"
+- Example for silk sarees: "Drape the Elegance", "Feel the Silk Luxury",
+  "Glow This Festive Season", "Wear Tradition, Own Style"
 - Example for sneakers: "Run Bolder, Pay Less", "Step Into Street Style",
-  "Your Next Favorite Pair", "Comfort Meets Cool"
+  "Lace Up, Stand Out", "Comfort You Can Feel"
 
 Call format_response with:
 - message: "Pick a catchy headline for your poster — this text will appear prominently on the image:"
@@ -176,13 +179,15 @@ STOP and wait.
 
    IMAGE PROMPT RULES (Gemini prompting guide):
    - Write the prompt as a NARRATIVE PARAGRAPH — NOT bullet points or labeled sections.
-   - Describe ONLY: product placement, background, lighting, composition, atmosphere.
-   - Use photography terms: "studio-lit", "three-point softbox setup", "product hero shot",
-     "clean gradient background", "high contrast", "dramatic side-lighting".
-   - Example GOOD prompt: "A high-resolution, studio-lit product photograph of a folded
-     silk saree on a polished marble surface with dramatic side-lighting creating rich
-     shadows. The background is a clean gradient. The product is centered with space
-     around it for text overlays. Shallow depth of field keeps focus on the fabric texture."
+   - ALWAYS include a PHOTOREALISTIC HUMAN using, wearing, or showcasing the product.
+   - Describe: human subject, product interaction, setting, lighting, composition.
+   - Use photography terms: "eye-level medium shot", "soft directional lighting",
+     "shallow depth of field", "warm golden-hour glow", "lifestyle setting".
+   - Example GOOD prompt: "A photorealistic eye-level medium shot of a confident young
+     Indian woman elegantly draping a rich silk saree, smiling warmly at the camera. She
+     stands in a sunlit boutique with warm wooden shelves and soft fabric backdrops.
+     Golden-hour lighting creates a warm, inviting glow. Shallow depth of field keeps
+     her and the saree in sharp focus against the softly blurred background."
    - NEVER put these in the prompt (the tool adds them automatically):
      * Any text content (headline, CTA, discount, "20% OFF", etc.)
      * Logo instructions ("place logo in corner", etc.)
