@@ -3,6 +3,8 @@
 Adapted from v2 — wrapped with LangChain @tool decorator.
 """
 
+import concurrent.futures
+import logging
 import os
 import io
 import uuid
@@ -13,6 +15,9 @@ from typing import Optional
 
 from langchain_core.tools import tool
 from PIL import Image
+
+logger = logging.getLogger(__name__)
+_REQUEST_TIMEOUT = 60  # Image gen can be slower
 
 
 def _get_config():
@@ -29,11 +34,16 @@ def _get_client():
 
 
 def _retry_with_backoff(func, max_retries: int = 3, base_delay: float = 2.0):
-    """Execute with exponential backoff. Only skip retry for unrecoverable errors."""
+    """Execute with exponential backoff and per-request timeout."""
     last_error = None
     for attempt in range(max_retries):
         try:
-            return func()
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+                future = pool.submit(func)
+                return future.result(timeout=_REQUEST_TIMEOUT)
+        except concurrent.futures.TimeoutError:
+            last_error = TimeoutError(f"Request timed out after {_REQUEST_TIMEOUT}s")
+            logger.warning("[IMAGE] Attempt %d timed out", attempt + 1)
         except Exception as e:
             last_error = e
             error_str = str(e).lower()
@@ -41,9 +51,10 @@ def _retry_with_backoff(func, max_retries: int = 3, base_delay: float = 2.0):
                 raise
             if "api" in error_str and "key" in error_str:
                 raise
-            if attempt < max_retries - 1:
-                delay = base_delay * (2 ** attempt)
-                time.sleep(delay)
+            logger.warning("[IMAGE] Attempt %d failed: %s", attempt + 1, str(e)[:200])
+        if attempt < max_retries - 1:
+            delay = base_delay * (2 ** attempt)
+            time.sleep(delay)
     raise last_error
 
 

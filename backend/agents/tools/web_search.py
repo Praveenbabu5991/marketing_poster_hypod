@@ -3,10 +3,17 @@
 Adapted from v2 — wrapped with LangChain @tool decorator.
 """
 
+import concurrent.futures
+import logging
 import time
 from datetime import datetime
 
 from langchain_core.tools import tool
+
+logger = logging.getLogger(__name__)
+
+# Per-request timeout for Gemini API calls (seconds)
+_REQUEST_TIMEOUT = 30
 
 
 def _get_config():
@@ -22,15 +29,22 @@ def _get_client():
     return genai.Client(api_key=api_key)
 
 
-def _retry_with_backoff(func, max_retries: int = 4, base_delay: float = 2.0):
+def _retry_with_backoff(func, max_retries: int = 3, base_delay: float = 2.0):
     last_error = None
     for attempt in range(max_retries):
         try:
-            return func()
+            # Run with a timeout to prevent hanging on unresponsive API
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+                future = pool.submit(func)
+                return future.result(timeout=_REQUEST_TIMEOUT)
+        except concurrent.futures.TimeoutError:
+            last_error = TimeoutError(f"Request timed out after {_REQUEST_TIMEOUT}s")
+            logger.warning("[SEARCH] Attempt %d timed out after %ds", attempt + 1, _REQUEST_TIMEOUT)
         except Exception as e:
             last_error = e
-            if attempt < max_retries - 1:
-                time.sleep(base_delay * (2 ** attempt))
+            logger.warning("[SEARCH] Attempt %d failed: %s", attempt + 1, str(e)[:200])
+        if attempt < max_retries - 1:
+            time.sleep(base_delay * (2 ** attempt))
     raise last_error
 
 

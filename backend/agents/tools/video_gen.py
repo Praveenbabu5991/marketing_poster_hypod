@@ -7,6 +7,7 @@ Supports two mutually exclusive modes:
 """
 
 import io
+import logging
 import os
 import uuid
 import time
@@ -15,6 +16,8 @@ from pathlib import Path
 
 from langchain_core.tools import tool
 from PIL import Image, ImageDraw
+
+logger = logging.getLogger(__name__)
 
 
 def _get_config():
@@ -242,19 +245,46 @@ def generate_video(
 
         gen_kwargs["config"] = types.GenerateVideosConfig(**config_kwargs)
 
+        logger.info("[VIDEO] Starting generation mode=%s model=%s", mode, VIDEO_MODEL)
+        logger.info("[VIDEO] Prompt (first 200 chars): %s", enhanced_prompt[:200])
+        if "reference_images" in config_kwargs:
+            logger.info("[VIDEO] Reference images: %d", len(config_kwargs["reference_images"]))
+
         operation = client.models.generate_videos(**gen_kwargs)
+        logger.info("[VIDEO] Operation received — done=%s name=%s",
+                     operation.done, getattr(operation, 'name', 'N/A'))
 
         max_wait = 300
+        poll_count = 0
         while not operation.done:
             time.sleep(10)
+            poll_count += 1
             operation = client.operations.get(operation)
+            logger.info("[VIDEO] Poll %d — done=%s elapsed=%ds", poll_count, operation.done, poll_count * 10)
             max_wait -= 10
             if max_wait <= 0:
+                logger.warning("[VIDEO] Timed out after 5 minutes")
                 return {"status": "timeout", "message": "Video generation timed out after 5 minutes."}
 
+        # Log full operation details for debugging
+        op_error = getattr(operation, 'error', None)
+        op_metadata = getattr(operation, 'metadata', None)
         result = operation.result
+        logger.info("[VIDEO] Operation complete — result=%s error=%s metadata=%s",
+                     type(result).__name__ if result else None, op_error, op_metadata)
+
         if not result or not result.generated_videos:
-            return {"status": "error", "message": "No video was generated. Try a different prompt."}
+            error_detail = ""
+            if op_error:
+                error_detail = f" Error: {op_error}"
+            # Try to get any additional info from the operation
+            for attr in ['_raw', 'response', '_response']:
+                raw = getattr(operation, attr, None)
+                if raw:
+                    logger.warning("[VIDEO] Operation.%s = %s", attr, str(raw)[:500])
+            logger.warning("[VIDEO] No video in result: result=%s error=%s", result, op_error)
+            msg = f"No video was generated.{error_detail} Try a different prompt."
+            return {"status": "error", "message": msg}
 
         video = result.generated_videos[0]
         output_path = Path(save_dir)
@@ -268,6 +298,7 @@ def generate_video(
         client.files.download(file=video.video)
         video.video.save(str(video_path))
 
+        logger.info("[VIDEO] Success: %s", filename)
         return {
             "status": "success",
             "video_path": str(video_path),
@@ -281,4 +312,5 @@ def generate_video(
         }
 
     except Exception as e:
+        logger.error("[VIDEO] Generation failed: %s", str(e), exc_info=True)
         return {"status": "error", "message": f"Video generation failed: {str(e)[:300]}"}

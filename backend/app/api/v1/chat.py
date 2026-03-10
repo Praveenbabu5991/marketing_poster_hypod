@@ -108,7 +108,10 @@ async def upload_product_in_chat(
         raise HTTPException(status_code=404, detail="Brand not found")
 
     brand.product_images = [str(file_path)]
-    await db.flush()
+    # Commit immediately so the next chat request sees the new image.
+    # Without this, the get_db dependency commits AFTER the response is sent,
+    # causing a race condition where the chat request reads stale data.
+    await db.commit()
     await db.refresh(brand)
 
     return {
