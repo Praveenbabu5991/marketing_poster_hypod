@@ -97,6 +97,110 @@ export function useChat(sessionId: string | undefined) {
         const decoder = new TextDecoder();
         let buffer = '';
 
+        // Helper: remove any transient status messages
+        const stripStatus = (msgs: ChatMessage[]) =>
+          msgs.filter((m) => m.role !== 'status');
+
+        const processSSELine = (line: string) => {
+          if (!line.startsWith('data: ')) return;
+
+          let event: SSEEvent;
+          try {
+            event = JSON.parse(line.slice(6));
+          } catch {
+            return;
+          }
+
+          switch (event.type) {
+            case 'text': {
+              // Ensure content is always a string (Gemini can return arrays)
+              const textContent = typeof event.content === 'string'
+                ? event.content
+                : String(event.content ?? '');
+              if (!textContent) break;
+              if (!assistantAdded) {
+                assistantAdded = true;
+                setMessages((prev) => [
+                  ...stripStatus(prev),
+                  { id: assistantId, role: 'assistant', content: textContent },
+                ]);
+              } else {
+                setMessages((prev) =>
+                  stripStatus(prev).map((m) =>
+                    m.id === assistantId
+                      ? { ...m, content: m.content + textContent }
+                      : m,
+                  ),
+                );
+              }
+              break;
+            }
+
+            case 'tool_start': {
+              const toolId = nextId();
+              setMessages((prev) => [
+                ...stripStatus(prev),
+                {
+                  id: toolId,
+                  role: 'tool',
+                  content: event.message,
+                  toolName: event.tool,
+                  toolActive: true,
+                },
+              ]);
+              break;
+            }
+
+            case 'tool_end': {
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.role === 'tool' && m.toolName === event.tool && m.toolActive
+                    ? { ...m, toolActive: false }
+                    : m,
+                ),
+              );
+              // Reset assistant accumulation so next text starts fresh
+              assistantAdded = false;
+              break;
+            }
+
+            case 'interactive': {
+              const intId = nextId();
+              setMessages((prev) => [
+                ...stripStatus(prev),
+                {
+                  id: intId,
+                  role: 'assistant',
+                  content: event.content.message,
+                  interactive: event.content,
+                },
+              ]);
+              break;
+            }
+
+            case 'status': {
+              setMessages((prev) => [
+                ...stripStatus(prev),
+                { id: nextId(), role: 'status', content: event.message },
+              ]);
+              break;
+            }
+
+            case 'error': {
+              setMessages((prev) => [
+                ...stripStatus(prev),
+                { id: nextId(), role: 'error', content: event.content },
+              ]);
+              break;
+            }
+
+            case 'done':
+              // Remove any lingering status messages
+              setMessages((prev) => stripStatus(prev));
+              break;
+          }
+        };
+
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
@@ -108,108 +212,16 @@ export function useChat(sessionId: string | undefined) {
           buffer = parts.pop()!; // keep incomplete chunk
 
           for (const part of parts) {
-            const line = part.trim();
-            if (!line.startsWith('data: ')) continue;
+            processSSELine(part.trim());
+          }
+        }
 
-            let event: SSEEvent;
-            try {
-              event = JSON.parse(line.slice(6));
-            } catch {
-              continue;
-            }
-
-            // Helper: remove any transient status messages
-            const stripStatus = (msgs: ChatMessage[]) =>
-              msgs.filter((m) => m.role !== 'status');
-
-            switch (event.type) {
-              case 'text': {
-                // Ensure content is always a string (Gemini can return arrays)
-                const textContent = typeof event.content === 'string'
-                  ? event.content
-                  : String(event.content ?? '');
-                if (!textContent) break;
-                if (!assistantAdded) {
-                  assistantAdded = true;
-                  setMessages((prev) => [
-                    ...stripStatus(prev),
-                    { id: assistantId, role: 'assistant', content: textContent },
-                  ]);
-                } else {
-                  setMessages((prev) =>
-                    stripStatus(prev).map((m) =>
-                      m.id === assistantId
-                        ? { ...m, content: m.content + textContent }
-                        : m,
-                    ),
-                  );
-                }
-                break;
-              }
-
-              case 'tool_start': {
-                const toolId = nextId();
-                setMessages((prev) => [
-                  ...stripStatus(prev),
-                  {
-                    id: toolId,
-                    role: 'tool',
-                    content: event.message,
-                    toolName: event.tool,
-                    toolActive: true,
-                  },
-                ]);
-                break;
-              }
-
-              case 'tool_end': {
-                setMessages((prev) =>
-                  prev.map((m) =>
-                    m.role === 'tool' && m.toolName === event.tool && m.toolActive
-                      ? { ...m, toolActive: false }
-                      : m,
-                  ),
-                );
-                // Reset assistant accumulation so next text starts fresh
-                assistantAdded = false;
-                break;
-              }
-
-              case 'interactive': {
-                const intId = nextId();
-                setMessages((prev) => [
-                  ...stripStatus(prev),
-                  {
-                    id: intId,
-                    role: 'assistant',
-                    content: event.content.message,
-                    interactive: event.content,
-                  },
-                ]);
-                break;
-              }
-
-              case 'status': {
-                setMessages((prev) => [
-                  ...stripStatus(prev),
-                  { id: nextId(), role: 'status', content: event.message },
-                ]);
-                break;
-              }
-
-              case 'error': {
-                setMessages((prev) => [
-                  ...stripStatus(prev),
-                  { id: nextId(), role: 'error', content: event.content },
-                ]);
-                break;
-              }
-
-              case 'done':
-                // Remove any lingering status messages
-                setMessages((prev) => stripStatus(prev));
-                break;
-            }
+        // Flush any remaining data in the buffer after stream closes
+        buffer += decoder.decode(); // flush TextDecoder
+        if (buffer.trim()) {
+          const remaining = buffer.split('\n\n');
+          for (const part of remaining) {
+            if (part.trim()) processSSELine(part.trim());
           }
         }
       } catch (err: unknown) {
@@ -260,6 +272,89 @@ export function useChat(sessionId: string | undefined) {
         const decoder = new TextDecoder();
         let buffer = '';
 
+        const stripStatus = (msgs: ChatMessage[]) =>
+          msgs.filter((m) => m.role !== 'status');
+
+        const processSSELine = (line: string) => {
+          if (!line.startsWith('data: ')) return;
+
+          let event: SSEEvent;
+          try {
+            event = JSON.parse(line.slice(6));
+          } catch {
+            return;
+          }
+
+          switch (event.type) {
+            case 'text': {
+              const textContent = typeof event.content === 'string'
+                ? event.content
+                : String(event.content ?? '');
+              if (!textContent) break;
+              if (!assistantAdded) {
+                assistantAdded = true;
+                setMessages((prev) => [
+                  ...stripStatus(prev),
+                  { id: assistantId, role: 'assistant', content: textContent },
+                ]);
+              } else {
+                setMessages((prev) =>
+                  stripStatus(prev).map((m) =>
+                    m.id === assistantId
+                      ? { ...m, content: m.content + textContent }
+                      : m,
+                  ),
+                );
+              }
+              break;
+            }
+            case 'tool_start': {
+              const toolId = nextId();
+              setMessages((prev) => [
+                ...stripStatus(prev),
+                { id: toolId, role: 'tool', content: event.message, toolName: event.tool, toolActive: true },
+              ]);
+              break;
+            }
+            case 'tool_end': {
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.role === 'tool' && m.toolName === event.tool && m.toolActive
+                    ? { ...m, toolActive: false }
+                    : m,
+                ),
+              );
+              assistantAdded = false;
+              break;
+            }
+            case 'interactive': {
+              const intId = nextId();
+              setMessages((prev) => [
+                ...stripStatus(prev),
+                { id: intId, role: 'assistant', content: event.content.message, interactive: event.content },
+              ]);
+              break;
+            }
+            case 'status': {
+              setMessages((prev) => [
+                ...stripStatus(prev),
+                { id: nextId(), role: 'status', content: event.message },
+              ]);
+              break;
+            }
+            case 'error': {
+              setMessages((prev) => [
+                ...stripStatus(prev),
+                { id: nextId(), role: 'error', content: event.content },
+              ]);
+              break;
+            }
+            case 'done':
+              setMessages((prev) => stripStatus(prev));
+              break;
+          }
+        };
+
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
@@ -270,87 +365,16 @@ export function useChat(sessionId: string | undefined) {
           buffer = parts.pop()!;
 
           for (const part of parts) {
-            const line = part.trim();
-            if (!line.startsWith('data: ')) continue;
+            processSSELine(part.trim());
+          }
+        }
 
-            let event: SSEEvent;
-            try {
-              event = JSON.parse(line.slice(6));
-            } catch {
-              continue;
-            }
-
-            const stripStatus = (msgs: ChatMessage[]) =>
-              msgs.filter((m) => m.role !== 'status');
-
-            switch (event.type) {
-              case 'text': {
-                const textContent = typeof event.content === 'string'
-                  ? event.content
-                  : String(event.content ?? '');
-                if (!textContent) break;
-                if (!assistantAdded) {
-                  assistantAdded = true;
-                  setMessages((prev) => [
-                    ...stripStatus(prev),
-                    { id: assistantId, role: 'assistant', content: textContent },
-                  ]);
-                } else {
-                  setMessages((prev) =>
-                    stripStatus(prev).map((m) =>
-                      m.id === assistantId
-                        ? { ...m, content: m.content + textContent }
-                        : m,
-                    ),
-                  );
-                }
-                break;
-              }
-              case 'tool_start': {
-                const toolId = nextId();
-                setMessages((prev) => [
-                  ...stripStatus(prev),
-                  { id: toolId, role: 'tool', content: event.message, toolName: event.tool, toolActive: true },
-                ]);
-                break;
-              }
-              case 'tool_end': {
-                setMessages((prev) =>
-                  prev.map((m) =>
-                    m.role === 'tool' && m.toolName === event.tool && m.toolActive
-                      ? { ...m, toolActive: false }
-                      : m,
-                  ),
-                );
-                assistantAdded = false;
-                break;
-              }
-              case 'interactive': {
-                const intId = nextId();
-                setMessages((prev) => [
-                  ...stripStatus(prev),
-                  { id: intId, role: 'assistant', content: event.content.message, interactive: event.content },
-                ]);
-                break;
-              }
-              case 'status': {
-                setMessages((prev) => [
-                  ...stripStatus(prev),
-                  { id: nextId(), role: 'status', content: event.message },
-                ]);
-                break;
-              }
-              case 'error': {
-                setMessages((prev) => [
-                  ...stripStatus(prev),
-                  { id: nextId(), role: 'error', content: event.content },
-                ]);
-                break;
-              }
-              case 'done':
-                setMessages((prev) => stripStatus(prev));
-                break;
-            }
+        // Flush any remaining data in the buffer after stream closes
+        buffer += decoder.decode(); // flush TextDecoder
+        if (buffer.trim()) {
+          const remaining = buffer.split('\n\n');
+          for (const part of remaining) {
+            if (part.trim()) processSSELine(part.trim());
           }
         }
       } catch (err: unknown) {

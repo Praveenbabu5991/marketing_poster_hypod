@@ -149,10 +149,17 @@ E3. PRESENT RESULT: Call format_response with media set to: {"image_path": "<pat
     Set allow_free_input=true.
     STOP and wait.
 
+    *** LAST SLIDE WARNING: Even for the LAST slide, you MUST present it with media
+    and wait for the user to click "Finish Carousel". Do NOT skip E3 for the last slide.
+    Do NOT call write_caption or generate_hashtags until the user clicks "Finish Carousel".
+    The sequence is ALWAYS: generate_image → format_response with media → STOP → wait. ***
+
 E4. REPEAT: On approval, move to next slide (back to E1). On redo/edit, regenerate current slide.
 
 ### Phase F — Caption and Hashtags
-After ALL slides are approved:
+Phase F starts ONLY after the user clicks "Finish Carousel" on the last slide.
+Do NOT combine Phase F with Phase E. The last slide MUST be shown to the user first.
+
 1. Call write_caption for the overall carousel topic.
    The caption should encourage swiping and saving. Include a hook line,
    brief value summary, and end with a CTA (Save/Share/Follow).
@@ -174,7 +181,9 @@ Handle responses:
 - NEVER make up image paths. Only use paths returned by generate_image.
 - NEVER skip slides or auto-approve. User must approve each slide.
 - Maintain visual consistency: same color palette, style, layout, typography across ALL slides.
-- Caption and hashtags are generated ONLY after all slides are approved.
+- Caption and hashtags are generated ONLY after the user clicks "Finish Carousel" on the last slide.
+- NEVER call write_caption or generate_hashtags in the same turn as generate_image.
+  Always show the slide image first (E3) and STOP. Caption/hashtags come in a SEPARATE turn.
 - Accept any slide count the user requests (2 or more). Do NOT reject or enforce limits.
 - ALWAYS show the image prompt to the user BEFORE calling generate_image. Never generate without approval.
 - Track which slide you are on. Always show "Slide X of Y" in your messages.

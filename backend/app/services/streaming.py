@@ -4,9 +4,13 @@ Transforms LangGraph streaming events into SSE JSON events for the frontend.
 """
 
 import json
+import logging
+import sys
 from typing import AsyncGenerator
 
 from langchain_core.messages import HumanMessage
+
+logger = logging.getLogger(__name__)
 
 
 async def stream_agent(
@@ -123,9 +127,17 @@ async def stream_agent(
                         except (json.JSONDecodeError, TypeError):
                             pass
 
+                    has_media = bool(isinstance(content, dict) and content.get("media"))
+                    print(f"[SSE] interactive event has_media={has_media}", file=sys.stderr, flush=True)
                     yield _sse_event({
                         "type": "interactive",
                         "content": content,
+                    })
+                elif tool_name == "format_response" and not output:
+                    print(f"[SSE] WARNING: format_response output is falsy: {repr(output)[:200]}", file=sys.stderr, flush=True)
+                    yield _sse_event({
+                        "type": "tool_end",
+                        "tool": tool_name,
                     })
                 else:
                     yield _sse_event({
