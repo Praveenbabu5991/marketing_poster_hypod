@@ -166,6 +166,20 @@ def generate_video(
         if target_audience:
             brand_narrative.append(f"The human subject should match the target audience: {target_audience}.")
 
+        # Product prominence: when product images are reference assets, tell Veo to keep them central
+        if reference_image_paths:
+            brand_narrative.append(
+                "The attached product must be the central visual element throughout the video. "
+                "Keep the product in sharp focus and prominently visible in every frame — "
+                "close-up details, center-framed, well-lit. The product should occupy at least "
+                "40-50% of the frame during interaction shots."
+            )
+        if logo_path and not image_path:
+            brand_narrative.append(
+                "The attached brand logo should appear clearly visible in the scene — "
+                "on packaging, signage, clothing, or as a natural element in the environment."
+            )
+
         enhanced_prompt = prompt.rstrip()
         if brand_narrative:
             enhanced_prompt += " " + " ".join(brand_narrative)

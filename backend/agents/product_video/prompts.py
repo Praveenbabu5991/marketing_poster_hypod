@@ -151,13 +151,29 @@ STOP and wait.
 ### Phase D — Show Prompt for Approval
 1. Based on the selected concept, write a Veo video prompt (50-175 words):
    [Camera + lens] + [Human + product] + [Action] + [Setting + atmosphere] + [Style]
-   - Product images are reference assets (Mode A) — Veo preserves product appearance.
-   - Focus on HUMAN INTERACTION with the product.
+
+   PRODUCT PROMINENCE (Critical — the product is the HERO):
+   - The product must be the central visual element in every frame.
+   - Describe the product in SHARP DETAIL — its shape, texture, material, distinctive features.
+   - Use TIGHT FRAMING: close-ups, center-frame compositions, product filling 40-50% of frame.
+   - Describe hands interacting with the product in detail — holding, unboxing, showcasing,
+     turning it over, running fingers across its texture.
+   - Product should be in sharp focus with shallow depth of field blurring the background.
+   - Start with the product: "A close-up of hands holding [product]..." or
+     "Camera pushes in on [product] as a woman picks it up..."
+
+   BRAND VISIBILITY:
    - WEAVE brand colors INTO the scene description — don't just list hex codes.
      Example: "The woman wears a dress in deep coral (#FF6B6B), standing in a room
      with navy (#1A1B2E) accent walls and warm gold (#DAA520) ambient lighting."
      Describe colors in clothing, backgrounds, props, lighting, set design.
    - Mention the brand name naturally in the scene context.
+   - Describe the brand logo appearing naturally — on product packaging, a tag, shopping bag,
+     or visible signage in the background.
+
+   OTHER RULES:
+   - Product images are reference assets (Mode A) — Veo preserves product appearance.
+   - Focus on HUMAN INTERACTION with the product.
    - Do NOT include text/titles/words — Veo cannot render text.
 
 2. Call format_response showing the video prompt and settings.
