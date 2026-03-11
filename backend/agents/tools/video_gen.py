@@ -93,8 +93,7 @@ def _composite_logo_onto_image(source_image: Image.Image, logo_path: str, brand_
     return source_image
 
 
-@tool
-def generate_video(
+def _generate_single_video(
     prompt: str,
     image_path: str = "",
     reference_image_paths: str = "",
@@ -335,3 +334,150 @@ def generate_video(
     except Exception as e:
         logger.error("[VIDEO] Generation failed: %s", str(e), exc_info=True)
         return {"status": "error", "message": f"Video generation failed: {str(e)[:300]}"}
+
+import subprocess
+import tempfile
+from langchain_core.tools import tool
+
+@tool
+def generate_video(
+    prompt: str,
+    image_path: str = "",
+    reference_image_paths: str = "",
+    duration_seconds: int = 16,
+    aspect_ratio: str = "9:16",
+    logo_path: str = "",
+    brand_name: str = "",
+    brand_colors: str = "",
+    company_overview: str = "",
+    target_audience: str = "",
+    products_services: str = "",
+    cta_text: str = "",
+    negative_prompt: str = "",
+    output_dir: str = "",
+) -> dict:
+    """Generate a video using Veo 3.1.
+
+    Supports two mutually exclusive modes:
+    - Mode A: text-to-video + reference_images (logos/assets as visual guides)
+    - Mode B: image-to-video + image= (starting frame, logo composited via PIL)
+
+    Args:
+        prompt: Video generation prompt (50-175 words).
+        image_path: Source image for image-to-video mode (Mode B).
+        reference_image_paths: Comma-separated paths to reference images (Mode A only).
+        duration_seconds: Video length 5-8 seconds.
+        aspect_ratio: "9:16" (Reels), "16:9" (YouTube), "1:1" (Feed).
+        logo_path: Brand logo path.
+        brand_name: Company name for prompt enhancement.
+        brand_colors: Comma-separated hex colors.
+        company_overview: Company description.
+        target_audience: Target audience description.
+        products_services: Products/services description.
+        cta_text: Call-to-action text.
+        negative_prompt: Elements to exclude.
+        output_dir: Directory to save video.
+    """
+    
+    clamped_duration = max(5, min(16, duration_seconds))
+    
+    if clamped_duration <= 8:
+        return _generate_single_video(
+            prompt, image_path, reference_image_paths, clamped_duration, aspect_ratio,
+            logo_path, brand_name, brand_colors, company_overview, target_audience,
+            products_services, cta_text, negative_prompt, output_dir
+        )
+        
+    part1_duration = 8
+    part2_duration = max(5, min(8, clamped_duration - 8))
+    
+    logger.info("[VIDEO] Generating part 1 (8s)")
+    part1_res = _generate_single_video(
+        prompt, image_path, reference_image_paths, part1_duration, aspect_ratio,
+        logo_path, brand_name, brand_colors, company_overview, target_audience,
+        products_services, cta_text, negative_prompt, output_dir
+    )
+    
+    if part1_res.get("status") != "success":
+        return part1_res
+        
+    part1_video = part1_res["video_path"]
+    
+    import uuid
+    from datetime import datetime
+    
+    _, _, GENERATED_DIR = _get_config()
+    save_dir = output_dir or str(GENERATED_DIR)
+    
+    last_frame_path = os.path.join(save_dir, f"frame_{uuid.uuid4().hex[:8]}.jpg")
+    
+    logger.info("[VIDEO] Extracting last frame from %s", part1_video)
+    try:
+        subprocess.run([
+            "ffmpeg", "-sseof", "-1", "-i", part1_video,
+            "-update", "1", "-q:v", "1", last_frame_path, "-y"
+        ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except Exception as e:
+        logger.error("[VIDEO] Failed to extract frame: %s", e)
+        return {"status": "error", "message": f"Failed to extract frame for 16s video: {e}"}
+        
+    logger.info("[VIDEO] Generating part 2 (%ss)", part2_duration)
+    # Important: when generating part 2 from an image, reference_image_paths should be empty to ensure Mode B is used
+    part2_res = _generate_single_video(
+        prompt=prompt + " (continuation)", 
+        image_path=last_frame_path, 
+        reference_image_paths="", 
+        duration_seconds=part2_duration, 
+        aspect_ratio=aspect_ratio,
+        logo_path=logo_path, 
+        brand_name=brand_name, 
+        brand_colors=brand_colors, 
+        company_overview=company_overview, 
+        target_audience=target_audience,
+        products_services=products_services, 
+        cta_text=cta_text, 
+        negative_prompt=negative_prompt, 
+        output_dir=output_dir
+    )
+    
+    if part2_res.get("status") != "success":
+        return part2_res
+        
+    part2_video = part2_res["video_path"]
+    
+    list_path = os.path.join(save_dir, f"list_{uuid.uuid4().hex[:8]}.txt")
+    with open(list_path, "w") as f:
+        f.write(f"file '{os.path.abspath(part1_video)}'\n")
+        f.write(f"file '{os.path.abspath(part2_video)}'\n")
+        
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    final_filename = f"video_{timestamp}_{uuid.uuid4().hex[:8]}.mp4"
+    final_video = os.path.join(save_dir, final_filename)
+    
+    logger.info("[VIDEO] Concatenating %s and %s into %s", part1_video, part2_video, final_video)
+    try:
+        subprocess.run([
+            "ffmpeg", "-f", "concat", "-safe", "0", "-i", list_path,
+            "-c", "copy", final_video, "-y"
+        ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except Exception as e:
+        logger.error("[VIDEO] Failed to concatenate videos: %s", e)
+        return {"status": "error", "message": f"Failed to concatenate videos: {e}"}
+        
+    try:
+        if os.path.exists(last_frame_path): os.remove(last_frame_path)
+        if os.path.exists(list_path): os.remove(list_path)
+    except:
+        pass
+        
+    return {
+        "status": "success",
+        "video_path": final_video,
+        "filename": final_filename,
+        "url": f"/generated/{final_filename}",
+        "duration_seconds": clamped_duration,
+        "aspect_ratio": aspect_ratio,
+        "model": part1_res.get("model", ""),
+        "mode": "stitched",
+        "branded": part1_res.get("branded", False),
+    }

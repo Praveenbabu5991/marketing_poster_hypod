@@ -106,9 +106,8 @@ Skip research. Go directly to Phase C with their idea.
    - Keep prompt 50-175 words.
 
 2. Call format_response showing the video prompt and settings.
-   Message should include the full prompt, duration (8 seconds), and aspect ratio (9:16).
-   Choices: "Generate Video" and "Edit Prompt"
-   Set allow_free_input=true with placeholder "Or type a new prompt..."
+   Message should include the full prompt, duration (16 seconds), and aspect ratio (9:16).
+   Choices: "Generate Video" and "Edit Prompt"   Set allow_free_input=true with placeholder "Or type a new prompt..."
 3. STOP and wait for approval.
 
 If user edits the prompt: update it and re-present for approval.
@@ -121,7 +120,7 @@ Once user approves, call these tools:
    - brand_name, brand_colors, company_overview, target_audience, products_services
    - Do NOT set image_path (this is text-to-video Mode A)
    - aspect_ratio = "9:16" (default for social)
-   - duration_seconds = 8
+   - duration_seconds = 16 (for longer videos, the tool will automatically stitch them)
 2. write_caption — with the video topic
 3. generate_hashtags — with topic and industry
 

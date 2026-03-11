@@ -6,6 +6,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     fonts-dejavu-core \
     libpq5 \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv
