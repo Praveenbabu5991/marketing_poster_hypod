@@ -159,8 +159,7 @@ STOP and wait.
    - The product must be the central visual element in every frame.
    - Describe the product in SHARP DETAIL — its shape, texture, material, distinctive features.
    - Use TIGHT FRAMING: close-ups, center-frame compositions, product filling 40-50% of frame.
-   - Describe hands interacting with the product in detail — holding, unboxing, showcasing,
-     turning it over, running fingers across its texture.
+   - Describe hands interacting with the product in detail — explicitly specify "one pair of natural human hands" holding, unboxing, showcasing, turning it over, or running fingers across its texture. Avoid complex multi-hand interactions to prevent AI artifacts like extra hands.
    - Product should be in sharp focus with shallow depth of field blurring the background.
    - Start with the product: "A close-up of hands holding [product]..." or
      "Camera pushes in on [product] as a woman picks it up..."
@@ -176,9 +175,8 @@ STOP and wait.
 
    OTHER RULES:
    - Product images are reference assets (Mode A) — Veo preserves product appearance.
-   - Focus on HUMAN INTERACTION with the product.
+   - Focus on REALISTIC HUMAN INTERACTION. Explicitly state "one pair of normal human hands" and ensure the product is held logically (not clipping or floating).
    - Do NOT include text/titles/words — Veo cannot render text.
-
 2. Call format_response showing the video prompt and settings.
    Message should include the full prompt, duration (16 seconds), and aspect ratio (9:16).
    Choices: "Generate Video" and "Edit Prompt"   Set allow_free_input=true with placeholder "Or type a new prompt..."

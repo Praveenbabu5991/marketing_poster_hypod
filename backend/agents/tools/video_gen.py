@@ -185,7 +185,7 @@ def _generate_single_video(
         if brand_narrative:
             enhanced_prompt += " " + " ".join(brand_narrative)
 
-        base_negatives = "text, titles, captions, words, letters, watermarks, subtitles"
+        base_negatives = "text, titles, captions, words, letters, watermarks, subtitles, extra hands, extra fingers, mutated limbs, floating objects, clipping, unrealistic physics, deformed, distorted, animated, cartoon"
         if negative_prompt:
             full_negative = f"{negative_prompt}, {base_negatives}"
         else:
