@@ -150,6 +150,9 @@ STOP and wait.
 
 ### Phase D — Show Prompt for Approval
 1. Based on the selected concept, write a Veo video prompt (50-175 words):
+   - Tell a good story based on the given image or motion graphics concept.
+   - The prompt must describe a continuous narrative and visual arc.
+   - Describe a clear progression: Setup → Action/Interaction → Hero Moment → Payoff.
    [Camera + lens] + [Human + product] + [Action] + [Setting + atmosphere] + [Style]
 
    PRODUCT PROMINENCE (Critical — the product is the HERO):

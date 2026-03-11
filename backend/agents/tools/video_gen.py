@@ -180,6 +180,8 @@ def generate_video(
                 "on packaging, signage, clothing, or as a natural element in the environment."
             )
 
+        brand_narrative.append("Tell a good story based on the visual elements, creating a compelling narrative arc.")
+
         enhanced_prompt = prompt.rstrip()
         if brand_narrative:
             enhanced_prompt += " " + " ".join(brand_narrative)

@@ -61,7 +61,7 @@ def animate_image(
         buf = io.BytesIO()
         source_image.save(buf, format="JPEG")
 
-        prompt = animation_prompt or "Subtle, elegant animation with gentle movement. Professional quality."
+        prompt = animation_prompt or "Tell a good story based on given image or motion graphics. Subtle, elegant animation with gentle movement. Professional quality."
         clamped_duration = max(5, min(8, duration_seconds))
 
         config = types.GenerateVideosConfig(

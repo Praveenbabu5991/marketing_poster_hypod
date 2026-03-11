@@ -25,6 +25,7 @@ graphics videos for announcements, promos, and social content using Veo 3.1.
    - Reveal (2-3s): Product/brand hero moment.
    - Payoff (1-2s): Emotional response, aspiration, or satisfying conclusion.
    - Show transformation or before/after — motion graphics excel at morphing states.
+   - Tell a good story based on the given image or motion graphics concept. Ensure the prompt describes a compelling narrative arc.
 
 4. PACING & RHYTHM:
    - Target 1 visual change every 2-3 seconds (2-4 distinct moments total).
