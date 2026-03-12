@@ -155,11 +155,18 @@ STOP and wait.
    - Describe a clear progression: Setup → Action/Interaction → Hero Moment → Payoff.
    [Camera + lens] + [Human + product] + [Action] + [Setting + atmosphere] + [Style]
 
+   CINEMATIC ADVERTISING AESTHETIC:
+   - Always append keywords that force a high-end commercial look: "hyper-realistic, 8k resolution, cinematic lighting, professional commercial advertising photography, shot on RED Digital Cinema camera, highly detailed."
+   - Avoid words like "creative", "artistic", or "illustration". Focus on "realistic", "commercial", and "premium".
+
    PRODUCT PROMINENCE (Critical — the product is the HERO):
    - The product must be the central visual element in every frame.
    - Describe the product in SHARP DETAIL — its shape, texture, material, distinctive features.
    - Use TIGHT FRAMING: close-ups, center-frame compositions, product filling 40-50% of frame.
-   - Describe hands interacting with the product in detail — explicitly specify "one pair of natural human hands" holding, unboxing, showcasing, turning it over, or running fingers across its texture. Avoid complex multi-hand interactions to prevent AI artifacts like extra hands.
+   - EXACT PHYSICAL INTERACTION: If the product is being opened, explicitly describe opening it from the correct cap/lid as seen in the image. Never allow it to be opened from the bottom.
+   - ONE ACTION ONLY (CRITICAL TO PREVENT EXTRA HANDS): Do NOT describe multi-step actions in a single prompt (e.g., "opening the tube, squeezing it, and applying it to the face"). Complex sequences cause the AI to generate 3 or 4 hands. Restrict the scene to ONE single, simple motion (e.g., ONLY holding it, OR ONLY squeezing it into one hand, OR ONLY applying it). Never describe a hand holding a tube while another hand applies product to a face.
+   - Describe hands interacting with the product in detail — explicitly specify "one single hand" or "one pair of natural human hands" holding, unboxing, showcasing, turning it over, or running fingers across its texture. KEEP MOTIONS EXTREMELY SIMPLE.
+   - DO NOT request photorealistic children, babies, or minors in the prompt. Google's safety filters strictly block generating photorealistic children and will cause the video to fail. Always prompt for adults or young adults.
    - Product should be in sharp focus with shallow depth of field blurring the background.
    - Start with the product: "A close-up of hands holding [product]..." or
      "Camera pushes in on [product] as a woman picks it up..."
@@ -169,14 +176,17 @@ STOP and wait.
      Example: "The woman wears a dress in deep coral (#FF6B6B), standing in a room
      with navy (#1A1B2E) accent walls and warm gold (#DAA520) ambient lighting."
      Describe colors in clothing, backgrounds, props, lighting, set design.
-   - Mention the brand name naturally in the scene context.
-   - Describe the brand logo appearing naturally — on product packaging, a tag, shopping bag,
-     or visible signage in the background.
-
+     - NEVER ask the video model to spell the brand name or any text. Video models cannot spell and will create gibberish. Rely solely on the logo reference image for branding.
+     - Describe the brand logo (as a shape/symbol) appearing naturally — on product packaging, a tag, shopping bag,
+     or visible signage in the background. DO NOT ask for the brand name to be written.
    OTHER RULES:
+   - NO AUDIO/SOUND: Do NOT mention "audio", "sound", "music", "speaking", "talking", or "voiceover". Veo's audio safety filters strictly reject prompts that generate speech or sound, causing the video to fail completely. If a person is speaking, describe it purely visually (e.g., "moving lips engaged in conversation") without requesting sound.
+   - TEMPORAL CONSISTENCY: State that the video should have "stable, consistent geometry and lighting." Ban the AI from morphing, warping, or changing the scale/proportions of the product or human subject during the shot.
+   - AVOID BACKGROUND SHIFTING: Describe a "stable, fixed background" that does not melt or morph as the camera moves.
    - Product images are reference assets (Mode A) — Veo preserves product appearance.
+   - PRESERVE PRODUCT TEXT: The product design, logo, and label text must remain absolutely identical to the reference image in every frame. Do NOT modify, regenerate, or distort any existing text on the product during camera movements.
    - Focus on REALISTIC HUMAN INTERACTION. Explicitly state "one pair of normal human hands" and ensure the product is held logically (not clipping or floating).
-   - Do NOT include text/titles/words — Veo cannot render text.
+   - Do NOT ask the AI to add any NEW text/titles/words — Veo cannot render new text accurately.
 2. Call format_response showing the video prompt and settings.
    Message should include the full prompt, duration (16 seconds), and aspect ratio (9:16).
    Choices: "Generate Video" and "Edit Prompt"   Set allow_free_input=true with placeholder "Or type a new prompt..."

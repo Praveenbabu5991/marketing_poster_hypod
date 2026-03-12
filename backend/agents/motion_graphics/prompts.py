@@ -95,15 +95,21 @@ Skip research. Go directly to Phase C with their idea.
 1. Based on the selected concept, write a detailed video prompt following the Veo 5-part formula:
    [Camera + lens] + [Subject] + [Action] + [Setting + atmosphere] + [Style]
 
+   CINEMATIC ADVERTISING AESTHETIC:
+   - Always append keywords that force a high-end commercial look: "hyper-realistic, 8k resolution, cinematic lighting, professional commercial advertising photography, highly detailed, premium aesthetic."
+   - Avoid words like "creative", "artistic", or "illustration" if the goal is realism. Focus on "realistic", "commercial", and "premium".
+
    Important prompt rules for Veo:
+   - NO AUDIO/SOUND: Do NOT mention "audio", "sound", "music", "speaking", "talking", or "voiceover". Veo's audio safety filters strictly reject prompts that generate speech or sound, causing the video to fail completely. If a person is speaking, describe it purely visually (e.g., "moving lips engaged in conversation") without requesting sound.
    - Do NOT include text, titles, words, or letters in the prompt — Veo cannot render text.
+   - DO NOT request photorealistic children, babies, or minors in the prompt. Google's safety filters strictly block generating photorealistic children and will cause the video to fail. Always prompt for adults or young adults.
    - Focus on visual motion: camera movements, transitions, lighting changes.
    - WEAVE brand colors INTO the scene description — don't just list hex codes.
      Example: "The scene is bathed in warm coral (#FF6B6B) lighting, with deep navy
      (#1A1B2E) shadows and accent elements in soft gold (#DAA520)."
      Describe colors in props, clothing, backgrounds, lighting gels, set design.
-   - Mention the brand name and product naturally in the scene context.
-   - Keep prompt 50-175 words.
+     - NEVER ask the video model to spell the brand name or any text. Video models cannot spell and will create gibberish. Rely solely on the logo reference image for branding.
+     - Describe the brand logo (as a shape/symbol) appearing naturally in the scene context. DO NOT ask for the brand name to be written.   - Keep prompt 50-175 words.
 
 2. Call format_response showing the video prompt and settings.
    Message should include the full prompt, duration (16 seconds), and aspect ratio (9:16).

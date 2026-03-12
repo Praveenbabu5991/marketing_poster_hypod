@@ -161,7 +161,10 @@ def _generate_single_video(
                 + (f" Use {secondary} as accent color in secondary elements." if secondary else "")
             )
         if brand_name:
-            brand_narrative.append(f"This is a marketing video for {brand_name}.")
+            # We explicitly do NOT append the brand_name to the text prompt 
+            # because Veo will try to render it as floating text/gibberish.
+            # The brand name is only used for logging or logo compositing.
+            pass
         if target_audience:
             brand_narrative.append(f"The human subject should match the target audience: {target_audience}.")
 
@@ -171,7 +174,10 @@ def _generate_single_video(
                 "The attached product must be the central visual element throughout the video. "
                 "Keep the product in sharp focus and prominently visible in every frame — "
                 "close-up details, center-framed, well-lit. The product should occupy at least "
-                "40-50% of the frame during interaction shots."
+                "40-50% of the frame during interaction shots. "
+                "CRITICAL: The product design, logo, and label text must remain absolutely identical "
+                "to the reference image. Do not modify, misspell, or regenerate any text on the product "
+                "even during camera movement or rotation."
             )
         if logo_path and not image_path:
             brand_narrative.append(
@@ -185,7 +191,7 @@ def _generate_single_video(
         if brand_narrative:
             enhanced_prompt += " " + " ".join(brand_narrative)
 
-        base_negatives = "text, titles, captions, words, letters, watermarks, subtitles, extra hands, extra fingers, mutated limbs, floating objects, clipping, unrealistic physics, deformed, distorted, animated, cartoon"
+        base_negatives = "text, titles, captions, words, letters, watermarks, subtitles, extra hands, extra fingers, three hands, four hands, mutated limbs, merging limbs, floating objects, clipping, unrealistic physics, deformed, distorted, animated, cartoon, opening from bottom, broken physics, morphing, flickering, jitter, warped face, asymmetrical eyes, disembodied limbs, scale issues, changing proportions, shifting background"
         if negative_prompt:
             full_negative = f"{negative_prompt}, {base_negatives}"
         else:
@@ -423,14 +429,15 @@ def generate_video(
         
     logger.info("[VIDEO] Generating part 2 (%ss)", part2_duration)
     # Important: when generating part 2 from an image, reference_image_paths should be empty to ensure Mode B is used
+    # Also pass logo_path="" and brand_name="" to avoid stamping a second logo on the middle frame
     part2_res = _generate_single_video(
-        prompt=prompt + " (continuation)", 
+        prompt=prompt, 
         image_path=last_frame_path, 
         reference_image_paths="", 
         duration_seconds=part2_duration, 
         aspect_ratio=aspect_ratio,
-        logo_path=logo_path, 
-        brand_name=brand_name, 
+        logo_path="", 
+        brand_name="", 
         brand_colors=brand_colors, 
         company_overview=company_overview, 
         target_audience=target_audience,
