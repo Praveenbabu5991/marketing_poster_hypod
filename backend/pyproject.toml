@@ -27,6 +27,7 @@ dependencies = [
     "sse-starlette>=2.0.0",
     "aiofiles>=24.0.0",
     "httpx>=0.28.0",
+    "edge-tts>=7.2.7",
 ]
 
 [project.optional-dependencies]

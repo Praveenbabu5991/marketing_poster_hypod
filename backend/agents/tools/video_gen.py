@@ -108,6 +108,7 @@ def _generate_single_video(
     cta_text: str = "",
     negative_prompt: str = "",
     output_dir: str = "",
+    audio_script: str = "",
 ) -> dict:
     """Generate a video using Veo 3.1.
 
@@ -130,6 +131,7 @@ def _generate_single_video(
         cta_text: Call-to-action text.
         negative_prompt: Elements to exclude.
         output_dir: Directory to save video.
+        audio_script: Voiceover text to generate and merge into the video.
     """
     _, VIDEO_MODEL, GENERATED_DIR = _get_config()
     save_dir = output_dir or str(GENERATED_DIR)
@@ -361,6 +363,7 @@ def generate_video(
     cta_text: str = "",
     negative_prompt: str = "",
     output_dir: str = "",
+    audio_script: str = "",
 ) -> dict:
     """Generate a video using Veo 3.1.
 
@@ -383,108 +386,159 @@ def generate_video(
         cta_text: Call-to-action text.
         negative_prompt: Elements to exclude.
         output_dir: Directory to save video.
+        audio_script: Voiceover text to generate and merge into the video.
     """
     
     clamped_duration = max(5, min(16, duration_seconds))
     
     if clamped_duration <= 8:
-        return _generate_single_video(
+        res = _generate_single_video(
             prompt, image_path, reference_image_paths, clamped_duration, aspect_ratio,
             logo_path, brand_name, brand_colors, company_overview, target_audience,
             products_services, cta_text, negative_prompt, output_dir
         )
+    else:
+        part1_duration = 8
+        part2_duration = max(5, min(8, clamped_duration - 8))
         
-    part1_duration = 8
-    part2_duration = max(5, min(8, clamped_duration - 8))
-    
-    logger.info("[VIDEO] Generating part 1 (8s)")
-    part1_res = _generate_single_video(
-        prompt, image_path, reference_image_paths, part1_duration, aspect_ratio,
-        logo_path, brand_name, brand_colors, company_overview, target_audience,
-        products_services, cta_text, negative_prompt, output_dir
-    )
-    
-    if part1_res.get("status") != "success":
-        return part1_res
+        logger.info("[VIDEO] Generating part 1 (8s)")
+        part1_res = _generate_single_video(
+            prompt, image_path, reference_image_paths, part1_duration, aspect_ratio,
+            logo_path, brand_name, brand_colors, company_overview, target_audience,
+            products_services, cta_text, negative_prompt, output_dir
+        )
         
-    part1_video = part1_res["video_path"]
-    
-    import uuid
-    from datetime import datetime
-    
-    _, _, GENERATED_DIR = _get_config()
-    save_dir = output_dir or str(GENERATED_DIR)
-    
-    last_frame_path = os.path.join(save_dir, f"frame_{uuid.uuid4().hex[:8]}.jpg")
-    
-    logger.info("[VIDEO] Extracting last frame from %s", part1_video)
-    try:
-        subprocess.run([
-            "ffmpeg", "-sseof", "-1", "-i", part1_video,
-            "-update", "1", "-q:v", "1", last_frame_path, "-y"
-        ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    except Exception as e:
-        logger.error("[VIDEO] Failed to extract frame: %s", e)
-        return {"status": "error", "message": f"Failed to extract frame for 16s video: {e}"}
+        if part1_res.get("status") != "success":
+            return part1_res
+            
+        part1_video = part1_res["video_path"]
         
-    logger.info("[VIDEO] Generating part 2 (%ss)", part2_duration)
-    # Important: when generating part 2 from an image, reference_image_paths should be empty to ensure Mode B is used
-    # Also pass logo_path="" and brand_name="" to avoid stamping a second logo on the middle frame
-    part2_res = _generate_single_video(
-        prompt=prompt, 
-        image_path=last_frame_path, 
-        reference_image_paths="", 
-        duration_seconds=part2_duration, 
-        aspect_ratio=aspect_ratio,
-        logo_path="", 
-        brand_name="", 
-        brand_colors=brand_colors, 
-        company_overview=company_overview, 
-        target_audience=target_audience,
-        products_services=products_services, 
-        cta_text=cta_text, 
-        negative_prompt=negative_prompt, 
-        output_dir=output_dir
-    )
-    
-    if part2_res.get("status") != "success":
-        return part2_res
+        import uuid
+        from datetime import datetime
         
-    part2_video = part2_res["video_path"]
-    
-    list_path = os.path.join(save_dir, f"list_{uuid.uuid4().hex[:8]}.txt")
-    with open(list_path, "w") as f:
-        f.write(f"file '{os.path.abspath(part1_video)}'\n")
-        f.write(f"file '{os.path.abspath(part2_video)}'\n")
+        _, _, GENERATED_DIR = _get_config()
+        save_dir = output_dir or str(GENERATED_DIR)
         
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    final_filename = f"video_{timestamp}_{uuid.uuid4().hex[:8]}.mp4"
-    final_video = os.path.join(save_dir, final_filename)
-    
-    logger.info("[VIDEO] Concatenating %s and %s into %s", part1_video, part2_video, final_video)
-    try:
-        subprocess.run([
-            "ffmpeg", "-f", "concat", "-safe", "0", "-i", list_path,
-            "-c", "copy", final_video, "-y"
-        ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    except Exception as e:
-        logger.error("[VIDEO] Failed to concatenate videos: %s", e)
-        return {"status": "error", "message": f"Failed to concatenate videos: {e}"}
+        last_frame_path = os.path.join(save_dir, f"frame_{uuid.uuid4().hex[:8]}.jpg")
         
-    try:
-        if os.path.exists(last_frame_path): os.remove(last_frame_path)
-        if os.path.exists(list_path): os.remove(list_path)
-    except:
-        pass
+        logger.info("[VIDEO] Extracting last frame from %s", part1_video)
+        try:
+            subprocess.run([
+                "ffmpeg", "-sseof", "-1", "-i", part1_video,
+                "-update", "1", "-q:v", "1", last_frame_path, "-y"
+            ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except Exception as e:
+            logger.error("[VIDEO] Failed to extract frame: %s", e)
+            return {"status": "error", "message": f"Failed to extract frame for 16s video: {e}"}
+            
+        logger.info("[VIDEO] Generating part 2 (%ss)", part2_duration)
+        # Important: when generating part 2 from an image, reference_image_paths should be empty to ensure Mode B is used
+        # Also pass logo_path="" and brand_name="" to avoid stamping a second logo on the middle frame
+        part2_res = _generate_single_video(
+            prompt=prompt, 
+            image_path=last_frame_path, 
+            reference_image_paths="", 
+            duration_seconds=part2_duration, 
+            aspect_ratio=aspect_ratio,
+            logo_path="", 
+            brand_name="", 
+            brand_colors=brand_colors, 
+            company_overview=company_overview, 
+            target_audience=target_audience,
+            products_services=products_services, 
+            cta_text=cta_text, 
+            negative_prompt=negative_prompt, 
+            output_dir=output_dir
+        )
         
-    return {
-        "status": "success",
-        "video_path": final_video,
-        "filename": final_filename,
-        "url": f"/generated/{final_filename}",
-        "duration_seconds": clamped_duration,
-        "aspect_ratio": aspect_ratio,
-        "model": part1_res.get("model", ""),
-        "mode": "stitched",
-        "branded": part1_res.get("branded", False),
-    }
+        if part2_res.get("status") != "success":
+            return part2_res
+            
+        part2_video = part2_res["video_path"]
+        
+        list_path = os.path.join(save_dir, f"list_{uuid.uuid4().hex[:8]}.txt")
+        with open(list_path, "w") as f:
+            f.write(f"file '{os.path.abspath(part1_video)}'\n")
+            f.write(f"file '{os.path.abspath(part2_video)}'\n")
+            
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        final_filename = f"video_{timestamp}_{uuid.uuid4().hex[:8]}.mp4"
+        final_video = os.path.join(save_dir, final_filename)
+        
+        logger.info("[VIDEO] Concatenating %s and %s into %s", part1_video, part2_video, final_video)
+        try:
+            subprocess.run([
+                "ffmpeg", "-f", "concat", "-safe", "0", "-i", list_path,
+                "-c", "copy", final_video, "-y"
+            ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except Exception as e:
+            logger.error("[VIDEO] Failed to concatenate videos: %s", e)
+            return {"status": "error", "message": f"Failed to concatenate videos: {e}"}
+            
+        try:
+            if os.path.exists(last_frame_path): os.remove(last_frame_path)
+            if os.path.exists(list_path): os.remove(list_path)
+        except:
+            pass
+            
+        res = {
+            "status": "success",
+            "video_path": final_video,
+            "filename": final_filename,
+            "url": f"/generated/{final_filename}",
+            "duration_seconds": clamped_duration,
+            "aspect_ratio": aspect_ratio,
+            "model": part1_res.get("model", ""),
+            "mode": "stitched",
+            "branded": part1_res.get("branded", False),
+        }
+
+    if res.get("status") == "success" and audio_script:
+        import uuid
+        from datetime import datetime
+        
+        _, _, GENERATED_DIR = _get_config()
+        save_dir = output_dir or str(GENERATED_DIR)
+        
+        video_path = res["video_path"]
+        audio_path = os.path.join(save_dir, f"audio_{uuid.uuid4().hex[:8]}.mp3")
+        logger.info("[VIDEO] Generating audio for script...")
+        
+        try:
+            # We assume edge-tts is in the venv
+            edge_tts_bin = os.path.join(os.getcwd(), ".venv", "bin", "edge-tts")
+            if not os.path.exists(edge_tts_bin):
+                # Fallback to global if venv not found
+                edge_tts_bin = "edge-tts"
+                
+            subprocess.run([
+                edge_tts_bin, "--text", audio_script, "--write-media", audio_path
+            ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            
+            if os.path.exists(audio_path):
+                video_with_audio_path = os.path.join(save_dir, f"with_audio_{uuid.uuid4().hex[:8]}.mp4")
+                
+                # We use -stream_loop -1 on video to loop it if audio is longer, and -shortest to end with audio.
+                subprocess.run([
+                    "ffmpeg", "-stream_loop", "-1", "-i", video_path, "-i", audio_path, 
+                    "-c:v", "copy", "-c:a", "aac", "-map", "0:v:0", "-map", "1:a:0",
+                    "-shortest", video_with_audio_path, "-y"
+                ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                
+                if os.path.exists(video_with_audio_path):
+                    try:
+                        os.remove(video_path)
+                    except:
+                        pass
+                    res["video_path"] = video_with_audio_path
+                    res["filename"] = os.path.basename(video_with_audio_path)
+                    res["url"] = f"/generated/{res['filename']}"
+                
+                try:
+                    os.remove(audio_path)
+                except:
+                    pass
+        except Exception as e:
+            logger.error("[VIDEO] Failed to merge audio: %s", e)
+            
+    return res
