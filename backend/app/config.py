@@ -1,8 +1,11 @@
 """Centralized configuration: env vars, model names, paths, tracing."""
 
+import logging
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
 
 # Load .env from backend root (cwd when running uvicorn)
 _backend_root = Path(__file__).parent.parent
@@ -23,6 +26,11 @@ DATABASE_URL_SYNC = DATABASE_URL.replace("+asyncpg", "").replace(
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY", "")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+
+# --- Google Cloud / Vertex AI ---
+GOOGLE_SERVICE_ACCOUNT_FILE = os.getenv("GOOGLE_SERVICE_ACCOUNT_FILE", "")
+GCLOUD_PROJECT = os.getenv("GCLOUD_PROJECT", "")
+GCLOUD_LOCATION = os.getenv("GCLOUD_LOCATION", "us-central1")
 
 # --- Model Configuration (model-agnostic: provider/model-name) ---
 ORCHESTRATOR_MODEL = os.getenv("ORCHESTRATOR_MODEL", "google_genai/gemini-2.5-flash")
@@ -49,6 +57,39 @@ CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
 # --- LangSmith Tracing ---
 LANGSMITH_API_KEY = os.getenv("LANGSMITH_API_KEY", "")
 LANGSMITH_PROJECT = os.getenv("LANGSMITH_PROJECT", "agent-factory-v4")
+
+
+def get_genai_client():
+    """Create a google.genai.Client using service account (Vertex AI) or API key."""
+    from google import genai
+    if GOOGLE_SERVICE_ACCOUNT_FILE and os.path.exists(GOOGLE_SERVICE_ACCOUNT_FILE):
+        from google.oauth2.service_account import Credentials
+        creds = Credentials.from_service_account_file(
+            GOOGLE_SERVICE_ACCOUNT_FILE,
+            scopes=["https://www.googleapis.com/auth/cloud-platform"],
+        )
+        logger.warning("[GOOGLE] Using Vertex AI service account -> project=%s location=%s", GCLOUD_PROJECT, GCLOUD_LOCATION)
+        return genai.Client(
+            vertexai=True,
+            project=GCLOUD_PROJECT,
+            location=GCLOUD_LOCATION,
+            credentials=creds,
+        )
+    if GOOGLE_API_KEY:
+        logger.warning("[GOOGLE] Using API key (free tier)")
+        return genai.Client(api_key=GOOGLE_API_KEY)
+    raise RuntimeError("No Google credentials configured")
+
+
+def get_google_credentials():
+    """Get credentials + project for LangChain init_chat_model (Vertex AI)."""
+    if GOOGLE_SERVICE_ACCOUNT_FILE and os.path.exists(GOOGLE_SERVICE_ACCOUNT_FILE):
+        from google.oauth2.service_account import Credentials
+        return Credentials.from_service_account_file(
+            GOOGLE_SERVICE_ACCOUNT_FILE,
+            scopes=["https://www.googleapis.com/auth/cloud-platform"],
+        ), GCLOUD_PROJECT
+    return None, None
 
 
 def setup_tracing():

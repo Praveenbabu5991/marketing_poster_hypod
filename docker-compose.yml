@@ -30,9 +30,11 @@ services:
       DATABASE_URL: postgresql+asyncpg://agent_factory:agent_factory@postgres:5432/agent_factory
       UPLOAD_DIR: /app/uploads
       GENERATED_DIR: /app/generated
+      GOOGLE_SERVICE_ACCOUNT_FILE: /app/credentials/hylancerai-36f61ff30743.json
     volumes:
       - ./generated:/app/generated
       - ./uploads:/app/uploads
+      - ./backend/credentials:/app/credentials:ro
 
   frontend:
     build:

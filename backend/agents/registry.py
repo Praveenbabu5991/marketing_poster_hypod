@@ -65,10 +65,16 @@ def _parse_model_string(model_string: str) -> tuple[str, str]:
 def _get_llm() -> BaseChatModel:
     """Create the orchestrator LLM from config."""
     from langchain.chat_models import init_chat_model
+    from app.config import get_google_credentials
     model, provider = _parse_model_string(ORCHESTRATOR_MODEL)
+    creds, project = get_google_credentials()
+    kwargs = {}
+    if creds and provider in ("google_genai", "google_vertexai", ""):
+        kwargs["credentials"] = creds
+        kwargs["project"] = project
     if provider:
-        return init_chat_model(model, model_provider=provider)
-    return init_chat_model(model)
+        return init_chat_model(model, model_provider=provider, **kwargs)
+    return init_chat_model(model, **kwargs)
 
 
 def get_agent_graph(agent_type: str) -> StateGraph:

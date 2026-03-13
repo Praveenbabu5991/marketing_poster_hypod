@@ -19,11 +19,8 @@ def _get_config():
 
 
 def _get_client():
-    from google import genai
-    api_key, _ = _get_config()
-    if not api_key:
-        raise RuntimeError("GOOGLE_API_KEY not configured")
-    return genai.Client(api_key=api_key)
+    from app.config import get_genai_client
+    return get_genai_client()
 
 
 def _retry_with_backoff(func, max_retries: int = 3, base_delay: float = 1.0):
