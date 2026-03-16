@@ -104,8 +104,10 @@ If the user chose "Generate More Ideas" (or choice "7"):
 - Do NOT proceed to the next phase.
 - Instead, clear the previous ideas and repeat the generation step to provide 6 completely new concepts. CRITICAL UNIQUENESS RULE: You MUST read the chat history to see which specific events, holidays, trends, and product angles you ALREADY suggested. You are FORBIDDEN from using those same calendar events, trends, or angles again. Pick DIFFERENT upcoming events and DIFFERENT product features/trends.
 
-If the user chose "Tell Your Idea" or typed their own idea directly:
-Skip research. Go directly to Phase C with their idea.
+If the user types a free-text idea/topic (e.g., "ugadi", "summer sale") instead of selecting an existing 1-7 choice:
+[CRITICAL DISTINCTION]: Look closely at the user's input.
+1. If their input is a BROAD TOPIC (e.g. just "ugadi" or "new year"), do NOT skip to the next phase. Treat it as a theme and generate 6 new choices based ENTIRELY and EXCLUSIVELY on that theme. Do NOT use the default "Calendar/Brand/Trending" categories. ALL 6 ideas must be variations of their specific topic (e.g. 6 different ways to make a post about Ugadi).
+2. If their input is a SPECIFIC, DETAILED CONCEPT (e.g. "ugadi: new year, new skin resolution" or a full sentence describing a scene), they are telling you EXACTLY what they want. Do NOT generate another list of 6 choices. Accept their idea and PROCEED IMMEDIATELY to the next phase (Show Prompt/Approval) using their specific concept.
 
 ### Phase C — Show Prompt for Approval
 1. Based on the selected concept, write a detailed video prompt following the Veo 5-part formula:
