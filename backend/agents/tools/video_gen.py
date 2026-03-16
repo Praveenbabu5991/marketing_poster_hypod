@@ -540,12 +540,12 @@ def generate_video(
             if os.path.exists(audio_path):
                 video_with_audio_path = os.path.join(save_dir, f"with_audio_{uuid.uuid4().hex[:8]}.mp4")
                 
-                # We do not loop the video. We force the output to be exactly clamped_duration.
-                # If audio is longer, it gets cut off. If shorter, the video continues in silence.
+                # We use -shortest to ensure the video stops playing exactly when the audio finishes, 
+                # eliminating any awkward silence at the end of the clip.
                 subprocess.run([
                     "ffmpeg", "-i", video_path, "-i", audio_path, 
                     "-c:v", "copy", "-c:a", "aac", "-map", "0:v:0", "-map", "1:a:0",
-                    "-t", str(clamped_duration), video_with_audio_path, "-y"
+                    "-shortest", video_with_audio_path, "-y"
                 ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 
                 if os.path.exists(video_with_audio_path):
