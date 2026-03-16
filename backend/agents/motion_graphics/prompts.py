@@ -96,12 +96,19 @@ Skip research. Go directly to Phase C with their idea.
    [Camera + lens] + [Subject] + [Action] + [Setting + atmosphere] + [Style]
 
    AUDIO SCRIPT GENERATION:
-   - If the user provided a long story or text, summarize it into a punchy, high-impact voiceover script (approx. 40 words) that fits perfectly into a 16-second video.
-   - If no script was provided, write a short, compelling brand-aligned script based on the video concept.
+   - Generate a high-energy, persuasive voiceover script designed specifically for a REALISTIC, FAST-PACED ADVERTISEMENT.
+   - The script MUST be exactly 20-24 words maximum. This shorter length is CRITICAL to ensure it fits perfectly into a 16-second video duration with natural pacing, guaranteeing the voiceover finishes completely before the video ends.
+   - Sync the script's rhythm with the visual beats described in your prompt.
 
-   CINEMATIC ADVERTISING AESTHETIC:
-   - Always append keywords that force a high-end commercial look: "hyper-realistic, 8k resolution, cinematic lighting, professional commercial advertising photography, highly detailed, premium aesthetic."
-   - Avoid words like "creative", "artistic", or "illustration" if the goal is realism. Focus on "realistic", "commercial", and "premium".
+   HIGH-END COMMERCIAL DIRECTOR AESTHETIC (CRITICAL):
+   - You must write the prompt like an award-winning commercial director crafting a multi-million dollar live-action ad.
+   - REALISTIC LIVE-ACTION COMMERCIALS: This must look like a real, high-budget TV commercial filmed with real human actors. Do NOT use abstract 3D, CGI metaphors, glowing nodes, or cartoon styles. Show REAL PEOPLE in high-end, realistic environments (e.g., modern offices, sleek cafes, bright studios).
+   - CINEMATIC HUMAN-AI INTEGRATION: Show humans interacting seamlessly with technology in a grounded, realistic way. For "AI", show them using sleek, modern interfaces, transparent screens, or subtle augmented reality projections that look grounded in reality, not sci-fi magic. 
+   - DYNAMIC CAMERA MOVEMENTS: You MUST script highly dynamic, aggressive camera motions to keep the energy high. Start the prompt with explosive movement like "A kinetic tracking shot", "An orbital drone shot", "A rapid dolly push-in", or "A sudden whip pan".
+   - ADVANCED LIGHTING: Specify the lighting setup explicitly to make the live-action footage look expensive (e.g., "soft golden hour rim lighting", "cinematic studio lighting with deep shadows", "bright, airy natural light").
+   - CREATIVE HOOKS & PACING: Script dramatic pacing explicitly. E.g., "The camera starts on a tight close-up of a person's focused expression, then crash-zooms out to reveal their sleek workspace."
+   - Always append keywords that force a high-end live-action commercial look: "hyper-realistic, 8k resolution, cinematic lighting, shot on RED Digital Cinema camera, 35mm lens, professional commercial advertising photography, highly detailed, premium lifestyle aesthetic."
+   - Avoid words like "creative", "artistic", "cartoon", "abstract", "3D render", or "illustration". Focus on "realistic live-action", "commercial", and "premium lifestyle".
 
    Important prompt rules for Veo:
    - NO AUDIO/SOUND IN VIDEO PROMPT: Do NOT mention "audio", "sound", "music", "speaking", "talking", or "voiceover" in the visual prompt itself. Veo's audio safety filters strictly reject prompts that generate speech or sound, causing the video to fail completely. If a person is speaking, describe it purely visually (e.g., "moving lips engaged in conversation") without requesting sound.

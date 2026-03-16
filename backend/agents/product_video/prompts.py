@@ -125,8 +125,9 @@ video concept options. Each concept describes a specific SCENE showing a HUMAN u
 VIDEO CONCEPT RULES:
 - Each concept MUST be about THIS specific product — show how a real person uses,
   wears, demonstrates, or interacts with it.
-- Max 2 sentences each. Describe the scene, the human, and the action.
-- Mix showcase techniques: Unboxing, Lifestyle/In-Use, Demo, UGC-Style.
+- ACT AS A CREATIVE DIRECTOR: Concepts should be highly creative, cinematic, and dynamic.
+- Max 2 sentences each. Describe the scene, the human, the action, and the camera movement.
+- Mix showcase techniques: Cinematic Reveal, High-Energy Lifestyle/In-Use, Fast-Paced Demo, UGC-Style.
 - Match the target audience from brand context.
 - Example for silk sarees:
   "Elegant Draping" — Woman gracefully draping the saree in a sunlit room, slow reveal of fabric texture.
@@ -155,7 +156,16 @@ STOP and wait.
    - Describe a clear progression: Setup → Action/Interaction → Hero Moment → Payoff.
    [Camera + lens] + [Human + product] + [Action] + [Setting + atmosphere] + [Style]
 
-   CINEMATIC ADVERTISING AESTHETIC:
+   AUDIO SCRIPT GENERATION:
+   - Generate a high-energy, persuasive voiceover script designed specifically for a REALISTIC, FAST-PACED ADVERTISEMENT.
+   - The script MUST be exactly 35-40 words to fit perfectly into a strict 16-second video duration without getting cut off.
+   - Sync the script's rhythm with the visual beats described in your prompt (e.g., introduce the product at the exact second the visual "Reveal" happens).
+
+   HIGH-END COMMERCIAL DIRECTOR AESTHETIC (CRITICAL):
+   - You must write the prompt like an award-winning commercial director crafting a multi-million dollar ad.
+   - DYNAMIC CAMERA MOVEMENTS: You MUST script highly dynamic, aggressive camera motions. Start the prompt with explosive movement like "A kinetic tracking shot", "An orbital drone shot", "A rapid dolly push-in", or "A sudden whip pan".
+   - ADVANCED LIGHTING: Specify the lighting setup explicitly (e.g., "volumetric lighting with god rays", "neon cyberpunk glow", "golden hour rim lighting", "chiaroscuro contrast").
+   - CREATIVE HOOKS & PACING: Script dramatic pacing explicitly in the visual description. E.g., "The camera starts on an extreme macro close-up of the texture, then crash-zooms out to reveal the product," or "The motion starts in dramatic slow-motion before speed-ramping back to real-time."
    - Always append keywords that force a high-end commercial look: "hyper-realistic, 8k resolution, cinematic lighting, professional commercial advertising photography, shot on RED Digital Cinema camera, highly detailed."
    - Avoid words like "creative", "artistic", or "illustration". Focus on "realistic", "commercial", and "premium".
 
@@ -180,16 +190,25 @@ STOP and wait.
      - Describe the brand logo (as a shape/symbol) appearing naturally — on product packaging, a tag, shopping bag,
      or visible signage in the background. DO NOT ask for the brand name to be written.
    OTHER RULES:
-   - NO AUDIO/SOUND: Do NOT mention "audio", "sound", "music", "speaking", "talking", or "voiceover". Veo's audio safety filters strictly reject prompts that generate speech or sound, causing the video to fail completely. If a person is speaking, describe it purely visually (e.g., "moving lips engaged in conversation") without requesting sound.
+   - NO AUDIO/SOUND IN VIDEO PROMPT: Do NOT mention "audio", "sound", "music", "speaking", "talking", or "voiceover" in the visual prompt itself. Veo's audio safety filters strictly reject prompts that generate speech or sound, causing the video to fail completely. If a person is speaking, describe it purely visually (e.g., "moving lips engaged in conversation") without requesting sound.
+     Instead, the voiceover text is handled SEPARATELY. You will pass it to the `generate_video` tool via the `audio_script` parameter later.
    - TEMPORAL CONSISTENCY: State that the video should have "stable, consistent geometry and lighting." Ban the AI from morphing, warping, or changing the scale/proportions of the product or human subject during the shot.
    - AVOID BACKGROUND SHIFTING: Describe a "stable, fixed background" that does not melt or morph as the camera moves.
    - Product images are reference assets (Mode A) — Veo preserves product appearance.
    - PRESERVE PRODUCT TEXT: The product design, logo, and label text must remain absolutely identical to the reference image in every frame. Do NOT modify, regenerate, or distort any existing text on the product during camera movements.
    - Focus on REALISTIC HUMAN INTERACTION. Explicitly state "one pair of normal human hands" and ensure the product is held logically (not clipping or floating).
    - Do NOT ask the AI to add any NEW text/titles/words — Veo cannot render new text accurately.
-2. Call format_response showing the video prompt and settings.
-   Message should include the full prompt, duration (16 seconds), and aspect ratio (9:16).
-   Choices: "Generate Video" and "Edit Prompt"   Set allow_free_input=true with placeholder "Or type a new prompt..."
+2. Call format_response showing the video prompt, the generated audio script, and settings.
+   The message MUST display both sections clearly:
+   ---
+   **VIDEO PROMPT:**
+   [The visual prompt here]
+
+   **AUDIO SCRIPT (Voiceover):**
+   [The 16-second summary script here]
+   ---
+   Include duration (16 seconds) and aspect ratio (9:16).
+   Choices: "Generate Video" and "Edit Prompt"   Set allow_free_input=true with placeholder "Or type a new prompt/script..."
 3. STOP and wait for approval.
 
 If user edits the prompt: update it and re-present for approval.
@@ -201,9 +220,11 @@ Once user approves, call these tools:
    - reference_image_paths = product image paths from brand context (comma-separated)
    - logo_path = brand logo path
    - brand_name, brand_colors, target_audience, products_services
+   - audio_script = the generated 16-second summary script
    - Do NOT set image_path (Mode A: text-to-video with reference_images)
    - aspect_ratio = "9:16", duration_seconds = 16
-   2. write_caption — with the video topic3. generate_hashtags — with topic and industry
+2. write_caption — with the video topic
+3. generate_hashtags — with topic and industry
 
 Then call format_response with:
 - message: Include the caption and hashtags

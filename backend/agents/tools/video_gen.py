@@ -419,37 +419,59 @@ def generate_video(
         _, _, GENERATED_DIR = _get_config()
         save_dir = output_dir or str(GENERATED_DIR)
         
-        last_frame_path = os.path.join(save_dir, f"frame_{uuid.uuid4().hex[:8]}.jpg")
+        last_frame_path = ""
         
-        logger.info("[VIDEO] Extracting last frame from %s", part1_video)
-        try:
-            subprocess.run([
-                "ffmpeg", "-sseof", "-1", "-i", part1_video,
-                "-update", "1", "-q:v", "1", last_frame_path, "-y"
-            ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        except Exception as e:
-            logger.error("[VIDEO] Failed to extract frame: %s", e)
-            return {"status": "error", "message": f"Failed to extract frame for 16s video: {e}"}
+        if reference_image_paths:
+            logger.info("[VIDEO] Generating part 2 (%ss) using Multi-Shot Mode A", part2_duration)
+            part2_prompt = prompt + " [CUT TO SHOT 2: Different dynamic camera angle, close-up hero shot of the product.]"
+            part2_res = _generate_single_video(
+                prompt=part2_prompt, 
+                image_path="", 
+                reference_image_paths=reference_image_paths, 
+                duration_seconds=part2_duration, 
+                aspect_ratio=aspect_ratio,
+                logo_path=logo_path, 
+                brand_name=brand_name, 
+                brand_colors=brand_colors, 
+                company_overview=company_overview, 
+                target_audience=target_audience,
+                products_services=products_services, 
+                cta_text=cta_text, 
+                negative_prompt=negative_prompt, 
+                output_dir=output_dir
+            )
+        else:
+            last_frame_path = os.path.join(save_dir, f"frame_{uuid.uuid4().hex[:8]}.jpg")
             
-        logger.info("[VIDEO] Generating part 2 (%ss)", part2_duration)
-        # Important: when generating part 2 from an image, reference_image_paths should be empty to ensure Mode B is used
-        # Also pass logo_path="" and brand_name="" to avoid stamping a second logo on the middle frame
-        part2_res = _generate_single_video(
-            prompt=prompt, 
-            image_path=last_frame_path, 
-            reference_image_paths="", 
-            duration_seconds=part2_duration, 
-            aspect_ratio=aspect_ratio,
-            logo_path="", 
-            brand_name="", 
-            brand_colors=brand_colors, 
-            company_overview=company_overview, 
-            target_audience=target_audience,
-            products_services=products_services, 
-            cta_text=cta_text, 
-            negative_prompt=negative_prompt, 
-            output_dir=output_dir
-        )
+            logger.info("[VIDEO] Extracting last frame from %s", part1_video)
+            try:
+                subprocess.run([
+                    "ffmpeg", "-sseof", "-1", "-i", part1_video,
+                    "-update", "1", "-q:v", "1", last_frame_path, "-y"
+                ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            except Exception as e:
+                logger.error("[VIDEO] Failed to extract frame: %s", e)
+                return {"status": "error", "message": f"Failed to extract frame for 16s video: {e}"}
+                
+            logger.info("[VIDEO] Generating part 2 (%ss) using Mode B Continuation", part2_duration)
+            # Important: when generating part 2 from an image, reference_image_paths should be empty to ensure Mode B is used
+            # Also pass logo_path="" and brand_name="" to avoid stamping a second logo on the middle frame
+            part2_res = _generate_single_video(
+                prompt=prompt, 
+                image_path=last_frame_path, 
+                reference_image_paths="", 
+                duration_seconds=part2_duration, 
+                aspect_ratio=aspect_ratio,
+                logo_path="", 
+                brand_name="", 
+                brand_colors=brand_colors, 
+                company_overview=company_overview, 
+                target_audience=target_audience,
+                products_services=products_services, 
+                cta_text=cta_text, 
+                negative_prompt=negative_prompt, 
+                output_dir=output_dir
+            )
         
         if part2_res.get("status") != "success":
             return part2_res
@@ -518,11 +540,12 @@ def generate_video(
             if os.path.exists(audio_path):
                 video_with_audio_path = os.path.join(save_dir, f"with_audio_{uuid.uuid4().hex[:8]}.mp4")
                 
-                # We use -stream_loop -1 on video to loop it if audio is longer, and -shortest to end with audio.
+                # We do not loop the video. We force the output to be exactly clamped_duration.
+                # If audio is longer, it gets cut off. If shorter, the video continues in silence.
                 subprocess.run([
-                    "ffmpeg", "-stream_loop", "-1", "-i", video_path, "-i", audio_path, 
+                    "ffmpeg", "-i", video_path, "-i", audio_path, 
                     "-c:v", "copy", "-c:a", "aac", "-map", "0:v:0", "-map", "1:a:0",
-                    "-shortest", video_with_audio_path, "-y"
+                    "-t", str(clamped_duration), video_with_audio_path, "-y"
                 ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 
                 if os.path.exists(video_with_audio_path):
