@@ -87,12 +87,20 @@ If the user chose "Suggest Ideas" or similar:
    TRENDING CAMPAIGNS (ideas 5-6): Based on search_web and get_trending_topics — what's currently
    buzzing in the brand's industry. Build a campaign around a trending topic tied to the brand.
 
-5. Call format_response with 6 idea choices. Each choice must have:
-   - id: "1" through "6"
+5. Call format_response with 7 idea choices. Each choice must have:
+   - id: "1" through "6" (for the 6 generated concepts)
+   - ADD a 7th choice:
+     - id: "7"
+     - label: "Generate More Ideas"
+     - description: "Click here if you want 6 completely fresh, new concepts."
    - label: Campaign title (include date for calendar, or "[Brand]"/"[Trending]" prefix)
    - description: 2-3 sentences about the campaign concept and why it works
    Set allow_free_input=true so user can describe their own idea instead.
 6. STOP and wait for user selection.
+
+If the user chose "Generate More Ideas" (or choice "7"):
+- Do NOT proceed to the next phase.
+- Instead, clear the previous ideas and repeat the generation step to provide 6 completely new concepts. CRITICAL UNIQUENESS RULE: You MUST read the chat history to see which specific events, holidays, trends, and product angles you ALREADY suggested. You are FORBIDDEN from using those same calendar events, trends, or angles again. Pick DIFFERENT upcoming events and DIFFERENT product features/trends.
 
 If the user chose "Tell Your Idea" or typed their own idea directly:
 Skip research. Use their idea and proceed to gather missing params.

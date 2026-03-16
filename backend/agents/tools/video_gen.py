@@ -534,7 +534,7 @@ def generate_video(
                 edge_tts_bin = "edge-tts"
                 
             subprocess.run([
-                edge_tts_bin, "--text", audio_script, "--write-media", audio_path
+                edge_tts_bin, "--voice", "en-US-JennyNeural", "--text", audio_script, "--write-media", audio_path
             ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             
             if os.path.exists(audio_path):

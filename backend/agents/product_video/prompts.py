@@ -140,14 +140,22 @@ VIDEO CONCEPT RULES:
 
 Call format_response with:
 - message: "Pick a video concept — this describes the scene we'll create:"
-- choices: SIX choices. Each must have:
-    id: "1" through "6"
+- choices: SEVEN choices. Each must have:
+    id: "1" through "6" (for the 6 generated concepts)
     label: Concept title (max 4 words)
     description: 2 sentences about the scene, human interaction, and camera angle
+    ADD a 7th choice:
+    id: "7"
+    label: "Generate More Ideas"
+    description: "Click here if you want 6 completely fresh, new video concepts."
 - choice_type: "single_select"
 - allow_free_input: true
 - input_placeholder: "Or describe your own video concept..."
 STOP and wait.
+
+If the user chose "Generate More Ideas" (or choice "7"):
+- Do NOT proceed to Phase D.
+- Instead, clear the previous ideas and repeat Phase C to provide 6 completely new concepts. CRITICAL UNIQUENESS RULE: You MUST read the chat history to see which specific events, holidays, trends, and product angles you ALREADY suggested. You are FORBIDDEN from using those same calendar events, trends, or angles again. Pick DIFFERENT upcoming events and DIFFERENT product features/trends.
 
 ### Phase D — Show Prompt for Approval
 1. Based on the selected concept, write a Veo video prompt (50-175 words):
