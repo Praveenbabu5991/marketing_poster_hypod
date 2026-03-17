@@ -9,6 +9,9 @@ import sys
 from typing import AsyncGenerator
 
 from langchain_core.messages import HumanMessage
+from sqlalchemy.ext.asyncio import AsyncSession
+from uuid import UUID
+from agents.callbacks import UsageMonitoringHandler
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +21,8 @@ async def stream_agent(
     message: str,
     brand_context: dict,
     thread_id: str,
+    user_id: UUID,
+    session_id: UUID,
 ) -> AsyncGenerator[str, None]:
     """Stream agent events as SSE-formatted strings.
 
@@ -26,11 +31,17 @@ async def stream_agent(
         message: User's message text.
         brand_context: Brand context dict to inject into state.
         thread_id: LangGraph thread ID for checkpointing.
+        db: Async database session.
+        user_id: User ID for usage tracking.
+        session_id: Session ID for usage tracking.
 
     Yields:
         SSE event strings: "data: {json}\n\n"
     """
-    config = {"configurable": {"thread_id": thread_id}}
+    config = {
+        "configurable": {"thread_id": thread_id},
+        "callbacks": [UsageMonitoringHandler(user_id=user_id, session_id=session_id)]
+    }
 
     input_state = {
         "messages": [HumanMessage(content=message)],

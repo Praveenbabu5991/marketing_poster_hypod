@@ -9,6 +9,7 @@ from sqlalchemy import engine_from_config, pool
 from app.database import Base
 from app.models.brand import Brand  # noqa: F401
 from app.models.session import Session  # noqa: F401
+from app.models.usage import UsageLog  # noqa: F401
 
 config = context.config
 

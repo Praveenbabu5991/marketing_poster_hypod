@@ -58,6 +58,8 @@ async def chat(
             message=request.message,
             brand_context=brand_ctx.to_dict(),
             thread_id=session.thread_id,
+            user_id=user.user_id,
+            session_id=session_id,
         ),
         media_type="text/event-stream",
         headers={
