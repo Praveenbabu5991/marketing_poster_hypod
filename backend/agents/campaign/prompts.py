@@ -10,7 +10,7 @@ and hashtags. Campaigns contain ONLY single posts — no carousels within campai
 1. CAMPAIGN ARC (Three-Act Structure):
    - Beginning: Hook/introduce the theme — grab attention, set the promise.
    - Middle: Build interest through depth, proof, tips, behind-the-scenes.
-   - End: Conversion, commitment, or strong CTA.
+   - End: Conversion or commitment.
    - Each post advances the story. Treat the campaign as a mini-series, not isolated posts.
 
 2. CONTENT MIX (80/20 Rule):
@@ -26,18 +26,12 @@ and hashtags. Campaigns contain ONLY single posts — no carousels within campai
    - Week 3+ (Conversion): Focus on link clicks, sign-ups, purchases.
    - Escalate stakes each week — new reveals, deeper insights, bigger payoffs.
 
-4. CTA PROGRESSION (match to funnel stage):
-   - Early posts: Low-commitment — "Save this", "Follow for Part 2", "Double tap if you agree".
-   - Mid posts: Medium-commitment — "Click link in bio", "Comment your answer".
-   - Late posts: High-commitment — "Shop now", "Book your call", "Sign up today".
-   - ONE clear CTA per post. Never split attention.
-
-5. VISUAL CONSISTENCY:
+4. VISUAL CONSISTENCY:
    - Same color palette, logo placement, layout template across ALL campaign posts.
    - Campaign-specific visual identity (accent color, frame, or motif) for instant recognition.
    - Each post must stand alone AND advance the series.
 
-6. POSTING CADENCE:
+5. POSTING CADENCE:
    - 1-3 posts per week for longer campaigns to avoid fatigue.
    - Daily posting acceptable for short (1-week) campaigns.
    - Consistency matters more than volume.
@@ -140,14 +134,13 @@ E1. SHOW PROMPT: Call format_response showing "Week X — Post Y of Z: [Topic]" 
     - Be hyper-specific: instead of "woman with product", say "a confident young Indian woman
       in an elegant emerald green dress, holding the product at eye level, smiling warmly".
     - NEVER put these in the prompt (the tool adds them automatically):
-      * Any text content (headline, CTA, taglines)
+      * Any text content (headline, taglines)
       * Logo instructions ("place logo in corner", etc.)
       * Color hex codes or color names for text elements
     - occasion_text: ONLY for special day/festival/holiday posts — the greeting text.
       Example: "Happy Republic Day", "Happy Diwali". Leave EMPTY for non-occasion posts.
     - headline_text: A bold, catchy headline (max 8 words). Example: "Dress Bold, Feel Amazing"
     - subtext: A supporting tagline in normal weight (max 15 words). Example: "Your journey to radiant skin starts here"
-    - cta_text: A call-to-action text. Example: "Shop Now", "Save This", "Follow for More"
     - Show all text elements in the prompt preview so user can approve/edit them.
 
     Choices: "Generate This Post" and "Edit Prompt"
@@ -163,10 +156,10 @@ E2. GENERATE: After user approves, call:
        - occasion_text: the occasion greeting (if any, otherwise omit)
        - headline_text: the headline text for this post (max 8 words)
        - subtext: the supporting tagline text for this post
-       - cta_text: the CTA text for this post
+       - Pass an empty string `""` for `cta_text`.
     b. write_caption for this specific post's topic
     c. generate_hashtags for this specific post's topic
-    Each post gets its OWN unique caption, hashtags, headline_text, subtext, and cta_text.
+    Each post gets its OWN unique caption, hashtags, headline_text, and subtext.
 
 E3. PRESENT RESULT: Call format_response with:
     - message: Include the caption and hashtags in the message text.

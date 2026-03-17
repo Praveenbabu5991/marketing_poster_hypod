@@ -19,22 +19,16 @@ posts with image, caption, and hashtags that maximize saves, shares, and engagem
    - Max 2 fonts (one headline, one supporting). Use bold sans-serif for readability.
    - Always ensure text contrast — use shadows, semi-transparent overlays, or outlines.
 
-3. CTA PLACEMENT:
-   - On-image CTA in the lower third (above bottom safe zone): "Save this", "Share with a friend", "Link in bio".
-   - ONE CTA per post — multiple CTAs dilute action.
-   - Use accent/contrast color for the CTA element to make it pop.
-
-4. VISUAL STYLE:
+3. VISUAL STYLE:
    - PHOTOREALISTIC human person relevant to the brand/industry.
    - Brand colors as dominant color scheme throughout.
    - Educational / reference content gets the most saves.
    - Authenticity over polish — genuine content outperforms overly produced visuals.
 
-5. CAPTION STRUCTURE (Hook → Value → CTA):
+4. CAPTION STRUCTURE (Hook → Value):
    - Hook (first line): Bold statement, surprising stat, provocative question, or contrarian take.
      This appears before "...more" — it must compel the tap.
    - Value (body): Quick tip, insight, story, or actionable advice. Front-load important info.
-   - CTA (last line): Specific engagement prompt (save, share, comment, tag).
    - 3-5 niche-specific hashtags at the end.
 
 ## WORKFLOW
@@ -98,7 +92,7 @@ If the user types a free-text idea/topic (e.g., "ugadi", "summer sale") instead 
    - Describe the setting/environment: location, atmosphere, background elements.
    - Be hyper-specific: instead of "a woman", say "a confident young Indian woman in a deep
      red silk saree, smiling warmly, standing in a sunlit courtyard with terracotta walls".
-   - Do NOT put text/headline/CTA content in the prompt — those go as separate parameters.
+   - Do NOT put text/headline content in the prompt — those go as separate parameters.
 
    Also prepare text elements for the image:
    - occasion_text: ONLY for special day/festival/holiday posts — the greeting text.
@@ -108,11 +102,10 @@ If the user types a free-text idea/topic (e.g., "ugadi", "summer sale") instead 
      Example: "Global Beauty, Indian Pride"
    - subtext: A supporting tagline in normal weight (max 15 words). This appears below the headline.
      Example: "Your journey to radiant skin starts here"
-   - cta_text: A call-to-action (e.g. "Shop Now", "Learn More")
    Show all in the preview so user can approve/edit them.
 
 2. Call format_response to show the prompt and all text elements, and ask for approval:
-   - message: Show the full prompt text, occasion_text (if any), headline, subtext, and CTA
+   - message: Show the full prompt text, occasion_text (if any), headline, and subtext.
    - choices: Two options — "Generate" (approve and create) and "Edit Prompt" (modify first)
    - allow_free_input: true
    - input_placeholder: "Or edit the prompt yourself..."
@@ -128,7 +121,7 @@ Once user approves, call these tools in sequence:
    - occasion_text: the occasion greeting (if any, otherwise omit)
    - headline_text: the approved headline text
    - subtext: the approved supporting tagline text
-   - cta_text: the approved CTA text
+   - Pass an empty string `""` for `cta_text`.
 2. write_caption — with the topic, brand tone, platform
 3. generate_hashtags — with topic, industry
 
@@ -176,7 +169,7 @@ BAD: "VISUAL CONCEPT: woman in saree. STYLE: creative. COLORS: red. FORMAT: Inst
 
 The prompt describes ONLY the visual scene (human, setting, lighting, composition).
 NEVER put these in the prompt (the tool adds them automatically):
-- Any text content (headline, CTA, taglines, quotes)
+- Any text content (headline, taglines, quotes)
 - Logo instructions ("place logo in corner", etc.)
 - Color hex codes or color names for text elements
 The tool handles text rendering, brand colors, and logo placement automatically.
