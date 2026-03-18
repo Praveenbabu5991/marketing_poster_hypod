@@ -33,11 +33,19 @@ export function Chat() {
   const [posterSize, setPosterSize] = useState('1080x1080 (Square)');
   const [posterFont, setPosterFont] = useState('Bold Sans-Serif (Default)');
 
+  // Video Settings State
+  const [videoSize, setVideoSize] = useState('1080x1920 (Reels / Shorts)');
+
   // Helper to get settings context
   const getSettingsContext = () => {
     const posterAgents = ['sales_poster', 'single_post', 'carousel', 'quick_image'];
+    const videoAgents = ['product_video', 'motion_graphics'];
+    
     if (session?.agent_type && posterAgents.includes(session.agent_type)) {
       return `Size: ${posterSize}, Font: ${posterFont}`;
+    }
+    if (session?.agent_type && videoAgents.includes(session.agent_type)) {
+      return `Size: ${videoSize}`;
     }
     return undefined;
   };
@@ -164,6 +172,24 @@ export function Chat() {
                 <option value="Playful Handwriting">Playful Handwriting</option>
                 <option value="Modern Minimalist">Modern Minimalist</option>
                 <option value="Heavy Impact">Heavy Impact</option>
+              </select>
+            </div>
+          </div>
+        )}
+
+        {/* Settings Panel for Video Agents */}
+        {session?.agent_type && ['product_video', 'motion_graphics'].includes(session.agent_type) && (
+          <div className="flex flex-row items-center gap-6 px-6 pb-4 overflow-x-auto">
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-text-muted">Size:</span>
+              <select 
+                value={videoSize} 
+                onChange={(e) => setVideoSize(e.target.value)}
+                className="rounded-md border border-border bg-bg-page px-2 py-1 text-text-primary outline-none focus:border-accent"
+              >
+                <option value="1080x1920 (Reels / Shorts)">9:16 (Reels / Shorts)</option>
+                <option value="1080x1080 (Instagram Post)">1:1 (Instagram Post)</option>
+                <option value="1920x1080 (Landscape)">16:9 (Landscape)</option>
               </select>
             </div>
           </div>
