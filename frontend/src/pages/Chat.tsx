@@ -29,6 +29,19 @@ export function Chat() {
   const [agent, setAgent] = useState<Agent | null>(null);
   const sentStartRef = useRef(false);
 
+  // Poster Settings State
+  const [posterSize, setPosterSize] = useState('1080x1080 (Square)');
+  const [posterFont, setPosterFont] = useState('Bold Sans-Serif (Default)');
+
+  // Helper to get settings context
+  const getSettingsContext = () => {
+    const posterAgents = ['sales_poster', 'single_post', 'carousel', 'quick_image'];
+    if (session?.agent_type && posterAgents.includes(session.agent_type)) {
+      return `Size: ${posterSize}, Font: ${posterFont}`;
+    }
+    return undefined;
+  };
+
   // Fetch session → brand → agent details on mount
   useEffect(() => {
     if (!sessionId) return;
@@ -71,7 +84,11 @@ export function Chat() {
   })();
 
   function handleInteractiveSelect(value: string) {
-    sendMessage(value);
+    sendMessage(value, getSettingsContext());
+  }
+
+  function handleSend(text: string) {
+    sendMessage(text, getSettingsContext());
   }
 
   const [uploading, setUploading] = useState(false);
@@ -104,16 +121,52 @@ export function Chat() {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {/* Header */}
-      <div className="flex items-center gap-3 border-b border-border bg-bg-card px-6 py-3">
-        {agent && (
-          <span className="rounded-lg bg-bg-elevated px-2.5 py-1 text-sm font-medium text-accent">
-            {agent.name}
-          </span>
-        )}
-        {brand && (
-          <span className="text-sm text-text-muted">
-            for <span className="text-text-primary">{brand.name}</span>
-          </span>
+      <div className="flex flex-col border-b border-border bg-bg-card">
+        <div className="flex items-center gap-3 px-6 py-3">
+          {agent && (
+            <span className="rounded-lg bg-bg-elevated px-2.5 py-1 text-sm font-medium text-accent">
+              {agent.name}
+            </span>
+          )}
+          {brand && (
+            <span className="text-sm text-text-muted">
+              for <span className="text-text-primary">{brand.name}</span>
+            </span>
+          )}
+        </div>
+        
+        {/* Settings Panel for Image Agents */}
+        {session?.agent_type && ['sales_poster', 'single_post', 'carousel', 'quick_image'].includes(session.agent_type) && (
+          <div className="flex flex-row items-center gap-6 px-6 pb-4 overflow-x-auto">
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-text-muted">Size:</span>
+              <select 
+                value={posterSize} 
+                onChange={(e) => setPosterSize(e.target.value)}
+                className="rounded-md border border-border bg-bg-page px-2 py-1 text-text-primary outline-none focus:border-accent"
+              >
+                <option value="1080x1080 (Square)">Square (1:1)</option>
+                <option value="1080x1920 (Story)">Story (9:16)</option>
+                <option value="1080x1350 (Portrait)">Portrait (4:5)</option>
+                <option value="1920x1080 (Landscape)">Landscape (16:9)</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-text-muted">Font:</span>
+              <select 
+                value={posterFont} 
+                onChange={(e) => setPosterFont(e.target.value)}
+                className="rounded-md border border-border bg-bg-page px-2 py-1 text-text-primary outline-none focus:border-accent"
+              >
+                <option value="Bold Sans-Serif (Default)">Bold Sans-Serif (Default)</option>
+                <option value="Elegant Serif">Elegant Serif</option>
+                <option value="Playful Handwriting">Playful Handwriting</option>
+                <option value="Modern Minimalist">Modern Minimalist</option>
+                <option value="Heavy Impact">Heavy Impact</option>
+              </select>
+            </div>
+          </div>
         )}
       </div>
 
@@ -139,7 +192,7 @@ export function Chat() {
 
       {/* Input */}
       <ChatInput
-        onSend={sendMessage}
+        onSend={handleSend}
         onUploadProduct={handleUploadProduct}
         disabled={streaming || uploading}
         showUpload={showUpload}

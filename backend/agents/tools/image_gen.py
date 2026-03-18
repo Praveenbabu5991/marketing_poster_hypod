@@ -89,6 +89,7 @@ def _build_narrative_prompt(
     cta_text: str,
     has_logo: bool,
     user_image_instructions: str,
+    font_style: str = "bold sans-serif",
 ) -> str:
     """Build a narrative Gemini prompt following official prompting guide.
 
@@ -124,7 +125,7 @@ def _build_narrative_prompt(
             )
         if headline_text:
             text_parts.append(
-                f'Display the headline text "{headline_text}" in large, bold sans-serif font '
+                f'Display the headline text "{headline_text}" in a large, {font_style} font '
                 f"as the most prominent text element on the image"
             )
         if subtext:
@@ -219,6 +220,7 @@ def generate_image(
     user_image_instructions: str = "",
     aspect_ratio: str = "1:1",
     output_dir: str = "",
+    font_style: str = "bold sans-serif",
 ) -> dict:
     """Generate a social media post image using Gemini.
 
@@ -260,6 +262,7 @@ def generate_image(
             cta_text=cta_text,
             has_logo=has_logo,
             user_image_instructions=user_image_instructions,
+            font_style=font_style,
         )
 
         from google.genai import types

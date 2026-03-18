@@ -67,7 +67,7 @@ export function useChat(sessionId: string | undefined) {
   }, [sessionId]);
 
   const sendMessage = useCallback(
-    async (text: string) => {
+    async (text: string, hiddenContext?: string) => {
       if (!sessionId || !text.trim() || streaming) return;
 
       // Add user message
@@ -87,7 +87,8 @@ export function useChat(sessionId: string | undefined) {
       let assistantAdded = false;
 
       try {
-        const res = await fetchChatSSE(sessionId, text.trim(), controller.signal);
+        const payloadText = hiddenContext ? `${text.trim()}\n\n[System Context: ${hiddenContext}]` : text.trim();
+        const res = await fetchChatSSE(sessionId, payloadText, controller.signal);
         if (!res.ok) {
           const body = await res.json().catch(() => ({ detail: res.statusText }));
           throw new Error(body.detail || `Chat failed: ${res.status}`);
