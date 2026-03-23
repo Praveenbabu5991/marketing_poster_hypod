@@ -40,5 +40,8 @@ htmlcov/
 .coverage
 .pytest_cache/
 
+# Credentials (service account keys)
+backend/credentials/
+
 # Docker
 postgres_data/
