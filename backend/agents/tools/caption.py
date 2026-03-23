@@ -96,15 +96,24 @@ Output ONLY the caption text. No labels, no quotes, no explanation."""
         response = _retry_with_backoff(make_request)
         caption = response.text.strip().strip('"').strip("'")
 
+        # Extract usage metadata for cost tracking
+        usage_meta = getattr(response, "usage_metadata", None)
+        token_info = {}
+        if usage_meta:
+            token_info["prompt_tokens"] = getattr(usage_meta, "prompt_token_count", 0) or 0
+            token_info["completion_tokens"] = getattr(usage_meta, "candidates_token_count", 0) or 0
+
         return {
             "status": "success",
             "caption": caption,
             "platform": platform,
             "tone": brand_tone,
+            "model": CAPTION_MODEL,
+            **token_info,
         }
 
     except Exception as e:
-        return {"status": "error", "message": f"Caption generation failed: {str(e)[:200]}"}
+        return {"status": "error", "message": f"Caption generation failed: {str(e)[:200]}", "model": _get_config()[1]}
 
 
 @tool
@@ -146,7 +155,14 @@ Output ONLY the improved caption. No explanation."""
         response = _retry_with_backoff(make_request)
         improved = response.text.strip().strip('"').strip("'")
 
-        return {"status": "success", "caption": improved, "feedback_applied": feedback}
+        # Extract usage metadata for cost tracking
+        usage_meta = getattr(response, "usage_metadata", None)
+        token_info = {}
+        if usage_meta:
+            token_info["prompt_tokens"] = getattr(usage_meta, "prompt_token_count", 0) or 0
+            token_info["completion_tokens"] = getattr(usage_meta, "candidates_token_count", 0) or 0
+
+        return {"status": "success", "caption": improved, "feedback_applied": feedback, "model": CAPTION_MODEL, **token_info}
 
     except Exception as e:
-        return {"status": "error", "message": f"Caption improvement failed: {str(e)[:200]}"}
+        return {"status": "error", "message": f"Caption improvement failed: {str(e)[:200]}", "model": _get_config()[1]}

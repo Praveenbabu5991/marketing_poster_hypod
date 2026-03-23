@@ -3,6 +3,7 @@ import { Layout } from './components/Layout';
 import { Dashboard } from './pages/Dashboard';
 import { BrandSetup } from './pages/BrandSetup';
 import { Chat } from './pages/Chat';
+import { Usage } from './pages/Usage';
 
 export default function App() {
   return (
@@ -13,6 +14,7 @@ export default function App() {
           <Route path="brands/new" element={<BrandSetup />} />
           <Route path="brands/:id/edit" element={<BrandSetup />} />
           <Route path="chat/:sessionId" element={<Chat />} />
+          <Route path="usage" element={<Usage />} />
         </Route>
       </Routes>
     </BrowserRouter>

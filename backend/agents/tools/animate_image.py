@@ -45,7 +45,7 @@ def animate_image(
     save_dir = output_dir or str(GENERATED_DIR)
 
     if not os.path.exists(image_path):
-        return {"status": "error", "message": f"Image not found: {image_path}"}
+        return {"status": "error", "message": f"Image not found: {image_path}", "model": VIDEO_MODEL}
 
     try:
         client = _get_client()
@@ -80,11 +80,11 @@ def animate_image(
             operation = client.operations.get(operation)
             max_wait -= 10
             if max_wait <= 0:
-                return {"status": "timeout", "message": "Video generation timed out after 5 minutes."}
+                return {"status": "timeout", "message": "Video generation timed out after 5 minutes.", "model": VIDEO_MODEL}
 
         result = operation.result
         if not result or not result.generated_videos:
-            return {"status": "error", "message": "No video was generated. Try a different animation prompt."}
+            return {"status": "error", "message": "No video was generated. Try a different animation prompt.", "model": VIDEO_MODEL}
 
         video = result.generated_videos[0]
         output_path = Path(save_dir)
@@ -105,7 +105,8 @@ def animate_image(
             "url": f"/generated/{filename}",
             "duration_seconds": clamped_duration,
             "source_image": image_path,
+            "model": VIDEO_MODEL,
         }
 
     except Exception as e:
-        return {"status": "error", "message": f"Animation failed: {str(e)[:300]}"}
+        return {"status": "error", "message": f"Animation failed: {str(e)[:300]}", "model": _get_config()[1]}

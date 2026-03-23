@@ -59,6 +59,51 @@ LANGSMITH_API_KEY = os.getenv("LANGSMITH_API_KEY", "")
 LANGSMITH_PROJECT = os.getenv("LANGSMITH_PROJECT", "agent-factory-v4")
 
 
+# --- Vertex AI / Gemini Pricing (USD) ---
+VERTEX_PRICING = {
+    # Gemini 2.5 Flash text (doubles above 128K context)
+    "gemini-2.5-flash": {"input_per_million": 0.30, "output_per_million": 2.50},
+    # Gemini 2.5 Flash Image — $0.039/image at 1K resolution
+    "gemini-2.5-flash-image": {"per_image": 0.039},
+    # Gemini image generation model
+    "gemini-3-pro-image-preview": {"per_image": 0.039},
+    # Veo 3.1 Standard — $0.40/sec
+    "veo-3.1-generate-preview": {"per_second": 0.40},
+    # Veo 3.1 Fast — $0.15/sec
+    "veo-3.1-fast-generate-preview": {"per_second": 0.15},
+}
+
+
+def calculate_cost(
+    model_name: str,
+    action_type: str,
+    prompt_tokens: int = 0,
+    completion_tokens: int = 0,
+    unit_count: int = 1,
+    video_duration_seconds: int = 0,
+) -> float:
+    """Calculate USD cost for a single API call based on model pricing."""
+    # Strip provider prefix (e.g. "google_genai/gemini-2.5-flash" -> "gemini-2.5-flash")
+    short_name = model_name.split("/")[-1] if "/" in model_name else model_name
+    pricing = VERTEX_PRICING.get(short_name)
+    if not pricing:
+        return 0.0
+
+    # Video billing — per second
+    if "per_second" in pricing:
+        duration = video_duration_seconds or 0
+        return round(pricing["per_second"] * duration, 6)
+
+    # Image billing — per image
+    if "per_image" in pricing:
+        return round(pricing["per_image"] * (unit_count or 1), 6)
+
+    # Text billing — per million tokens
+    input_cost = (prompt_tokens or 0) / 1_000_000 * pricing.get("input_per_million", 0)
+    output_cost = (completion_tokens or 0) / 1_000_000 * pricing.get("output_per_million", 0)
+    return round(input_cost + output_cost, 6)
+
+
 def get_genai_client():
     """Create a google.genai.Client using service account (Vertex AI) or API key."""
     from google import genai

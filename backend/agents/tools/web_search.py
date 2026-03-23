@@ -65,16 +65,26 @@ Current Date: {datetime.now().strftime("%B %d, %Y")}
 Focus on: key facts, actionable takeaways, relevant trends."""
 
         def make_request():
-            return client.models.generate_content(model=DEFAULT_MODEL, contents=prompt).text.strip()
+            return client.models.generate_content(model=DEFAULT_MODEL, contents=prompt)
 
-        result = _retry_with_backoff(make_request)
-        return {"status": "success", "query": query, "insights": result}
+        response = _retry_with_backoff(make_request)
+        result = response.text.strip()
+
+        # Extract usage metadata for cost tracking
+        usage_meta = getattr(response, "usage_metadata", None)
+        token_info = {}
+        if usage_meta:
+            token_info["prompt_tokens"] = getattr(usage_meta, "prompt_token_count", 0) or 0
+            token_info["completion_tokens"] = getattr(usage_meta, "candidates_token_count", 0) or 0
+
+        return {"status": "success", "query": query, "insights": result, "model": DEFAULT_MODEL, **token_info}
 
     except Exception as e:
         return {
             "status": "error",
             "message": f"Search temporarily unavailable. Use your knowledge of the brand to suggest ideas instead.",
             "query": query,
+            "model": _get_config()[1],
         }
 
 
@@ -111,14 +121,25 @@ Provide:
 Be specific and practical."""
 
         def make_request():
-            return client.models.generate_content(model=DEFAULT_MODEL, contents=prompt).text.strip()
+            return client.models.generate_content(model=DEFAULT_MODEL, contents=prompt)
 
-        result = _retry_with_backoff(make_request)
+        response = _retry_with_backoff(make_request)
+        result = response.text.strip()
+
+        # Extract usage metadata for cost tracking
+        usage_meta = getattr(response, "usage_metadata", None)
+        token_info = {}
+        if usage_meta:
+            token_info["prompt_tokens"] = getattr(usage_meta, "prompt_token_count", 0) or 0
+            token_info["completion_tokens"] = getattr(usage_meta, "candidates_token_count", 0) or 0
+
         return {
             "status": "success",
             "industry": industry,
             "platform": platform,
             "suggestions": result,
+            "model": DEFAULT_MODEL,
+            **token_info,
         }
 
     except Exception as e:
@@ -126,4 +147,5 @@ Be specific and practical."""
             "status": "error",
             "message": f"Trend research temporarily unavailable. Use your knowledge of the {industry} industry to suggest ideas instead.",
             "industry": industry,
+            "model": _get_config()[1],
         }

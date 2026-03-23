@@ -1,44 +1,48 @@
+"""Usage logging model for per-user, per-model API cost tracking."""
+
 import uuid
-import enum
-from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Enum
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy import Column, String, Integer, Float, Text, DateTime, ForeignKey
+from sqlalchemy import Uuid, JSON
 from sqlalchemy.sql import func
 from app.database import Base
 
-class AIModelName(str, enum.Enum):
-    # Text Models
-    GEMINI_FLASH = "google_genai/gemini-2.5-flash"
-    GEMINI_PRO = "google_genai/gemini-1.5-pro"
-    
-    # Image Models
-    IMAGEN_3 = "gemini-3-pro-image-preview"
-    
-    # Video Models
-    VEO_3 = "veo-3.1-generate-preview"
-    
-    # Search/Utility
-    WEB_SEARCH = "web_search_utility"
 
 class UsageLog(Base):
     __tablename__ = "usage_logs"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), nullable=False, index=True)
-    session_id = Column(UUID(as_uuid=True), ForeignKey("sessions.id"), nullable=True)
-    
-    # Category: 'text', 'image', 'video'
+    id = Column(Uuid, primary_key=True, default=uuid.uuid4)
+    user_id = Column(Uuid, nullable=False, index=True)
+    session_id = Column(Uuid, ForeignKey("sessions.id"), nullable=True)
+
+    # Category: 'text', 'image', 'video', 'search'
     action_type = Column(String(50), nullable=False, index=True)
-    
-    # Use the Enum for strict model tracking
-    model_name = Column(
-        Enum(AIModelName, name="aimodelname_enum", create_type=True), 
-        nullable=False, 
-        index=True
-    )
-    
+
+    # Free-form model name — no enum, no migration needed for new models
+    model_name = Column(String(200), nullable=False, index=True)
+
+    # Tool that triggered this log (e.g. "generate_image", "orchestrator_llm")
+    tool_name = Column(String(100), nullable=True)
+
+    # "success" or "error"
+    status = Column(String(20), nullable=False, default="success")
+
+    # Calculated USD cost
+    cost_usd = Column(Float, nullable=False, default=0.0)
+
+    # Token counts (for LLM calls)
     prompt_tokens = Column(Integer, nullable=True)
     completion_tokens = Column(Integer, nullable=True)
+
+    # Unit count (images generated, API calls, etc.)
     unit_count = Column(Integer, nullable=False, default=1)
-    
-    metadata_json = Column(JSONB, nullable=True, server_default="{}")
+
+    # Video duration for Veo billing
+    video_duration_seconds = Column(Integer, nullable=True)
+
+    # Error message if status == "error"
+    error_message = Column(Text, nullable=True)
+
+    # Arbitrary metadata
+    metadata_json = Column(JSON, nullable=True, default=dict)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)

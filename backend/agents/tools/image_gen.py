@@ -302,6 +302,13 @@ def generate_image(
 
         response = _retry_with_backoff(make_request)
 
+        # Extract usage metadata for cost tracking
+        usage_meta = getattr(response, "usage_metadata", None)
+        token_info = {}
+        if usage_meta:
+            token_info["prompt_tokens"] = getattr(usage_meta, "prompt_token_count", 0) or 0
+            token_info["completion_tokens"] = getattr(usage_meta, "candidates_token_count", 0) or 0
+
         output_path = Path(save_dir)
         output_path.mkdir(parents=True, exist_ok=True)
 
@@ -324,12 +331,15 @@ def generate_image(
                     "style": style,
                     "aspect_ratio": ar,
                     "model": IMAGE_MODEL,
+                    **token_info,
                 }
 
-        return {"status": "error", "message": "No image was generated. Try a different prompt."}
+        return {"status": "error", "message": "No image was generated. Try a different prompt.", "model": IMAGE_MODEL}
 
     except Exception as e:
-        return _format_error(e, "Try simplifying your prompt.")
+        result = _format_error(e, "Try simplifying your prompt.")
+        result["model"] = _get_config()[1]  # IMAGE_MODEL
+        return result
 
 
 @tool
@@ -378,6 +388,13 @@ def edit_image(
 
         response = _retry_with_backoff(make_request)
 
+        # Extract usage metadata for cost tracking
+        usage_meta = getattr(response, "usage_metadata", None)
+        token_info = {}
+        if usage_meta:
+            token_info["prompt_tokens"] = getattr(usage_meta, "prompt_token_count", 0) or 0
+            token_info["completion_tokens"] = getattr(usage_meta, "candidates_token_count", 0) or 0
+
         output_path = Path(save_dir)
         output_path.mkdir(parents=True, exist_ok=True)
 
@@ -397,9 +414,13 @@ def edit_image(
                     "filename": filename,
                     "url": f"/generated/{filename}",
                     "edit_instruction": edit_instruction,
+                    "model": EDIT_MODEL,
+                    **token_info,
                 }
 
-        return {"status": "error", "message": "Edit produced no image. Try different instructions."}
+        return {"status": "error", "message": "Edit produced no image. Try different instructions.", "model": EDIT_MODEL}
 
     except Exception as e:
-        return _format_error(e, "Try simpler edit instructions.")
+        result = _format_error(e, "Try simpler edit instructions.")
+        result["model"] = _get_config()[2]  # EDIT_MODEL
+        return result

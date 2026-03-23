@@ -94,6 +94,13 @@ Output ONLY the hashtags, one per line, each starting with #. No explanations.""
         response = _retry_with_backoff(make_request)
         raw = response.text.strip()
 
+        # Extract usage metadata for cost tracking
+        usage_meta = getattr(response, "usage_metadata", None)
+        token_info = {}
+        if usage_meta:
+            token_info["prompt_tokens"] = getattr(usage_meta, "prompt_token_count", 0) or 0
+            token_info["completion_tokens"] = getattr(usage_meta, "candidates_token_count", 0) or 0
+
         hashtags = []
         seen = set()
         for line in raw.split("\n"):
@@ -113,7 +120,9 @@ Output ONLY the hashtags, one per line, each starting with #. No explanations.""
             "hashtags": hashtags[:count],
             "hashtag_string": " ".join(hashtags[:count]),
             "count": len(hashtags[:count]),
+            "model": CAPTION_MODEL,
+            **token_info,
         }
 
     except Exception as e:
-        return {"status": "error", "message": f"Hashtag generation failed: {str(e)[:200]}"}
+        return {"status": "error", "message": f"Hashtag generation failed: {str(e)[:200]}", "model": _get_config()[1]}

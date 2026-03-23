@@ -201,7 +201,7 @@ def _generate_single_video(
         if image_path:
             resolved_img = _resolve_image_path(image_path)
             if not os.path.exists(resolved_img):
-                return {"status": "error", "message": f"Source image not found: {image_path}"}
+                return {"status": "error", "message": f"Source image not found: {image_path}", "model": VIDEO_MODEL}
 
             source_image = Image.open(resolved_img)
             if source_image.mode in ("RGBA", "LA", "P"):
@@ -289,7 +289,7 @@ def _generate_single_video(
             max_wait -= 10
             if max_wait <= 0:
                 logger.warning("[VIDEO] Timed out after 5 minutes")
-                return {"status": "timeout", "message": "Video generation timed out after 5 minutes."}
+                return {"status": "timeout", "message": "Video generation timed out after 5 minutes.", "model": VIDEO_MODEL}
 
         # Log full operation details for debugging
         op_error = getattr(operation, 'error', None)
@@ -309,7 +309,7 @@ def _generate_single_video(
                     logger.warning("[VIDEO] Operation.%s = %s", attr, str(raw)[:500])
             logger.warning("[VIDEO] No video in result: result=%s error=%s", result, op_error)
             msg = f"No video was generated.{error_detail} Try a different prompt."
-            return {"status": "error", "message": msg}
+            return {"status": "error", "message": msg, "model": VIDEO_MODEL}
 
         video = result.generated_videos[0]
         output_path = Path(save_dir)
@@ -338,7 +338,7 @@ def _generate_single_video(
 
     except Exception as e:
         logger.error("[VIDEO] Generation failed: %s", str(e), exc_info=True)
-        return {"status": "error", "message": f"Video generation failed: {str(e)[:300]}"}
+        return {"status": "error", "message": f"Video generation failed: {str(e)[:300]}", "model": VIDEO_MODEL}
 
 import subprocess
 import tempfile

@@ -110,3 +110,44 @@ export interface ProductImageUploadResponse {
   image_path: string;
   url: string;
 }
+
+// --- Usage Monitoring ---
+export interface UsageSummaryItem {
+  model_name: string;
+  action_type: string;
+  total_calls: number;
+  successful_calls: number;
+  failed_calls: number;
+  total_prompt_tokens: number;
+  total_completion_tokens: number;
+  total_cost_usd: number;
+  total_video_seconds: number;
+}
+
+export interface UsageSummaryResponse {
+  items: UsageSummaryItem[];
+  total_cost_usd: number;
+}
+
+export interface UsageLogItem {
+  id: string;
+  session_id: string | null;
+  action_type: string;
+  model_name: string;
+  tool_name: string | null;
+  status: string;
+  cost_usd: number;
+  prompt_tokens: number | null;
+  completion_tokens: number | null;
+  unit_count: number;
+  video_duration_seconds: number | null;
+  error_message: string | null;
+  created_at: string | null;
+}
+
+export interface UsageHistoryResponse {
+  items: UsageLogItem[];
+  total: number;
+  limit: number;
+  offset: number;
+}
