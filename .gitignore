@@ -42,6 +42,10 @@ htmlcov/
 
 # Credentials (service account keys)
 backend/credentials/
+*.json
+!package.json
+!package-lock.json
+!tsconfig*.json
 
 # Docker
 postgres_data/
