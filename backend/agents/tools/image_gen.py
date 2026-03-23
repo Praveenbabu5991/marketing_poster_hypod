@@ -22,7 +22,7 @@ from langchain_core.tools import tool
 from PIL import Image
 
 logger = logging.getLogger(__name__)
-_REQUEST_TIMEOUT = 60  # Image gen can be slower
+_REQUEST_TIMEOUT = 120  # Image gen can be slower, especially under quota pressure
 
 
 def _get_config():
@@ -35,7 +35,7 @@ def _get_client():
     return get_genai_client()
 
 
-def _retry_with_backoff(func, max_retries: int = 3, base_delay: float = 2.0):
+def _retry_with_backoff(func, max_retries: int = 5, base_delay: float = 5.0):
     """Execute with exponential backoff and per-request timeout."""
     last_error = None
     for attempt in range(max_retries):
@@ -56,6 +56,7 @@ def _retry_with_backoff(func, max_retries: int = 3, base_delay: float = 2.0):
             logger.warning("[IMAGE] Attempt %d failed: %s", attempt + 1, str(e)[:200])
         if attempt < max_retries - 1:
             delay = base_delay * (2 ** attempt)
+            logger.warning("[IMAGE] Retrying in %.0fs...", delay)
             time.sleep(delay)
     raise last_error
 

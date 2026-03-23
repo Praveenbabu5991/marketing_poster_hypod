@@ -26,7 +26,7 @@ def _get_client():
     return get_genai_client()
 
 
-def _retry_with_backoff(func, max_retries: int = 3, base_delay: float = 2.0):
+def _retry_with_backoff(func, max_retries: int = 5, base_delay: float = 5.0):
     last_error = None
     for attempt in range(max_retries):
         try:
@@ -41,7 +41,9 @@ def _retry_with_backoff(func, max_retries: int = 3, base_delay: float = 2.0):
             last_error = e
             logger.warning("[SEARCH] Attempt %d failed: %s", attempt + 1, str(e)[:200])
         if attempt < max_retries - 1:
-            time.sleep(base_delay * (2 ** attempt))
+            delay = base_delay * (2 ** attempt)
+            logger.warning("[SEARCH] Retrying in %.0fs...", delay)
+            time.sleep(delay)
     raise last_error
 
 
