@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useStore } from '../store/useStore';
 import { useChat } from '../hooks/useChat';
-import { getPlan, saveSlots, updateSlot, createSlotContent } from '../api/calendar';
+import { getPlan, saveSlots, updateSlot, createSlotContent, updatePlanSession } from '../api/calendar';
 import { createSession } from '../api/sessions';
 import { CalendarGrid } from '../components/CalendarGrid';
 import { CalendarPopover } from '../components/CalendarPopover';
@@ -39,24 +39,44 @@ export function Calendar() {
   const [contentSlotId, setContentSlotId] = useState<string | null>(null);
 
   const plannerSessionRef = useRef<string | null>(null);
-  const { messages, streaming, sendMessage, sendHidden } = useChat(activeSessionId || undefined);
+  const { messages, streaming, sendMessage, sendHidden, cancel } = useChat(activeSessionId || undefined);
 
   const pendingMessageRef = useRef<string | null>(null);
   const autoTriggeredRef = useRef<string | null>(null);
-  const savedPlanMsgIdRef = useRef<string | null>(null);
-  // Track which content image we've already persisted to DB
-  const savedContentMsgIdRef = useRef<string | null>(null);
 
-  // Fetch plan when brand/month changes
+  // Gate flags: only true during active generation, NOT when restoring history
+  const expectingPlanRef = useRef(false);
+  const expectingContentRef = useRef(false);
+
+  // Fetch plan when brand/month changes — full reset
   useEffect(() => {
     if (!selectedBrandId) return;
-    setLoading(true);
+
+    // Cancel any in-flight SSE stream from the previous month
+    cancel();
+
+    // Clean reset all session/chat state
+    setActiveSessionId(null);
+    plannerSessionRef.current = null;
+    setContentSlotId(null);
+    pendingMessageRef.current = null;
+    setSelectedSlot(null);
     autoTriggeredRef.current = null;
-    savedPlanMsgIdRef.current = null;
-    savedContentMsgIdRef.current = null;
+    expectingPlanRef.current = false;
+    expectingContentRef.current = false;
     setSidebarMode('planner');
+
+    setLoading(true);
     getPlan(selectedBrandId, year, month)
-      .then(setPlan)
+      .then((loadedPlan) => {
+        setPlan(loadedPlan);
+        // Restore planner session if this month already has one
+        if (loadedPlan.planner_session_id) {
+          plannerSessionRef.current = loadedPlan.planner_session_id;
+          setActiveSessionId(loadedPlan.planner_session_id);
+          setSidebarMode('planner');
+        }
+      })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [selectedBrandId, year, month]);
@@ -84,17 +104,25 @@ export function Calendar() {
   }, [activeSessionId, streaming, sendHidden]);
 
   // Watch for interactive responses containing calendar_plan (planner mode)
+  // Only processes messages when expectingPlanRef is true (active generation)
   useEffect(() => {
     if (!plan || sidebarMode !== 'planner') return;
+    if (!expectingPlanRef.current) return; // Skip when restoring history
 
     for (let i = messages.length - 1; i >= 0; i--) {
       const msg = messages[i];
       if (msg.interactive?.media && 'calendar_plan' in (msg.interactive.media as Record<string, unknown>)) {
-        if (savedPlanMsgIdRef.current === msg.id) break;
-
         const calendarPlan = (msg.interactive.media as Record<string, unknown>).calendar_plan;
         if (Array.isArray(calendarPlan) && calendarPlan.length > 0) {
-          savedPlanMsgIdRef.current = msg.id;
+          // Guard: verify slot dates belong to the current plan's month
+          const firstDate = (calendarPlan[0] as Record<string, unknown>)?.date;
+          if (typeof firstDate === 'string') {
+            const d = new Date(firstDate + 'T00:00:00');
+            if (d.getFullYear() !== year || d.getMonth() + 1 !== month) {
+              break; // Stale data from a different month's session
+            }
+          }
+          expectingPlanRef.current = false; // Done — don't re-process
           saveSlots(plan.id, calendarPlan)
             .then((savedSlots) => {
               setPlan((prev) =>
@@ -109,15 +137,15 @@ export function Calendar() {
   }, [messages, plan, sidebarMode]);
 
   // Watch for generated content (content mode) — persist image to DB
+  // Only processes when expectingContentRef is true (active generation)
   useEffect(() => {
     if (sidebarMode !== 'content' || !contentSlotId) return;
+    if (!expectingContentRef.current) return; // Skip when restoring history
 
     for (let i = messages.length - 1; i >= 0; i--) {
       const msg = messages[i];
       if (msg.interactive?.media?.image_path) {
-        // Already persisted this message
-        if (savedContentMsgIdRef.current === msg.id) break;
-        savedContentMsgIdRef.current = msg.id;
+        expectingContentRef.current = false; // Done — don't re-process
 
         const imagePath = msg.interactive.media.image_path;
 
@@ -168,13 +196,22 @@ export function Calendar() {
   async function triggerPlanGeneration() {
     if (!selectedBrandId || streaming) return;
 
+    // Mark that we're actively generating — enables the plan watcher
+    expectingPlanRef.current = true;
+
     try {
       const session = await createSession({ brand_id: selectedBrandId, agent_type: 'content_calendar' });
       plannerSessionRef.current = session.id;
       pendingMessageRef.current = buildPlanMessage(year, month);
       setSidebarMode('planner');
       setActiveSessionId(session.id);
+
+      // Persist planner session on the plan so it can be restored on month switch
+      if (plan?.id) {
+        updatePlanSession(plan.id, session.id).catch(console.error);
+      }
     } catch (err) {
+      expectingPlanRef.current = false;
       console.error('Failed to create planning session:', err);
     }
   }
@@ -185,6 +222,9 @@ export function Calendar() {
 
     const slot = plan?.slots.find((s) => s.id === slotId);
     if (!slot) return;
+
+    // Mark that we're actively generating content — enables the content watcher
+    expectingContentRef.current = true;
 
     try {
       const result = await createSlotContent(slotId);
@@ -199,7 +239,6 @@ export function Calendar() {
         };
       });
 
-      savedContentMsgIdRef.current = null;
       setContentSlotId(slotId);
       setSidebarMode('content');
       setSelectedSlot(null);
@@ -209,6 +248,7 @@ export function Calendar() {
       pendingMessageRef.current = `Create this specific post${eventContext}: ${idea}. Skip the suggestion phase — go straight to writing the image prompt and showing it for approval.`;
       setActiveSessionId(result.session_id);
     } catch (err) {
+      expectingContentRef.current = false;
       console.error('Failed to create content session:', err);
     }
   }
@@ -217,6 +257,8 @@ export function Calendar() {
   function handleViewSlotSession(slot: CalendarSlot) {
     if (!slot.session_id) return;
 
+    // Viewing history — don't enable the content watcher
+    expectingContentRef.current = false;
     setContentSlotId(slot.id);
     setSidebarMode('content');
     setSelectedSlot(null);
@@ -224,6 +266,7 @@ export function Calendar() {
   }
 
   function handleBackToPlanner() {
+    expectingContentRef.current = false;
     setSidebarMode('planner');
     setContentSlotId(null);
     if (plannerSessionRef.current) {

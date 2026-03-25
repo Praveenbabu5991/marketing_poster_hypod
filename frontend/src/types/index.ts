@@ -178,6 +178,7 @@ export interface CalendarPlan {
   year: number;
   month: number;
   status: string; // draft, active, archived
+  planner_session_id: string | null;
   slots: CalendarSlot[];
   created_at: string;
   updated_at: string;

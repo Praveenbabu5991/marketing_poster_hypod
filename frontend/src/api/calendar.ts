@@ -26,6 +26,13 @@ export function updateSlot(slotId: string, data: CalendarSlotUpdate): Promise<Ca
   });
 }
 
+export function updatePlanSession(planId: string, plannerSessionId: string): Promise<CalendarPlan> {
+  return fetchApi(`/api/v1/calendar/plans/${planId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ planner_session_id: plannerSessionId }),
+  });
+}
+
 export function createSlotContent(slotId: string): Promise<CreateContentResponse> {
   return fetchApi(`/api/v1/calendar/slots/${slotId}/create-content`, {
     method: 'POST',

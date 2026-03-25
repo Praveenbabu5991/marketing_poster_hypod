@@ -51,11 +51,16 @@ class CalendarPlanResponse(BaseModel):
     year: int
     month: int
     status: str
+    planner_session_id: Optional[UUID] = None
     slots: list[CalendarSlotResponse] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class CalendarPlanUpdate(BaseModel):
+    planner_session_id: Optional[UUID] = None
 
 
 class SaveSlotsRequest(BaseModel):

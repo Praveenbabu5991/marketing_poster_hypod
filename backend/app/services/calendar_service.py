@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.calendar import CalendarPlan, CalendarSlot
-from app.schemas.calendar import CalendarSlotData, CalendarSlotUpdate
+from app.schemas.calendar import CalendarPlanUpdate, CalendarSlotData, CalendarSlotUpdate
 
 
 async def get_or_create_plan(
@@ -59,6 +59,25 @@ async def get_plan_for_month(
         )
     )
     return result.scalar_one_or_none()
+
+
+async def update_plan(
+    db: AsyncSession, plan_id: UUID, user_id: UUID, data: CalendarPlanUpdate
+) -> CalendarPlan | None:
+    """Update plan-level fields (e.g. planner_session_id)."""
+    result = await db.execute(
+        select(CalendarPlan).where(CalendarPlan.id == plan_id, CalendarPlan.user_id == user_id)
+    )
+    plan = result.scalar_one_or_none()
+    if not plan:
+        return None
+    update_data = data.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(plan, key, value)
+    plan.updated_at = datetime.now(timezone.utc)
+    await db.flush()
+    await db.refresh(plan)
+    return plan
 
 
 async def get_slots(db: AsyncSession, plan_id: UUID) -> list[CalendarSlot]:

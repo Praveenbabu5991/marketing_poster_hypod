@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.schemas.calendar import (
     CalendarPlanResponse,
+    CalendarPlanUpdate,
     CalendarSlotResponse,
     CalendarSlotUpdate,
     SaveSlotsRequest,
@@ -38,6 +39,7 @@ async def get_or_create_plan(
         year=plan.year,
         month=plan.month,
         status=plan.status,
+        planner_session_id=plan.planner_session_id,
         slots=[CalendarSlotResponse.model_validate(s) for s in slots],
         created_at=plan.created_at,
         updated_at=plan.updated_at,
@@ -57,6 +59,32 @@ async def save_slots(
         raise HTTPException(status_code=404, detail="Plan not found")
     slots = await calendar_service.save_slots_from_agent(db, plan_id, data.slots)
     return [CalendarSlotResponse.model_validate(s) for s in slots]
+
+
+@router.patch("/plans/{plan_id}", response_model=CalendarPlanResponse)
+async def update_plan(
+    plan_id: UUID,
+    data: CalendarPlanUpdate,
+    user: UserDetails = Depends(require_authenticated_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update plan-level fields (e.g. planner_session_id)."""
+    plan = await calendar_service.update_plan(db, plan_id, user.user_id, data)
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found")
+    slots = await calendar_service.get_slots(db, plan.id)
+    return CalendarPlanResponse(
+        id=plan.id,
+        user_id=plan.user_id,
+        brand_id=plan.brand_id,
+        year=plan.year,
+        month=plan.month,
+        status=plan.status,
+        planner_session_id=plan.planner_session_id,
+        slots=[CalendarSlotResponse.model_validate(s) for s in slots],
+        created_at=plan.created_at,
+        updated_at=plan.updated_at,
+    )
 
 
 @router.get("/plans/{plan_id}/slots", response_model=list[CalendarSlotResponse])

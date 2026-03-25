@@ -22,6 +22,7 @@ class CalendarPlan(Base):
     year = Column(Integer, nullable=False)
     month = Column(Integer, nullable=False)  # 1-12
     status = Column(String(20), default="draft", nullable=False)  # draft | active | archived
+    planner_session_id = Column(Uuid, ForeignKey("sessions.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(
         DateTime(timezone=True),
