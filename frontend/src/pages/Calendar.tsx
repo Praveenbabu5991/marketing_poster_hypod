@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 import { useChat } from '../hooks/useChat';
 import { getPlan, saveSlots, updateSlot, createSlotContent, updatePlanSession } from '../api/calendar';
@@ -6,7 +7,7 @@ import { createSession } from '../api/sessions';
 import { CalendarGrid } from '../components/CalendarGrid';
 import { CalendarPopover } from '../components/CalendarPopover';
 import { CalendarSidebar } from '../components/CalendarSidebar';
-import type { CalendarPlan, CalendarSlot, CalendarSlotUpdate } from '../types';
+import type { Brand, CalendarPlan, CalendarSlot, CalendarSlotUpdate } from '../types';
 
 function buildPlanMessage(year: number, month: number): string {
   const today = new Date();
@@ -26,6 +27,8 @@ type SidebarMode = 'planner' | 'content';
 
 export function Calendar() {
   const { selectedBrandId } = useStore();
+  const { brands, refreshSessions } = useOutletContext<{ brands: Brand[]; refreshSessions: () => void }>();
+  const selectedBrand = brands.find((b) => b.id === selectedBrandId);
 
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
@@ -42,7 +45,6 @@ export function Calendar() {
   const { messages, streaming, sendMessage, sendHidden, cancel } = useChat(activeSessionId || undefined);
 
   const pendingMessageRef = useRef<string | null>(null);
-  const autoTriggeredRef = useRef<string | null>(null);
 
   // Gate flags: only true during active generation, NOT when restoring history
   const expectingPlanRef = useRef(false);
@@ -61,7 +63,6 @@ export function Calendar() {
     setContentSlotId(null);
     pendingMessageRef.current = null;
     setSelectedSlot(null);
-    autoTriggeredRef.current = null;
     expectingPlanRef.current = false;
     expectingContentRef.current = false;
     setSidebarMode('planner');
@@ -80,19 +81,6 @@ export function Calendar() {
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [selectedBrandId, year, month]);
-
-  // Auto-generate plan when a draft plan loads with no slots
-  useEffect(() => {
-    if (!plan || !selectedBrandId) return;
-    if (plan.status !== 'draft' || plan.slots.length > 0) return;
-    if (streaming || loading) return;
-
-    const key = `${selectedBrandId}-${year}-${month}`;
-    if (autoTriggeredRef.current === key) return;
-    autoTriggeredRef.current = key;
-
-    triggerPlanGeneration();
-  }, [plan, selectedBrandId, streaming, loading]);
 
   // When activeSessionId changes AND we have a pending message, send it
   useEffect(() => {
@@ -205,6 +193,7 @@ export function Calendar() {
       pendingMessageRef.current = buildPlanMessage(year, month);
       setSidebarMode('planner');
       setActiveSessionId(session.id);
+      refreshSessions();
 
       // Persist planner session on the plan so it can be restored on month switch
       if (plan?.id) {
@@ -242,6 +231,7 @@ export function Calendar() {
       setContentSlotId(slotId);
       setSidebarMode('content');
       setSelectedSlot(null);
+      refreshSessions();
 
       const idea = slot.post_idea || slot.event_name || 'a branded post';
       const eventContext = slot.event_name ? ` for ${slot.event_name} on ${slot.slot_date}` : '';
@@ -284,6 +274,17 @@ export function Calendar() {
     },
     [activeSessionId, sendMessage],
   );
+
+  async function handleApproveAndGenerate(slotId: string) {
+    if (!selectedBrandId || streaming) return;
+    try {
+      await handleSlotUpdate(slotId, { status: 'approved' });
+      setSelectedSlot(null);
+      await handleGenerateContent(slotId);
+    } catch (err) {
+      console.error('Failed to approve and generate:', err);
+    }
+  }
 
   async function handleSlotUpdate(slotId: string, data: CalendarSlotUpdate) {
     try {
@@ -336,9 +337,8 @@ export function Calendar() {
             <h1 className="text-xl font-bold text-text-primary">Content Calendar</h1>
             <p className="text-xs text-text-muted">
               {plan?.slots.length
-                ? `${plan.slots.length} posts planned`
+                ? `${plan.slots.length} of ${selectedBrand?.max_posts_per_month ?? 12} posts planned`
                 : 'No posts planned yet'}
-              {plan?.status === 'draft' && !streaming && ' — Generating plan automatically...'}
             </p>
           </div>
           <button
@@ -382,7 +382,7 @@ export function Calendar() {
           slot={selectedSlot}
           onClose={() => setSelectedSlot(null)}
           onUpdate={handleSlotUpdate}
-          onGenerateContent={handleGenerateContent}
+          onApproveAndGenerate={handleApproveAndGenerate}
           onViewSession={handleViewSlotSession}
         />
       )}

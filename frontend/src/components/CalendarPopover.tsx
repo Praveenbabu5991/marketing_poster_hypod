@@ -6,8 +6,16 @@ interface CalendarPopoverProps {
   slot: CalendarSlot;
   onClose: () => void;
   onUpdate: (slotId: string, data: CalendarSlotUpdate) => Promise<void>;
-  onGenerateContent: (slotId: string) => Promise<void>;
+  onApproveAndGenerate: (slotId: string) => Promise<void>;
   onViewSession: (slot: CalendarSlot) => void;
+}
+
+function formatTime12(time24: string): string {
+  const [hStr, mStr] = time24.split(':');
+  const h = parseInt(hStr, 10);
+  const suffix = h >= 12 ? 'PM' : 'AM';
+  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${h12}:${mStr} ${suffix}`;
 }
 
 const AGENT_LABELS: Record<string, string> = {
@@ -34,7 +42,7 @@ const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
   skipped: { label: 'Skipped', cls: 'text-gray-400' },
 };
 
-export function CalendarPopover({ slot, onClose, onUpdate, onGenerateContent, onViewSession }: CalendarPopoverProps) {
+export function CalendarPopover({ slot, onClose, onUpdate, onApproveAndGenerate, onViewSession }: CalendarPopoverProps) {
   const [editing, setEditing] = useState(false);
   const [editIdea, setEditIdea] = useState(slot.post_idea || '');
   const [editType, setEditType] = useState(slot.post_type);
@@ -43,7 +51,16 @@ export function CalendarPopover({ slot, onClose, onUpdate, onGenerateContent, on
   const statusInfo = STATUS_LABELS[slot.status] || STATUS_LABELS.suggested;
   const typeInfo = TYPE_BADGES[slot.event_type || 'regular'] || TYPE_BADGES.regular;
 
-  async function handleApprove() {
+  async function handleApproveAndGenerate() {
+    setLoading(true);
+    try {
+      await onApproveAndGenerate(slot.id);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleRestore() {
     setLoading(true);
     try {
       await onUpdate(slot.id, { status: 'approved' });
@@ -66,15 +83,6 @@ export function CalendarPopover({ slot, onClose, onUpdate, onGenerateContent, on
     try {
       await onUpdate(slot.id, { post_idea: editIdea, post_type: editType });
       setEditing(false);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleGenerate() {
-    setLoading(true);
-    try {
-      await onGenerateContent(slot.id);
     } finally {
       setLoading(false);
     }
@@ -155,12 +163,22 @@ export function CalendarPopover({ slot, onClose, onUpdate, onGenerateContent, on
               <p className="mb-3 text-sm leading-relaxed text-text-primary">{slot.post_idea}</p>
             )}
 
-            {/* Post type */}
-            <div className="mb-4 flex items-center gap-2">
-              <span className="text-xs text-text-muted">Agent:</span>
-              <span className="text-xs font-medium text-text-primary">
-                {AGENT_LABELS[slot.post_type] || slot.post_type}
-              </span>
+            {/* Post type & time */}
+            <div className="mb-4 flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-text-muted">Agent:</span>
+                <span className="text-xs font-medium text-text-primary">
+                  {AGENT_LABELS[slot.post_type] || slot.post_type}
+                </span>
+              </div>
+              {slot.posting_time && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-text-muted">Post at:</span>
+                  <span className="text-xs font-medium text-text-primary">
+                    {formatTime12(slot.posting_time)}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Generated content preview */}
@@ -178,7 +196,7 @@ export function CalendarPopover({ slot, onClose, onUpdate, onGenerateContent, on
               {slot.status === 'suggested' && (
                 <>
                   <button
-                    onClick={handleApprove}
+                    onClick={handleApproveAndGenerate}
                     disabled={loading}
                     className="rounded-lg bg-green-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
                   >
@@ -191,16 +209,32 @@ export function CalendarPopover({ slot, onClose, onUpdate, onGenerateContent, on
                   >
                     Skip
                   </button>
+                  <button
+                    onClick={() => setEditing(true)}
+                    className="rounded-lg px-4 py-1.5 text-sm text-text-muted hover:bg-bg-elevated hover:text-text-primary"
+                  >
+                    Edit
+                  </button>
                 </>
               )}
-              {(slot.status === 'approved' || slot.status === 'suggested') && (
-                <button
-                  onClick={handleGenerate}
-                  disabled={loading}
-                  className="rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"
-                >
-                  Generate Content
-                </button>
+              {slot.status === 'approved' && (
+                <>
+                  {slot.session_id ? (
+                    <button
+                      onClick={() => { onViewSession(slot); onClose(); }}
+                      className="rounded-lg bg-purple-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-purple-700"
+                    >
+                      View Session
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setEditing(true)}
+                      className="rounded-lg px-4 py-1.5 text-sm text-text-muted hover:bg-bg-elevated hover:text-text-primary"
+                    >
+                      Edit
+                    </button>
+                  )}
+                </>
               )}
               {(slot.status === 'generated' || slot.status === 'generating') && slot.session_id && (
                 <button
@@ -210,17 +244,9 @@ export function CalendarPopover({ slot, onClose, onUpdate, onGenerateContent, on
                   {slot.status === 'generating' ? 'View Progress' : 'View Session'}
                 </button>
               )}
-              {slot.status !== 'skipped' && (
-                <button
-                  onClick={() => setEditing(true)}
-                  className="rounded-lg px-4 py-1.5 text-sm text-text-muted hover:bg-bg-elevated hover:text-text-primary"
-                >
-                  Edit
-                </button>
-              )}
               {slot.status === 'skipped' && (
                 <button
-                  onClick={handleApprove}
+                  onClick={handleRestore}
                   disabled={loading}
                   className="rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
                 >

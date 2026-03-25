@@ -1,10 +1,18 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { fetchChatSSE } from '../api/client';
+import { getSessionMessages } from '../api/sessions';
 import type { ChatMessage, SSEEvent } from '../types';
 
 let msgCounter = 0;
 function nextId() {
   return `msg-${++msgCounter}`;
+}
+
+function syncCounter(msgs: ChatMessage[]) {
+  for (const m of msgs) {
+    const num = parseInt(m.id.replace('msg-', ''), 10);
+    if (!isNaN(num) && num >= msgCounter) msgCounter = num + 1;
+  }
 }
 
 const STORAGE_PREFIX = 'chat-messages-';
@@ -44,16 +52,31 @@ export function useChat(sessionId: string | undefined) {
     messagesRef.current = messages;
   }, [messages]);
 
-  // Load persisted messages when session changes
+  // Load persisted messages when session changes:
+  // Show localStorage cache immediately, then refresh from backend (authoritative).
   useEffect(() => {
     if (sessionId) {
-      const saved = loadMessages(sessionId);
-      setMessages(saved);
-      // Ensure counter is above any existing IDs
-      for (const m of saved) {
-        const num = parseInt(m.id.replace('msg-', ''), 10);
-        if (!isNaN(num) && num >= msgCounter) msgCounter = num + 1;
-      }
+      // 1. Instant: show cached messages from localStorage
+      const cached = loadMessages(sessionId);
+      setMessages(cached);
+      syncCounter(cached);
+
+      // 2. Authoritative: fetch from backend (PostgreSQL checkpointer)
+      let cancelled = false;
+      getSessionMessages(sessionId)
+        .then((backendMsgs) => {
+          if (cancelled) return;
+          if (backendMsgs.length > 0) {
+            setMessages(backendMsgs);
+            syncCounter(backendMsgs);
+            saveMessages(sessionId, backendMsgs);
+          }
+        })
+        .catch(() => {
+          // Backend unavailable — keep localStorage cache
+        });
+
+      return () => { cancelled = true; };
     } else {
       setMessages([]);
     }

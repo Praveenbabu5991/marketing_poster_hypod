@@ -26,6 +26,14 @@ const STATUS_COLORS: Record<string, string> = {
   skipped: 'bg-gray-500/20 border-gray-500/40 text-gray-400',
 };
 
+function formatTime(time24: string): string {
+  const [hStr, mStr] = time24.split(':');
+  const h = parseInt(hStr, 10);
+  const suffix = h >= 12 ? 'PM' : 'AM';
+  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${h12}:${mStr} ${suffix}`;
+}
+
 const TYPE_EMOJI: Record<string, string> = {
   festival: '\uD83C\uDF89',
   trending: '\uD83D\uDD25',
@@ -137,6 +145,11 @@ export function CalendarGrid({
                     <span>{TYPE_EMOJI[slot.event_type || 'regular'] || ''}</span>
                     <span className="truncate">{slot.event_name || 'Post'}</span>
                   </div>
+                  {slot.posting_time && (
+                    <div className="mt-0.5 text-[9px] font-medium opacity-80">
+                      {formatTime(slot.posting_time)}
+                    </div>
+                  )}
                   {slot.post_idea && (
                     <div className="mt-0.5 text-[9px] leading-tight opacity-70 line-clamp-2">
                       {slot.post_idea}

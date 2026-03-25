@@ -27,7 +27,9 @@ def _build_system_message(prompt_template: str, brand_context: dict) -> str:
     """Inject brand context into the prompt template."""
     bc = BrandContext.from_dict(brand_context)
     brand_text = bc.to_prompt_text()
-    return prompt_template.replace("{brand_context}", brand_text)
+    result = prompt_template.replace("{brand_context}", brand_text)
+    result = result.replace("{max_posts_per_month}", str(bc.max_posts_per_month))
+    return result
 
 
 def build_agent_graph(

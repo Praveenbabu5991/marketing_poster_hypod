@@ -263,7 +263,7 @@ export function Layout() {
 
       {/* Main Content */}
       <main className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <Outlet context={{ brands, refreshBrands }} />
+        <Outlet context={{ brands, refreshBrands, refreshSessions }} />
       </main>
     </div>
   );
