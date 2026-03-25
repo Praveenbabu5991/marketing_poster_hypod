@@ -1,5 +1,5 @@
 import { fetchApi } from './client';
-import type { Session, SessionCreate } from '../types';
+import type { ChatMessage, Session, SessionCreate } from '../types';
 
 export function listSessions(brandId?: string): Promise<Session[]> {
   const params = brandId ? `?brand_id=${brandId}` : '';
@@ -26,4 +26,8 @@ export function updateSession(id: string, data: { title: string }): Promise<Sess
 
 export function deleteSession(id: string): Promise<void> {
   return fetchApi<void>(`/api/v1/sessions/${id}`, { method: 'DELETE' });
+}
+
+export function getSessionMessages(id: string): Promise<ChatMessage[]> {
+  return fetchApi<ChatMessage[]>(`/api/v1/sessions/${id}/messages`);
 }

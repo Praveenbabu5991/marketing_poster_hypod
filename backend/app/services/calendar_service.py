@@ -108,6 +108,7 @@ async def save_slots_from_agent(
             event_type=s.event_type,
             post_idea=s.post_idea,
             post_type=s.post_type,
+            posting_time=s.posting_time,
             status="suggested",
         )
         db.add(slot)

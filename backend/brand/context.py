@@ -39,6 +39,7 @@ class BrandContext:
     target_audience: str = ""
     products_services: str = ""
     product_images: list[str] = field(default_factory=list)
+    max_posts_per_month: int = 12
 
     @property
     def primary_color(self) -> str:
@@ -79,7 +80,8 @@ class BrandContext:
             f"Secondary Color: {self.secondary_color or 'Not set'}\n"
             f"Additional Colors: {', '.join(additional) if additional else 'None'}\n"
             f"Logo Path: {self.logo_path or 'Not uploaded'}\n"
-            f"Product Images: {', '.join(self.product_images) if self.product_images else 'None'}"
+            f"Product Images: {', '.join(self.product_images) if self.product_images else 'None'}\n"
+            f"Max Posts Per Month: {self.max_posts_per_month}"
         )
 
     def to_dict(self) -> dict:
@@ -93,6 +95,7 @@ class BrandContext:
             "target_audience": self.target_audience,
             "products_services": self.products_services,
             "product_images": self.product_images,
+            "max_posts_per_month": self.max_posts_per_month,
         }
 
     @classmethod
@@ -110,6 +113,7 @@ class BrandContext:
             target_audience=data.get("target_audience", ""),
             products_services=data.get("products_services", ""),
             product_images=[_resolve_path(p) or p for p in raw_images],
+            max_posts_per_month=data.get("max_posts_per_month", 12),
         )
 
     @classmethod
@@ -126,4 +130,5 @@ class BrandContext:
             target_audience=brand.target_audience or "",
             products_services=brand.products_services or "",
             product_images=[_resolve_path(p) or p for p in raw_images],
+            max_posts_per_month=getattr(brand, "max_posts_per_month", 12),
         )

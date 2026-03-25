@@ -43,6 +43,7 @@ class CalendarSlot(Base):
     event_type = Column(String(50), nullable=True)  # festival, trending, brand, regular
     post_idea = Column(Text, nullable=True)
     post_type = Column(String(50), default="single_post", nullable=False)
+    posting_time = Column(String(5), nullable=True)  # HH:MM 24h format
     status = Column(String(20), default="suggested", nullable=False)  # suggested | approved | generating | generated | skipped
     session_id = Column(Uuid, ForeignKey("sessions.id"), nullable=True)
     generated_image = Column(String(500), nullable=True)

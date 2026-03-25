@@ -1,14 +1,17 @@
-"""SSE streaming chat endpoint + in-chat product upload."""
+"""SSE streaming chat endpoint + in-chat product upload + message history."""
 
+import json
 import uuid as _uuid
 from pathlib import Path
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
-from langgraph.checkpoint.memory import MemorySaver
+from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.checkpoint import get_checkpointer
 from app.config import UPLOAD_DIR
 from app.database import get_db
 from app.schemas.chat import ChatRequest
@@ -20,10 +23,6 @@ from agents.registry import get_agent_graph
 from brand.context import BrandContext
 
 router = APIRouter()
-
-# Shared in-memory checkpointer — single instance across all requests
-# so conversation state persists between turns. Will switch to PostgresSaver for production.
-_checkpointer = MemorySaver()
 
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 
@@ -48,9 +47,9 @@ async def chat(
 
     brand_ctx = BrandContext.from_db_model(brand)
 
-    # Get and compile agent graph with shared checkpointer
+    # Get and compile agent graph with PostgreSQL checkpointer
     graph = get_agent_graph(session.agent_type)
-    compiled = graph.compile(checkpointer=_checkpointer)
+    compiled = graph.compile(checkpointer=get_checkpointer())
 
     return StreamingResponse(
         stream_agent(
@@ -120,3 +119,120 @@ async def upload_product_in_chat(
         "image_path": str(file_path),
         "url": f"/uploads/products/{filename}",
     }
+
+
+@router.get("/sessions/{session_id}/messages")
+async def get_messages(
+    session_id: UUID,
+    user: UserDetails = Depends(require_authenticated_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Load conversation history from the LangGraph checkpointer."""
+    session = await session_service.get_session(db, session_id, user.user_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    graph = get_agent_graph(session.agent_type)
+    compiled = graph.compile(checkpointer=get_checkpointer())
+
+    state = await compiled.aget_state(
+        {"configurable": {"thread_id": session.thread_id}}
+    )
+
+    if not state or not state.values:
+        return []
+
+    lc_messages = state.values.get("messages", [])
+    return _convert_messages(lc_messages)
+
+
+_TOOL_LABELS: dict[str, str] = {
+    "get_upcoming_events": "Fetched upcoming events",
+    "search_web": "Searched the web",
+    "get_trending_topics": "Fetched trending topics",
+    "generate_image": "Generated image",
+    "generate_video": "Generated video",
+    "format_response": "Formatted response",
+}
+
+
+def _tool_display_label(tool_name: str) -> str:
+    """Short display label for a tool result (avoids dumping raw JSON)."""
+    return _TOOL_LABELS.get(tool_name, tool_name or "Tool completed")
+
+
+def _convert_messages(lc_messages: list) -> list[dict[str, Any]]:
+    """Convert LangChain message objects to frontend ChatMessage[] format."""
+    result: list[dict[str, Any]] = []
+    msg_counter = 0
+
+    # Build set of format_response tool_call IDs so we can skip their ToolMessages
+    format_response_call_ids: set[str] = set()
+    for msg in lc_messages:
+        if isinstance(msg, AIMessage) and msg.tool_calls:
+            for tc in msg.tool_calls:
+                if tc.get("name") == "format_response":
+                    format_response_call_ids.add(tc.get("id", ""))
+
+    for msg in lc_messages:
+        msg_counter += 1
+        msg_id = f"msg-{msg_counter}"
+
+        if isinstance(msg, HumanMessage):
+            result.append({
+                "id": msg_id,
+                "role": "user",
+                "content": msg.content if isinstance(msg.content, str) else str(msg.content),
+            })
+
+        elif isinstance(msg, AIMessage):
+            # Check for format_response tool call → interactive message
+            format_tc = None
+            if msg.tool_calls:
+                for tc in msg.tool_calls:
+                    if tc.get("name") == "format_response":
+                        format_tc = tc
+                        break
+
+            if format_tc:
+                # Parse the interactive response from tool call args
+                args = format_tc.get("args", {})
+                interactive = args
+                if isinstance(args, str):
+                    try:
+                        interactive = json.loads(args)
+                    except (json.JSONDecodeError, TypeError):
+                        interactive = {"message": args}
+
+                message_text = interactive.get("message", "") if isinstance(interactive, dict) else str(interactive)
+                result.append({
+                    "id": msg_id,
+                    "role": "assistant",
+                    "content": message_text,
+                    "interactive": interactive,
+                })
+            elif msg.content:
+                content = msg.content if isinstance(msg.content, str) else str(msg.content)
+                if content.strip():
+                    result.append({
+                        "id": msg_id,
+                        "role": "assistant",
+                        "content": content,
+                    })
+
+        elif isinstance(msg, ToolMessage):
+            # Skip ToolMessages that are responses to format_response calls
+            tool_call_id = getattr(msg, "tool_call_id", "")
+            if tool_call_id in format_response_call_ids:
+                continue
+
+            tool_name = getattr(msg, "name", None) or ""
+            result.append({
+                "id": msg_id,
+                "role": "tool",
+                "content": _tool_display_label(tool_name),
+                "toolName": tool_name,
+                "toolActive": False,
+            })
+
+    return result

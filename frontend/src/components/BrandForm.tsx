@@ -72,6 +72,7 @@ export function BrandForm({ initial, onSubmit, loading }: Props) {
   const [selectedPalette, setSelectedPalette] = useState<string | null>(
     initial?.colors?.length ? null : defaultPalette.name,
   );
+  const [maxPostsPerMonth, setMaxPostsPerMonth] = useState(initial?.max_posts_per_month ?? 12);
   const [logoColors, setLogoColors] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
 
@@ -170,6 +171,7 @@ export function BrandForm({ initial, onSubmit, loading }: Props) {
       products_services: productsServices || undefined,
       logo_path: logoPath || undefined,
       colors: allColors,
+      max_posts_per_month: maxPostsPerMonth,
     });
   }
 
@@ -258,6 +260,24 @@ export function BrandForm({ initial, onSubmit, loading }: Props) {
           rows={2}
           className="w-full rounded-lg border border-border bg-bg-page px-4 py-2.5 text-text-primary focus:border-accent focus:outline-none"
         />
+      </div>
+
+      {/* Max Posts Per Month */}
+      <div>
+        <label className="mb-1 block text-sm font-medium text-text-primary">
+          Max Posts Per Month
+        </label>
+        <input
+          type="number"
+          min={4}
+          max={30}
+          value={maxPostsPerMonth}
+          onChange={(e) => setMaxPostsPerMonth(Math.max(4, Math.min(30, Number(e.target.value) || 12)))}
+          className="w-full rounded-lg border border-border bg-bg-page px-4 py-2.5 text-text-primary focus:border-accent focus:outline-none"
+        />
+        <p className="mt-1 text-xs text-text-muted">
+          How many posts the calendar planner should create per month (4-30)
+        </p>
       </div>
 
       {/* Logo Upload */}

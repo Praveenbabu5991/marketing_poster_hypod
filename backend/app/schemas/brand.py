@@ -18,6 +18,7 @@ class BrandCreate(BaseModel):
     colors: list[str] = Field(default_factory=list)
     product_images: list[str] = Field(default_factory=list)
     style_reference_url: Optional[str] = None
+    max_posts_per_month: int = Field(12, ge=4, le=30)
 
 
 class BrandUpdate(BaseModel):
@@ -31,6 +32,7 @@ class BrandUpdate(BaseModel):
     colors: Optional[list[str]] = None
     product_images: Optional[list[str]] = None
     style_reference_url: Optional[str] = None
+    max_posts_per_month: Optional[int] = Field(None, ge=4, le=30)
 
 
 class BrandResponse(BaseModel):
@@ -46,6 +48,7 @@ class BrandResponse(BaseModel):
     colors: list[str]
     product_images: list[str]
     style_reference_url: Optional[str]
+    max_posts_per_month: int
     is_active: bool
     created_at: datetime
     updated_at: datetime

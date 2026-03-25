@@ -14,6 +14,7 @@ class CalendarSlotData(BaseModel):
     event_type: str = "regular"
     post_idea: str = ""
     post_type: str = "single_post"
+    posting_time: Optional[str] = None  # HH:MM 24h format
 
 
 class CalendarSlotUpdate(BaseModel):
@@ -21,6 +22,7 @@ class CalendarSlotUpdate(BaseModel):
     event_type: Optional[str] = None
     post_idea: Optional[str] = None
     post_type: Optional[str] = None
+    posting_time: Optional[str] = None
     status: Optional[str] = None
 
 
@@ -32,6 +34,7 @@ class CalendarSlotResponse(BaseModel):
     event_type: Optional[str]
     post_idea: Optional[str]
     post_type: str
+    posting_time: Optional[str]
     status: str
     session_id: Optional[UUID]
     generated_image: Optional[str]

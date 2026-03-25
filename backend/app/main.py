@@ -6,13 +6,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.config import CORS_ORIGINS, GENERATED_DIR, UPLOAD_DIR, setup_tracing
+from app.checkpoint import close_checkpointer, init_checkpointer
+from app.config import CHECKPOINT_URL, CORS_ORIGINS, GENERATED_DIR, UPLOAD_DIR, setup_tracing
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     setup_tracing()
+    await init_checkpointer(CHECKPOINT_URL)
     yield
+    await close_checkpointer()
 
 
 app = FastAPI(

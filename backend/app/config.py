@@ -22,6 +22,10 @@ DATABASE_URL_SYNC = DATABASE_URL.replace("+asyncpg", "").replace(
     "postgresql://", "postgresql+psycopg2://"
 ) if "+asyncpg" in DATABASE_URL else DATABASE_URL
 
+# psycopg3 connection string for LangGraph AsyncPostgresSaver
+# Strips the +asyncpg driver suffix to get plain postgresql:// URI
+CHECKPOINT_URL = DATABASE_URL.replace("+asyncpg", "")
+
 # --- API Keys ---
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY", "")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")

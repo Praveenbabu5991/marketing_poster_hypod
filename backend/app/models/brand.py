@@ -3,7 +3,7 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, Column, DateTime, JSON, String, Text, Uuid
+from sqlalchemy import Boolean, Column, DateTime, Integer, JSON, String, Text, Uuid
 
 from app.database import Base
 
@@ -23,6 +23,7 @@ class Brand(Base):
     colors = Column(JSON, nullable=True, default=list)
     product_images = Column(JSON, nullable=True, default=list)
     style_reference_url = Column(String(500), nullable=True)
+    max_posts_per_month = Column(Integer, default=12, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(

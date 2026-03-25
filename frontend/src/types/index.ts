@@ -11,6 +11,7 @@ export interface Brand {
   colors: string[];
   product_images: string[];
   style_reference_url: string | null;
+  max_posts_per_month: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -27,6 +28,7 @@ export interface BrandCreate {
   colors?: string[];
   product_images?: string[];
   style_reference_url?: string;
+  max_posts_per_month?: number;
 }
 
 export type BrandUpdate = Partial<BrandCreate>;
@@ -161,6 +163,7 @@ export interface CalendarSlot {
   event_type: string | null; // festival, trending, brand, regular
   post_idea: string | null;
   post_type: string;
+  posting_time: string | null;
   status: string; // suggested, approved, generating, generated, skipped
   session_id: string | null;
   generated_image: string | null;
@@ -189,6 +192,7 @@ export interface CalendarSlotUpdate {
   event_type?: string;
   post_idea?: string;
   post_type?: string;
+  posting_time?: string;
   status?: string;
 }
 

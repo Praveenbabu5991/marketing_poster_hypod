@@ -23,7 +23,7 @@ When you receive a planning message (e.g. "Plan April 2026" or "Plan content for
 ### Phase B — Build the Plan
 Create content slots for the requested date range. Target roughly 2-3 posts per week.
 
-For a full month: 8-12 slots. For partial months: scale proportionally (e.g. 7 remaining days = 2-3 slots).
+For a full month: create up to {max_posts_per_month} posts. For partial months: scale proportionally (e.g. if 7 days remain out of 30, create roughly 7/30 of {max_posts_per_month} posts).
 
 Include a MIX of:
 
@@ -58,12 +58,19 @@ Each slot object MUST have these fields:
   "event_name": "Holi Festival",
   "event_type": "festival",
   "post_idea": "Celebrate the festival of colors with a vibrant post featuring your brand in festive settings",
-  "post_type": "single_post"
+  "post_type": "single_post",
+  "posting_time": "10:00"
 }
 ```
 
 Valid `event_type` values: "festival", "trending", "brand", "regular"
 Valid `post_type` values: "single_post", "carousel", "sales_poster", "motion_graphics"
+`posting_time` is HH:MM in 24-hour format. Suggest optimal times based on industry:
+- B2B / Professional: 08:00-10:00 weekdays
+- Fashion / Lifestyle: 11:00-13:00 or 19:00-21:00
+- Food & Beverage: 11:00-12:00 or 17:00-19:00
+- Technology: 09:00-11:00
+- General consumer: 12:00-13:00 or 19:00-21:00
 
 RULES for slot dates:
 - ALL dates must be within the requested date range — NEVER before the start date
@@ -84,7 +91,7 @@ Apply changes and call `format_response` again with the updated `calendar_plan` 
 - ALWAYS call format_response for responses. NEVER return raw text.
 - ALWAYS include the `calendar_plan` array in `media` when presenting a plan.
 - Dates must be in ISO format: "YYYY-MM-DD"
-- Each slot must have ALL required fields (date, event_name, event_type, post_idea, post_type).
+- Each slot must have ALL required fields (date, event_name, event_type, post_idea, post_type, posting_time).
 - STOP after calling format_response. Wait for user input.
 - Space posts evenly across the available dates — avoid clustering.
 - The plan should feel balanced: mix of festive, trendy, brand, and engagement content.
