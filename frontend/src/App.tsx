@@ -3,6 +3,7 @@ import { Layout } from './components/Layout';
 import { Dashboard } from './pages/Dashboard';
 import { BrandSetup } from './pages/BrandSetup';
 import { Chat } from './pages/Chat';
+import { Calendar } from './pages/Calendar';
 import { Usage } from './pages/Usage';
 
 export default function App() {
@@ -14,6 +15,7 @@ export default function App() {
           <Route path="brands/new" element={<BrandSetup />} />
           <Route path="brands/:id/edit" element={<BrandSetup />} />
           <Route path="chat/:sessionId" element={<Chat />} />
+          <Route path="calendar" element={<Calendar />} />
           <Route path="usage" element={<Usage />} />
         </Route>
       </Routes>

@@ -151,3 +151,49 @@ export interface UsageHistoryResponse {
   limit: number;
   offset: number;
 }
+
+// --- Content Calendar ---
+export interface CalendarSlot {
+  id: string;
+  plan_id: string;
+  slot_date: string; // ISO date
+  event_name: string | null;
+  event_type: string | null; // festival, trending, brand, regular
+  post_idea: string | null;
+  post_type: string;
+  status: string; // suggested, approved, generating, generated, skipped
+  session_id: string | null;
+  generated_image: string | null;
+  caption: string | null;
+  hashtags: string | null;
+  metadata_json: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CalendarPlan {
+  id: string;
+  user_id: string;
+  brand_id: string;
+  year: number;
+  month: number;
+  status: string; // draft, active, archived
+  slots: CalendarSlot[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CalendarSlotUpdate {
+  event_name?: string;
+  event_type?: string;
+  post_idea?: string;
+  post_type?: string;
+  status?: string;
+}
+
+export interface CreateContentResponse {
+  session_id: string;
+  slot_id: string;
+  agent_type: string;
+  post_idea: string;
+}

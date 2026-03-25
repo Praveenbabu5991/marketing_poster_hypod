@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from app.api.v1 import agents, brands, chat, sessions, upload, usage
+from app.api.v1 import agents, brands, calendar, chat, sessions, upload, usage
 
 api_router = APIRouter()
 
@@ -12,3 +12,4 @@ api_router.include_router(chat.router, tags=["chat"])
 api_router.include_router(agents.router, prefix="/agents", tags=["agents"])
 api_router.include_router(upload.router, prefix="/upload", tags=["upload"])
 api_router.include_router(usage.router, prefix="/usage", tags=["usage"])
+api_router.include_router(calendar.router, prefix="/calendar", tags=["calendar"])

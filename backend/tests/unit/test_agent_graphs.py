@@ -67,9 +67,9 @@ class TestAgentGraphs:
 
 class TestAgentRegistry:
 
-    def test_agent_configs_has_seven_agents(self):
+    def test_agent_configs_has_expected_agents(self):
         from agents.registry import AGENT_CONFIGS
-        assert len(AGENT_CONFIGS) == 7
+        assert len(AGENT_CONFIGS) == 8
         assert "single_post" in AGENT_CONFIGS
         assert "carousel" in AGENT_CONFIGS
         assert "campaign" in AGENT_CONFIGS
@@ -77,6 +77,7 @@ class TestAgentRegistry:
         assert "motion_graphics" in AGENT_CONFIGS
         assert "product_video" in AGENT_CONFIGS
         assert "quick_image" in AGENT_CONFIGS
+        assert "content_calendar" in AGENT_CONFIGS
 
     def test_product_agents_require_product_images(self):
         from agents.registry import AGENT_CONFIGS

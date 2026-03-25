@@ -230,8 +230,21 @@ export function Layout() {
           )}
         </div>
 
-        {/* Usage Link */}
-        <div className="border-t border-border p-4">
+        {/* Bottom Links */}
+        <div className="border-t border-border p-4 space-y-1">
+          <Link
+            to="/calendar"
+            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs transition-colors hover:bg-bg-elevated hover:text-text-primary no-underline ${
+              location.pathname === '/calendar'
+                ? 'bg-bg-elevated text-text-primary'
+                : 'text-text-muted'
+            }`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5">
+              <path fillRule="evenodd" d="M4 1.75a.75.75 0 0 1 1.5 0V3h5V1.75a.75.75 0 0 1 1.5 0V3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2V1.75ZM4.5 7a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-7ZM4 9.75A.75.75 0 0 1 4.75 9h1.5a.75.75 0 0 1 0 1.5h-1.5A.75.75 0 0 1 4 9.75Zm4 0a.75.75 0 0 1 .75-.75h2.5a.75.75 0 0 1 0 1.5h-2.5A.75.75 0 0 1 8 9.75Z" clipRule="evenodd" />
+            </svg>
+            Content Calendar
+          </Link>
           <Link
             to="/usage"
             className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs transition-colors hover:bg-bg-elevated hover:text-text-primary no-underline ${
