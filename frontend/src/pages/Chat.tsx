@@ -35,6 +35,7 @@ export function Chat() {
 
   // Video Settings State
   const [videoSize, setVideoSize] = useState('1080x1920 (Reels / Shorts)');
+  const [videoDuration, setVideoDuration] = useState('16');
 
   // Helper to get settings context
   const getSettingsContext = () => {
@@ -45,7 +46,7 @@ export function Chat() {
       return `Size: ${posterSize}, Font: ${posterFont}`;
     }
     if (session?.agent_type && videoAgents.includes(session.agent_type)) {
-      return `Size: ${videoSize}`;
+      return `Size: ${videoSize}, Duration: ${videoDuration} seconds`;
     }
     return undefined;
   };
@@ -190,6 +191,18 @@ export function Chat() {
                 <option value="1080x1920 (Reels / Shorts)">9:16 (Reels / Shorts)</option>
                 <option value="1080x1080 (Instagram Post)">1:1 (Instagram Post)</option>
                 <option value="1920x1080 (Landscape)">16:9 (Landscape)</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-text-muted">Duration:</span>
+              <select 
+                value={videoDuration} 
+                onChange={(e) => setVideoDuration(e.target.value)}
+                className="rounded-md border border-border bg-bg-page px-2 py-1 text-text-primary outline-none focus:border-accent"
+              >
+                <option value="8">8 Seconds</option>
+                <option value="16">16 Seconds</option>
               </select>
             </div>
           </div>

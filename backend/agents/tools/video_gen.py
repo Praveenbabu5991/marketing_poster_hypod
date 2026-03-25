@@ -448,7 +448,7 @@ def generate_video(
                 ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             except Exception as e:
                 logger.error("[VIDEO] Failed to extract frame: %s", e)
-                return {"status": "error", "message": f"Failed to extract frame for 16s video: {e}"}
+                return {"status": "error", "message": f"Failed to extract frame for stitched video: {e}"}
                 
             logger.info("[VIDEO] Generating part 2 (%ss) using Mode B Continuation", part2_duration)
             # Important: when generating part 2 from an image, reference_image_paths should be empty to ensure Mode B is used
