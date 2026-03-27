@@ -47,6 +47,16 @@ async def get_plan(db: AsyncSession, plan_id: UUID, user_id: UUID) -> CalendarPl
     return result.scalar_one_or_none()
 
 
+async def get_plan_by_planner_session(
+    db: AsyncSession, session_id: UUID
+) -> CalendarPlan | None:
+    """Find the plan that uses a given session as its planner."""
+    result = await db.execute(
+        select(CalendarPlan).where(CalendarPlan.planner_session_id == session_id)
+    )
+    return result.scalar_one_or_none()
+
+
 async def get_plan_for_month(
     db: AsyncSession, user_id: UUID, brand_id: UUID, year: int, month: int
 ) -> CalendarPlan | None:

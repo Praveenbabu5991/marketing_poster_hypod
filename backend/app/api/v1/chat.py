@@ -1,7 +1,9 @@
 """SSE streaming chat endpoint + in-chat product upload + message history."""
 
+import calendar as cal_mod
 import json
 import uuid as _uuid
+from datetime import date
 from pathlib import Path
 from typing import Any
 from uuid import UUID
@@ -17,7 +19,7 @@ from app.database import get_db
 from app.schemas.chat import ChatRequest
 from app.security.dependencies import require_authenticated_user
 from app.security.models import UserDetails
-from app.services import session_service, brand_service
+from app.services import session_service, brand_service, calendar_service
 from app.services.streaming import stream_agent
 from agents.registry import get_agent_graph
 from brand.context import BrandContext
@@ -47,6 +49,54 @@ async def chat(
 
     brand_ctx = BrandContext.from_db_model(brand)
 
+    # For content_calendar sessions, inject calendar context so the planner
+    # knows the date range and all current slots (including manually added ones).
+    message = request.message
+    if session.agent_type == "content_calendar":
+        plan = await calendar_service.get_plan_by_planner_session(db, session_id)
+        if plan:
+            # Build date-range context
+            today = date.today()
+            is_current_month = today.year == plan.year and today.month == plan.month
+            last_day = cal_mod.monthrange(plan.year, plan.month)[1]
+            month_name = date(plan.year, plan.month, 1).strftime("%B")
+
+            if is_current_month:
+                start = today.day
+                remaining = last_day - start
+                start_iso = today.isoformat()
+                date_ctx = (
+                    f"Month: {month_name} {plan.year}. "
+                    f"Plan for remaining {remaining} days ({month_name} {start} to {month_name} {last_day}). "
+                    f"Start date: {start_iso}. Do NOT create slots before {start_iso}."
+                )
+            else:
+                date_ctx = (
+                    f"Month: {month_name} {plan.year}. "
+                    f"Plan for full month ({last_day} days)."
+                )
+
+            # Build current slots context
+            slots = await calendar_service.get_slots(db, plan.id)
+            slots_data = [
+                {
+                    "date": str(s.slot_date),
+                    "event_name": s.event_name or "",
+                    "event_type": s.event_type or "regular",
+                    "post_idea": s.post_idea or "",
+                    "post_type": s.post_type or "single_post",
+                    "posting_time": s.posting_time or "",
+                }
+                for s in slots
+            ]
+
+            context_block = f"[Calendar Context: {date_ctx}]"
+            if slots_data:
+                context_block += f"\n[Current Calendar Slots: {json.dumps(slots_data)}]"
+            message = f"{context_block}\n\n{message}"
+            import sys
+            print(f"[CALENDAR] Injected context for plan {plan.id} ({plan.year}-{plan.month:02d}), {len(slots_data)} slots", file=sys.stderr, flush=True)
+
     # Get and compile agent graph with PostgreSQL checkpointer
     graph = get_agent_graph(session.agent_type)
     compiled = graph.compile(checkpointer=get_checkpointer())
@@ -54,7 +104,7 @@ async def chat(
     return StreamingResponse(
         stream_agent(
             compiled_graph=compiled,
-            message=request.message,
+            message=message,
             brand_context=brand_ctx.to_dict(),
             thread_id=session.thread_id,
             user_id=user.user_id,

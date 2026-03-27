@@ -15,23 +15,23 @@ class TestFormatResponse:
         assert result["has_choices"] is False
 
     def test_with_choices(self):
-        choices = json.dumps([
+        choices = [
             {"id": "1", "label": "Option A", "description": "First option"},
             {"id": "2", "label": "Option B", "description": "Second option"},
-        ])
+        ]
         result = format_response.invoke({"message": "Pick one", "choices": choices})
         assert result["has_choices"] is True
         assert len(result["choices"]) == 2
         assert result["choice_type"] == "single_select"
 
     def test_with_media(self):
-        media = json.dumps({"image_path": "/generated/test.png"})
+        media = {"image_path": "/generated/test.png"}
         result = format_response.invoke({"message": "Here's your image", "media": media})
         assert "media" in result
         assert result["media"]["image_path"] == "/generated/test.png"
 
-    def test_invalid_choices_json(self):
-        result = format_response.invoke({"message": "Test", "choices": "not-json"})
+    def test_empty_choices(self):
+        result = format_response.invoke({"message": "Test", "choices": []})
         assert result["has_choices"] is False
         assert result["choices"] == []
 
@@ -50,7 +50,7 @@ class TestFormatResponse:
         assert result["allow_free_input"] is False
 
     def test_video_media(self):
-        media = json.dumps({"video_path": "/generated/test.mp4"})
+        media = {"video_path": "/generated/test.mp4"}
         result = format_response.invoke({"message": "Video", "media": media})
         assert result["media"]["video_path"] == "/generated/test.mp4"
 

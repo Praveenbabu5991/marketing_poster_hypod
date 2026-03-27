@@ -11,18 +11,8 @@ import { AddSlotPopover, type AddSlotData } from '../components/AddSlotPopover';
 import { CalendarSidebar } from '../components/CalendarSidebar';
 import type { Brand, CalendarPlan, CalendarSlot, CalendarSlotUpdate } from '../types';
 
-function buildPlanMessage(year: number, month: number): string {
-  const today = new Date();
-  const isCurrentMonth = today.getFullYear() === year && today.getMonth() + 1 === month;
-  const monthName = new Date(year, month - 1).toLocaleString('en-US', { month: 'long' });
-
-  if (isCurrentMonth) {
-    const day = today.getDate();
-    const lastDay = new Date(year, month, 0).getDate();
-    const remaining = lastDay - day;
-    return `Plan content for the remaining ${remaining} days of ${monthName} ${year} (from ${monthName} ${day} to ${monthName} ${lastDay}). Only create slots for dates from ${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')} onwards. Do NOT create any slots for dates before today.`;
-  }
-  return `Plan ${monthName} ${year}`;
+function daysInMonth(year: number, month: number): number {
+  return new Date(year, month, 0).getDate();
 }
 
 type SidebarMode = 'planner' | 'content';
@@ -39,6 +29,8 @@ export function Calendar() {
   const [selectedSlot, setSelectedSlot] = useState<CalendarSlot | null>(null);
   const [addSlotDate, setAddSlotDate] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const maxDays = daysInMonth(year, month);
+  const [postsCount, setPostsCount] = useState(selectedBrand?.max_posts_per_month ?? 12);
 
   const [sidebarMode, setSidebarMode] = useState<SidebarMode>('planner');
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
@@ -56,6 +48,14 @@ export function Calendar() {
   // Track processed campaign post dates to avoid duplicate slot creation
   const processedCampaignDatesRef = useRef<Set<string>>(new Set());
 
+  // When regenerating a single slot, track its date so the plan watcher
+  // uses addSlot (upsert) instead of saveSlots (bulk replace)
+  const regeneratingSlotDateRef = useRef<string | null>(null);
+
+  // Track the last processed plan message ID to avoid re-processing old plans
+  // when expectingPlanRef is re-enabled for regeneration
+  const lastProcessedPlanMsgIdRef = useRef<string | null>(null);
+
   // Fetch plan when brand/month changes — full reset
   useEffect(() => {
     if (!selectedBrandId) return;
@@ -72,7 +72,11 @@ export function Calendar() {
     expectingPlanRef.current = false;
     expectingContentRef.current = false;
     processedCampaignDatesRef.current = new Set();
+    lastProcessedPlanMsgIdRef.current = null;
     setSidebarMode('planner');
+    const days = daysInMonth(year, month);
+    const brandDefault = brands.find((b) => b.id === selectedBrandId)?.max_posts_per_month ?? 12;
+    setPostsCount(Math.min(brandDefault, days));
 
     setLoading(true);
     getPlan(selectedBrandId, year, month)
@@ -107,6 +111,10 @@ export function Calendar() {
     for (let i = messages.length - 1; i >= 0; i--) {
       const msg = messages[i];
       if (msg.interactive?.media && 'calendar_plan' in (msg.interactive.media as Record<string, unknown>)) {
+        // Skip if this is the same plan message we already processed
+        // (prevents re-processing old plans when expectingPlanRef is re-enabled)
+        if (msg.id === lastProcessedPlanMsgIdRef.current) break;
+
         const calendarPlan = (msg.interactive.media as Record<string, unknown>).calendar_plan;
         if (Array.isArray(calendarPlan) && calendarPlan.length > 0) {
           // Guard: verify slot dates belong to the current plan's month
@@ -118,13 +126,51 @@ export function Calendar() {
             }
           }
           expectingPlanRef.current = false; // Done — don't re-process
-          saveSlots(plan.id, calendarPlan)
-            .then((savedSlots) => {
-              setPlan((prev) =>
-                prev ? { ...prev, status: 'active', slots: savedSlots } : prev
-              );
-            })
-            .catch(console.error);
+          lastProcessedPlanMsgIdRef.current = msg.id; // Remember this message
+
+          const regenDate = regeneratingSlotDateRef.current;
+          regeneratingSlotDateRef.current = null;
+
+          if (regenDate) {
+            // Regenerating a single slot — find the matching slot in the
+            // agent's response and upsert ONLY that one (preserves manual slots)
+            const match = calendarPlan.find(
+              (s: Record<string, unknown>) => s.date === regenDate
+            ) as Record<string, string> | undefined;
+            if (match) {
+              addSlot(plan.id, {
+                date: match.date,
+                event_name: match.event_name,
+                event_type: match.event_type,
+                post_idea: match.post_idea,
+                post_type: match.post_type,
+                posting_time: match.posting_time,
+                status: 'suggested',
+              })
+                .then((saved) => {
+                  setPlan((prev) => {
+                    if (!prev) return prev;
+                    const exists = prev.slots.some((s) => s.slot_date === regenDate);
+                    return {
+                      ...prev,
+                      slots: exists
+                        ? prev.slots.map((s) => (s.slot_date === regenDate ? saved : s))
+                        : [...prev.slots, saved],
+                    };
+                  });
+                })
+                .catch(console.error);
+            }
+          } else {
+            // Full plan generation — replace all slots
+            saveSlots(plan.id, calendarPlan)
+              .then((savedSlots) => {
+                setPlan((prev) =>
+                  prev ? { ...prev, status: 'active', slots: savedSlots } : prev
+                );
+              })
+              .catch(console.error);
+          }
           break;
         }
       }
@@ -263,16 +309,17 @@ export function Calendar() {
 
     try {
       const session = await createSession({ brand_id: selectedBrandId, agent_type: 'content_calendar' });
+
+      // Link plan to session BEFORE sending — backend uses this to inject calendar context
+      if (plan?.id) {
+        await updatePlanSession(plan.id, session.id);
+      }
+
       plannerSessionRef.current = session.id;
-      pendingMessageRef.current = buildPlanMessage(year, month);
+      pendingMessageRef.current = `Plan ${postsCount} posts`;
       setSidebarMode('planner');
       setActiveSessionId(session.id);
       refreshSessions();
-
-      // Persist planner session on the plan so it can be restored on month switch
-      if (plan?.id) {
-        updatePlanSession(plan.id, session.id).catch(console.error);
-      }
     } catch (err) {
       expectingPlanRef.current = false;
       console.error('Failed to create planning session:', err);
@@ -391,30 +438,30 @@ export function Calendar() {
   function handleRegenerateSlot(slot: CalendarSlot) {
     setSelectedSlot(null);
 
-    // Switch to planner mode if needed
-    if (sidebarMode !== 'planner') {
-      expectingContentRef.current = false;
-      setSidebarMode('planner');
-      setContentSlotId(null);
-    }
-
     // If no planner session exists, can't regenerate a single slot — need full plan first
     if (!plannerSessionRef.current) {
       triggerPlanGeneration();
       return;
     }
 
-    // Ensure planner session is active
-    setActiveSessionId(plannerSessionRef.current);
-
     // Enable the plan watcher so the updated plan gets saved
     expectingPlanRef.current = true;
+    regeneratingSlotDateRef.current = slot.slot_date;
 
-    const eventName = slot.event_name || 'the post';
     const dateStr = slot.slot_date;
-    sendMessage(
-      `Change the idea for the slot on ${dateStr} (${eventName}). Suggest a completely different, fresh concept for this date. Keep the same date and event_type. Return the full updated calendar_plan with all slots.`
-    );
+    const msg = `Regenerate ${dateStr}`;
+
+    if (activeSessionId === plannerSessionRef.current && sidebarMode === 'planner') {
+      // Already on the planner session — send directly
+      sendMessage(msg);
+    } else {
+      // Need to switch to planner session first — use pending message
+      expectingContentRef.current = false;
+      setSidebarMode('planner');
+      setContentSlotId(null);
+      pendingMessageRef.current = msg;
+      setActiveSessionId(plannerSessionRef.current);
+    }
   }
 
   async function handleUploadProductImage(file: File) {
@@ -479,26 +526,59 @@ export function Calendar() {
             <h1 className="text-xl font-bold text-text-primary">Content Calendar</h1>
             <p className="text-xs text-text-muted">
               {plan?.slots.length
-                ? `${plan.slots.length} of ${selectedBrand?.max_posts_per_month ?? 12} posts planned`
+                ? `${plan.slots.length} posts planned`
                 : 'No posts planned yet'}
             </p>
           </div>
-          <button
-            onClick={triggerPlanGeneration}
-            disabled={streaming || loading}
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50 transition-colors"
-          >
-            {streaming ? (
-              <span className="flex items-center gap-2">
-                <span className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                Planning...
-              </span>
-            ) : plan?.status === 'active' ? (
-              'Regenerate Plan'
-            ) : (
-              'Generate Plan'
-            )}
-          </button>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <label className="text-xs text-text-muted whitespace-nowrap">Posts:</label>
+              <div className="flex items-center rounded-md border border-border bg-bg-surface">
+                <button
+                  onClick={() => setPostsCount((c) => Math.max(1, c - 1))}
+                  disabled={streaming || loading || postsCount <= 1}
+                  className="px-1.5 py-1 text-text-muted hover:text-text-primary disabled:opacity-30 transition-colors text-xs"
+                >
+                  -
+                </button>
+                <input
+                  type="number"
+                  min={1}
+                  max={maxDays}
+                  value={postsCount}
+                  onChange={(e) => {
+                    const v = parseInt(e.target.value, 10);
+                    if (!isNaN(v)) setPostsCount(Math.max(1, Math.min(maxDays, v)));
+                  }}
+                  disabled={streaming || loading}
+                  className="w-8 bg-transparent text-center text-sm text-text-primary outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                />
+                <button
+                  onClick={() => setPostsCount((c) => Math.min(maxDays, c + 1))}
+                  disabled={streaming || loading || postsCount >= maxDays}
+                  className="px-1.5 py-1 text-text-muted hover:text-text-primary disabled:opacity-30 transition-colors text-xs"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+            <button
+              onClick={triggerPlanGeneration}
+              disabled={streaming || loading}
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50 transition-colors"
+            >
+              {streaming ? (
+                <span className="flex items-center gap-2">
+                  <span className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  Planning...
+                </span>
+              ) : plan?.status === 'active' ? (
+                'Regenerate Plan'
+              ) : (
+                'Generate Plan'
+              )}
+            </button>
+          </div>
         </div>
 
         {loading ? (

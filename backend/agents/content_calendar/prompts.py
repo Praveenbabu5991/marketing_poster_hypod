@@ -8,23 +8,30 @@ across the requested date range.
 
 ## WORKFLOW
 
-### Phase A — Start Planning
-When you receive a planning message (e.g. "Plan April 2026" or "Plan content for the remaining 7 days of March 2026 (from March 25 to March 31)"):
+### System-Injected Context
+Every message includes system-injected blocks (you do NOT need to ask the user for this info):
+- `[Calendar Context: ...]` — the target month, date range, and start date constraint.
+- `[Current Calendar Slots: [...]]` — ALL slots currently on the calendar, including
+  manually added ones. This is the AUTHORITATIVE source of truth for existing slots.
 
-1. Parse the target date range from the message carefully.
-   - If the message says "remaining X days" with specific start/end dates, plan ONLY for those dates.
-   - If a full month is given, plan for the entire month.
-   - NEVER create slots for dates in the past or before the specified start date.
-2. Call `get_upcoming_events` with `days_ahead` matching the remaining days in the range.
-3. Call `search_web` with the brand's industry to research current trends.
-4. Call `get_trending_topics` for the brand's industry and platform.
-5. Analyze all gathered data and create a content plan.
+### Phase A — Start Planning
+When you receive a planning message (e.g. "Plan 12 posts"):
+
+1. Read the `[Calendar Context]` block for the target month and date range.
+   - If it says "remaining X days", plan ONLY for those dates.
+   - If "full month", plan for the entire month.
+   - NEVER create slots for dates before the start date.
+2. Extract the requested post count from the user message (e.g. "Plan 12 posts" → 12).
+3. Call `get_upcoming_events` with `days_ahead` matching the remaining days in the range.
+4. Call `search_web` with the brand's industry to research current trends.
+5. Call `get_trending_topics` for the brand's industry and platform.
+6. Analyze all gathered data and create a content plan.
 
 ### Phase B — Build the Plan
 Create content slots for the requested date range.
 
-For a full month: create exactly {max_posts_per_month} posts. For partial months: scale proportionally (e.g. if 7 days remain out of 30, create roughly 7/30 of {max_posts_per_month} posts, rounded to nearest integer).
-The brand's max_posts_per_month setting is the ONLY guide for how many posts to create. Do NOT use any other heuristic like "2-3 per week".
+Create exactly the number of posts the user requested (from "Plan N posts").
+This is the ONLY guide for how many posts to create. Do NOT use any other heuristic.
 
 Include a MIX of:
 
@@ -79,11 +86,26 @@ RULES for slot dates:
 - Space slots evenly across the available days
 - Festival slots MUST use the actual festival date (if within range)
 
-### Phase D — User Feedback
-After presenting the plan, if the user wants changes:
+### Phase D — User Feedback & Slot Regeneration
+
+The `[Current Calendar Slots]` in every message is the AUTHORITATIVE source of truth.
+Always use it as your starting point. NEVER drop any slot that exists in this list.
+
+**Handling "Regenerate YYYY-MM-DD" requests:**
+1. Find the slot for that date in the `[Current Calendar Slots]` data.
+2. Read its `event_name` and `post_idea` — this is the user's intent and theme.
+3. Come up with a FRESH, CREATIVE post concept that builds on that same theme.
+   - Keep the event_name, event_type, and date unchanged.
+   - Propose a different angle, hook, or visual approach while staying true to the theme.
+   - Example: if event_name is "Saif birthday" and post_idea is "20% off sale",
+     you might suggest "Birthday countdown story series with daily surprise deals"
+     or "Customer birthday wish wall featuring Saif's favorites".
+4. Return the full updated `calendar_plan` with ALL slots (only the regenerated slot changed).
+
+**Handling other feedback:**
 - Add/remove specific slots
-- Change post types
-- Adjust ideas
+- Change post types or ideas
+- Adjust posting times
 - Regenerate the entire plan
 
 Apply changes and call `format_response` again with the updated `calendar_plan` media.
