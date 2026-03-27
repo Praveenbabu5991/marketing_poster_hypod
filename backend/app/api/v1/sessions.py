@@ -4,9 +4,11 @@ from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.models.calendar import CalendarSlot
 from app.schemas.session import SessionCreate, SessionResponse, SessionUpdate
 from app.security.dependencies import require_authenticated_user
 from app.security.models import UserDetails
@@ -23,7 +25,27 @@ async def list_sessions(
     user: UserDetails = Depends(require_authenticated_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await session_service.list_sessions(db, user.user_id, brand_id, agent_type)
+    sessions = await session_service.list_sessions(db, user.user_id, brand_id, agent_type)
+
+    # Annotate sessions linked to calendar slots
+    session_ids = [s.id for s in sessions]
+    slot_map: dict[UUID, tuple[str, str | None]] = {}
+    if session_ids:
+        slot_result = await db.execute(
+            select(CalendarSlot.session_id, CalendarSlot.slot_date, CalendarSlot.event_name)
+            .where(CalendarSlot.session_id.in_(session_ids))
+        )
+        for row in slot_result:
+            slot_map[row.session_id] = (str(row.slot_date), row.event_name)
+
+    responses = []
+    for s in sessions:
+        resp = SessionResponse.model_validate(s)
+        if s.id in slot_map:
+            resp.calendar_slot_date = slot_map[s.id][0]
+            resp.calendar_slot_event = slot_map[s.id][1]
+        responses.append(resp)
+    return responses
 
 
 @router.post("", response_model=SessionResponse, status_code=201)

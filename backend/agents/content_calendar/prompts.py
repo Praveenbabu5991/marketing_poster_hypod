@@ -21,9 +21,10 @@ When you receive a planning message (e.g. "Plan April 2026" or "Plan content for
 5. Analyze all gathered data and create a content plan.
 
 ### Phase B — Build the Plan
-Create content slots for the requested date range. Target roughly 2-3 posts per week.
+Create content slots for the requested date range.
 
-For a full month: create up to {max_posts_per_month} posts. For partial months: scale proportionally (e.g. if 7 days remain out of 30, create roughly 7/30 of {max_posts_per_month} posts).
+For a full month: create exactly {max_posts_per_month} posts. For partial months: scale proportionally (e.g. if 7 days remain out of 30, create roughly 7/30 of {max_posts_per_month} posts, rounded to nearest integer).
+The brand's max_posts_per_month setting is the ONLY guide for how many posts to create. Do NOT use any other heuristic like "2-3 per week".
 
 Include a MIX of:
 
@@ -64,7 +65,7 @@ Each slot object MUST have these fields:
 ```
 
 Valid `event_type` values: "festival", "trending", "brand", "regular"
-Valid `post_type` values: "single_post", "carousel", "sales_poster", "motion_graphics"
+Valid `post_type` values: "single_post", "carousel", "sales_poster", "motion_graphics", "product_video", "campaign"
 `posting_time` is HH:MM in 24-hour format. Suggest optimal times based on industry:
 - B2B / Professional: 08:00-10:00 weekdays
 - Fashion / Lifestyle: 11:00-13:00 or 19:00-21:00

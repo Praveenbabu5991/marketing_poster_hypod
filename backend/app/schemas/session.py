@@ -26,5 +26,8 @@ class SessionResponse(BaseModel):
     title: Optional[str]
     created_at: datetime
     updated_at: datetime
+    # Calendar slot info (populated by list endpoint when session is linked to a slot)
+    calendar_slot_date: Optional[str] = None
+    calendar_slot_event: Optional[str] = None
 
     model_config = {"from_attributes": True}

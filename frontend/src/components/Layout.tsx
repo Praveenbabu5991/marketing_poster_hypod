@@ -48,7 +48,36 @@ export function Layout() {
     sales_poster: 'Sales Poster',
     motion_graphics: 'Motion Graphics',
     product_video: 'Product Video',
+    content_calendar: 'Calendar Planner',
   };
+
+  const AGENT_ICONS: Record<string, string> = {
+    single_post: '\uD83D\uDDBC\uFE0F',
+    carousel: '\uD83C\uDFA0',
+    campaign: '\uD83D\uDCE3',
+    sales_poster: '\uD83D\uDED2',
+    motion_graphics: '\uD83C\uDFAC',
+    product_video: '\uD83D\uDCF9',
+    content_calendar: '\uD83D\uDCC5',
+  };
+
+  function formatSessionDate(dateStr: string): string {
+    const d = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24 && d.getDate() === now.getDate()) return `${diffHours}h ago`;
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (d.getDate() === yesterday.getDate() && d.getMonth() === yesterday.getMonth()) return 'Yesterday';
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  // Hide content_calendar sessions — they're managed inside the Calendar page
+  const agentSessions = sessions.filter((s) => s.agent_type !== 'content_calendar');
 
   // Highlight current session in sidebar
   const currentSessionId = location.pathname.startsWith('/chat/')
@@ -161,71 +190,97 @@ export function Layout() {
 
         {/* Recent Sessions */}
         <div className="min-h-0 flex-1 overflow-y-auto p-4">
-          <h3 className="mb-2 text-xs font-medium text-text-muted">Recent Sessions</h3>
-          {sessions.length === 0 ? (
+          <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
+            Recent Sessions
+          </h3>
+          {agentSessions.length === 0 ? (
             <p className="text-xs text-text-muted">
               {selectedBrandId ? 'No sessions yet' : 'Select a brand first'}
             </p>
           ) : (
             <ul className="space-y-1">
-              {sessions.slice(0, 20).map((s) => (
-                <li key={s.id} className="group">
-                  {renamingId === s.id ? (
-                    <div className="rounded-lg bg-bg-elevated px-3 py-2">
-                      <input
-                        type="text"
-                        value={renameValue}
-                        onChange={(e) => setRenameValue(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') submitRename(s.id);
-                          if (e.key === 'Escape') setRenamingId(null);
-                        }}
-                        onBlur={() => submitRename(s.id)}
-                        autoFocus
-                        maxLength={255}
-                        className="w-full rounded border border-border bg-bg-page px-2 py-1 text-xs text-text-primary focus:border-accent focus:outline-none"
-                      />
-                    </div>
-                  ) : (
-                    <div className="relative">
-                      <button
-                        onClick={() => navigate(`/chat/${s.id}`)}
-                        className={`w-full rounded-lg px-3 py-2 text-left text-xs transition-colors hover:bg-bg-elevated hover:text-text-primary ${
-                          s.id === currentSessionId
-                            ? 'bg-bg-elevated text-text-primary'
-                            : 'text-text-muted'
-                        }`}
-                      >
-                        <div className="font-medium text-text-primary">
-                          {AGENT_LABELS[s.agent_type] || s.agent_type}
-                        </div>
-                        <div className="truncate pr-10">{s.title || 'Untitled'}</div>
-                      </button>
-                      {/* Session actions — visible on hover */}
-                      <div className="absolute right-1 top-1 flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
-                        <button
-                          onClick={(e) => startRename(s.id, s.title || '', e)}
-                          title="Rename"
-                          className="rounded p-1 text-text-muted hover:bg-bg-page hover:text-accent"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="h-3 w-3">
-                            <path d="M13.49 3.51a3.73 3.73 0 0 0-5.27 0L2.64 9.09a.75.75 0 0 0-.2.39l-.67 3.35a.75.75 0 0 0 .88.88l3.35-.67a.75.75 0 0 0 .39-.2l5.58-5.58a3.73 3.73 0 0 0 0-5.27l-.48.49.48-.49ZM9.28 4.57a2.23 2.23 0 0 1 3.15 3.15l-5.58 5.58-2.2.44.44-2.2 5.58-5.58.61.61-.61-.61Z" />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={(e) => handleDeleteSession(s.id, e)}
-                          title="Delete"
-                          className="rounded p-1 text-text-muted hover:bg-bg-page hover:text-red-400"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="h-3 w-3">
-                            <path fillRule="evenodd" d="M5 3.25V4H2.75a.75.75 0 0 0 0 1.5h.31l.57 7.6A2 2 0 0 0 5.62 15h4.76a2 2 0 0 0 1.99-1.9l.57-7.6h.31a.75.75 0 0 0 0-1.5H11v-.75A2.25 2.25 0 0 0 8.75 1h-1.5A2.25 2.25 0 0 0 5 3.25Zm1.5 0a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .75.75V4h-3v-.75ZM6.05 6a.75.75 0 0 1 .787.713l.275 5.5a.75.75 0 0 1-1.498.074l-.275-5.5A.75.75 0 0 1 6.05 6Zm3.9 0a.75.75 0 0 1 .712.787l-.275 5.5a.75.75 0 0 1-1.498-.074l.275-5.5A.75.75 0 0 1 9.95 6Z" clipRule="evenodd" />
-                          </svg>
-                        </button>
+              {agentSessions.slice(0, 20).map((s) => {
+                const fromCalendar = !!s.calendar_slot_date;
+                const slotDateLabel = s.calendar_slot_date
+                  ? new Date(s.calendar_slot_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                  : null;
+
+                return (
+                  <li key={s.id} className="group">
+                    {renamingId === s.id ? (
+                      <div className="rounded-lg bg-bg-elevated px-3 py-2">
+                        <input
+                          type="text"
+                          value={renameValue}
+                          onChange={(e) => setRenameValue(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') submitRename(s.id);
+                            if (e.key === 'Escape') setRenamingId(null);
+                          }}
+                          onBlur={() => submitRename(s.id)}
+                          autoFocus
+                          maxLength={255}
+                          className="w-full rounded border border-border bg-bg-page px-2 py-1 text-xs text-text-primary focus:border-accent focus:outline-none"
+                        />
                       </div>
-                    </div>
-                  )}
-                </li>
-              ))}
+                    ) : (
+                      <div className="relative">
+                        <button
+                          onClick={() => navigate(`/chat/${s.id}`)}
+                          className={`w-full rounded-lg px-3 py-2 text-left text-xs transition-colors hover:bg-bg-elevated hover:text-text-primary ${
+                            s.id === currentSessionId
+                              ? 'bg-bg-elevated text-text-primary'
+                              : 'text-text-muted'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5 font-medium text-text-primary">
+                              <span className="text-[10px]">{AGENT_ICONS[s.agent_type] || ''}</span>
+                              {AGENT_LABELS[s.agent_type] || s.agent_type}
+                            </div>
+                            <span className="text-[9px] text-text-muted">{formatSessionDate(s.created_at)}</span>
+                          </div>
+                          <div className="mt-0.5 truncate pr-10 text-text-muted">
+                            {s.title || (fromCalendar ? (s.calendar_slot_event || 'Calendar post') : 'Untitled')}
+                          </div>
+                          {fromCalendar && (
+                            <div className="mt-0.5 flex items-center gap-1">
+                              <span className="inline-flex items-center gap-0.5 rounded bg-accent/15 px-1.5 py-0.5 text-[9px] font-medium text-accent">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="h-2.5 w-2.5">
+                                  <path fillRule="evenodd" d="M4 1.75a.75.75 0 0 1 1.5 0V3h5V1.75a.75.75 0 0 1 1.5 0V3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2V1.75ZM4.5 7a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-7Z" clipRule="evenodd" />
+                                </svg>
+                                {slotDateLabel}
+                                {s.calendar_slot_event ? ` \u2022 ${s.calendar_slot_event}` : ''}
+                              </span>
+                            </div>
+                          )}
+                        </button>
+                        {/* Session actions — visible on hover */}
+                        <div className="absolute right-1 top-1 flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+                          <button
+                            onClick={(e) => startRename(s.id, s.title || '', e)}
+                            title="Rename"
+                            className="rounded p-1 text-text-muted hover:bg-bg-page hover:text-accent"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="h-3 w-3">
+                              <path d="M13.49 3.51a3.73 3.73 0 0 0-5.27 0L2.64 9.09a.75.75 0 0 0-.2.39l-.67 3.35a.75.75 0 0 0 .88.88l3.35-.67a.75.75 0 0 0 .39-.2l5.58-5.58a3.73 3.73 0 0 0 0-5.27l-.48.49.48-.49ZM9.28 4.57a2.23 2.23 0 0 1 3.15 3.15l-5.58 5.58-2.2.44.44-2.2 5.58-5.58.61.61-.61-.61Z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={(e) => handleDeleteSession(s.id, e)}
+                            title="Delete"
+                            className="rounded p-1 text-text-muted hover:bg-bg-page hover:text-red-400"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="h-3 w-3">
+                              <path fillRule="evenodd" d="M5 3.25V4H2.75a.75.75 0 0 0 0 1.5h.31l.57 7.6A2 2 0 0 0 5.62 15h4.76a2 2 0 0 0 1.99-1.9l.57-7.6h.31a.75.75 0 0 0 0-1.5H11v-.75A2.25 2.25 0 0 0 8.75 1h-1.5A2.25 2.25 0 0 0 5 3.25Zm1.5 0a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .75.75V4h-3v-.75ZM6.05 6a.75.75 0 0 1 .787.713l.275 5.5a.75.75 0 0 1-1.498.074l-.275-5.5A.75.75 0 0 1 6.05 6Zm3.9 0a.75.75 0 0 1 .712.787l-.275 5.5a.75.75 0 0 1-1.498-.074l.275-5.5A.75.75 0 0 1 9.95 6Z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>

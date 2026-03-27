@@ -88,6 +88,7 @@ def _build_narrative_prompt(
     has_logo: bool,
     user_image_instructions: str,
     font_style: str = "bold sans-serif",
+    has_product_image: bool = False,
 ) -> str:
     """Build a narrative Gemini prompt following official prompting guide.
 
@@ -112,7 +113,22 @@ def _build_narrative_prompt(
     }
     style_desc = style_map.get(style, style_map["creative"])
 
-    # --- Part 1: Text rendering (guide says: generate the text first) ---
+    # --- Part 1: Product image anchor (HIGHEST PRIORITY when product image attached) ---
+    product_paragraph = ""
+    if has_product_image:
+        product_paragraph = (
+            "I am attaching the ACTUAL PRODUCT PHOTO. This is the most important element. "
+            "You MUST build the entire poster design AROUND this exact product. "
+            "Place this product as the central visual anchor — it should be the hero of the image, "
+            "prominently visible and occupying 30-50% of the poster area. "
+            "Keep the product's exact appearance, colors, shape, and details — do NOT replace it "
+            "with a different or AI-generated product. Construct a complementary background scene, "
+            "lighting, and environment that enhances and showcases this specific product. "
+        )
+        if user_image_instructions:
+            product_paragraph += f"{user_image_instructions}. "
+
+    # --- Part 2: Text rendering (guide says: generate the text first) ---
     text_paragraph = ""
     if occasion_text or headline_text or subtext or cta_text:
         text_parts = []
@@ -149,25 +165,33 @@ def _build_narrative_prompt(
                 f"{primary} text. "
             )
 
-    # --- Part 2: Scene description (narrative, with photography terms) ---
+    # --- Part 3: Scene description (narrative, with photography terms) ---
     brand_label = brand_name or "a brand"
     industry_label = industry or "general"
 
     scene_paragraph = (
-        f"Create a premium, scroll-stopping social media image for {brand_label} "
+        f"Create a premium, scroll-stopping social media poster for {brand_label} "
         f"in the {industry_label} industry. "
         f"The visual style should be {style_desc}. "
     )
     if occasion:
         scene_paragraph += f"The theme is {occasion}. "
-    scene_paragraph += (
-        f"The scene should be: {prompt}. "
-        "Use a photorealistic, eye-level medium shot with soft directional lighting "
-        "that creates depth and dimension. The composition should have a single strong "
-        "focal point with high contrast between the subject and background. "
-    )
+    scene_paragraph += f"The scene should be: {prompt}. "
+    if has_product_image:
+        scene_paragraph += (
+            "Build the entire background, lighting, and environment to complement and "
+            "showcase the attached product photo. The product should feel naturally integrated "
+            "into the scene — not pasted on. Use soft directional lighting that matches the "
+            "product's lighting. "
+        )
+    else:
+        scene_paragraph += (
+            "Use a photorealistic, eye-level medium shot with soft directional lighting "
+            "that creates depth and dimension. The composition should have a single strong "
+            "focal point with high contrast between the subject and background. "
+        )
 
-    # --- Part 3: Brand color palette (narrative, not bullet list) ---
+    # --- Part 4: Brand color palette (narrative, not bullet list) ---
     color_paragraph = ""
     if colors_list:
         color_paragraph = (
@@ -178,26 +202,17 @@ def _build_narrative_prompt(
             f"recognizable as this brand's content. "
         )
 
-    # --- Part 4: Logo (high-fidelity preservation, per guide template #5) ---
+    # --- Part 5: Logo (high-fidelity preservation, per guide template #5) ---
     logo_paragraph = ""
     if has_logo:
         logo_paragraph = (
-            "I am attaching the brand logo image file. Using the provided logo image, "
-            "place this EXACT logo in the bottom-right corner of the design. Ensure the "
-            "logo features remain completely unchanged — do not redraw, recreate, or "
-            "generate any logo. The logo should be clearly visible and properly sized. "
+            "I am also attaching the brand logo image file. Place this EXACT logo in the "
+            "bottom-right corner of the design. Ensure the logo features remain completely "
+            "unchanged — do not redraw, recreate, or generate any logo. "
         )
 
-    # --- Part 5: User images (combining multiple images, per guide template #4) ---
-    user_img_paragraph = ""
-    if user_image_instructions:
-        user_img_paragraph = (
-            f"I am also attaching product/reference images. {user_image_instructions}. "
-            "Preserve the product's appearance, colors, and details faithfully. "
-        )
-
-    # Assemble in the optimal order: text first, then scene, then brand details
-    full_prompt = text_paragraph + scene_paragraph + color_paragraph + logo_paragraph + user_img_paragraph
+    # Assemble: product anchor first, then text, scene, brand, logo
+    full_prompt = product_paragraph + text_paragraph + scene_paragraph + color_paragraph + logo_paragraph
     return full_prompt.strip()
 
 
@@ -242,10 +257,40 @@ def generate_image(
     _, IMAGE_MODEL, _, GENERATED_DIR = _get_config()
     save_dir = output_dir or str(GENERATED_DIR)
 
+    # Debug: log all arguments received from LLM
+    import sys
+    print(f"[IMAGE_GEN] prompt='{prompt[:80]}...' logo_path='{logo_path}' user_images='{user_images}' user_image_instructions='{user_image_instructions}' aspect_ratio='{aspect_ratio}'", file=sys.stderr, flush=True)
+
     try:
         client = _get_client()
 
         has_logo = bool(logo_path and os.path.exists(logo_path))
+
+        # Load product images first to know if we have them
+        # Upscale tiny images — Gemini ignores images < ~512px
+        MIN_PRODUCT_DIM = 768
+        product_pil_images = []
+        if user_images:
+            for user_img_path in [p.strip() for p in user_images.split(",") if p.strip()][:5]:
+                exists = os.path.exists(user_img_path)
+                print(f"[IMAGE_GEN] user_img_path='{user_img_path}' exists={exists}", file=sys.stderr, flush=True)
+                if exists:
+                    try:
+                        img = Image.open(user_img_path).convert("RGB")
+                        original_size = img.size
+                        # Upscale if too small — preserves aspect ratio
+                        w, h = img.size
+                        if max(w, h) < MIN_PRODUCT_DIM:
+                            scale = MIN_PRODUCT_DIM / max(w, h)
+                            new_w, new_h = int(w * scale), int(h * scale)
+                            img = img.resize((new_w, new_h), Image.LANCZOS)
+                            print(f"[IMAGE_GEN] Upscaled product image: {original_size} -> {img.size}", file=sys.stderr, flush=True)
+                        product_pil_images.append(img)
+                        print(f"[IMAGE_GEN] Product image loaded: {img.size} {img.mode} (original={original_size})", file=sys.stderr, flush=True)
+                    except Exception as e:
+                        print(f"[IMAGE_GEN] Failed to open product image: {e}", file=sys.stderr, flush=True)
+
+        has_product = len(product_pil_images) > 0
 
         full_prompt = _build_narrative_prompt(
             prompt=prompt,
@@ -261,28 +306,31 @@ def generate_image(
             has_logo=has_logo,
             user_image_instructions=user_image_instructions,
             font_style=font_style,
+            has_product_image=has_product,
         )
 
         from google.genai import types
 
-        contents = [full_prompt]
+        # Build contents: product image FIRST (hero element), then prompt, then logo
+        contents = []
 
-        # Attach logo image (guide: high-fidelity detail preservation)
+        # Product image first — Gemini should build the scene around it
+        for pimg in product_pil_images:
+            contents.append(pimg)
+
+        # Text prompt that instructs Gemini to use the attached product
+        contents.append(full_prompt)
+
+        # Logo last
         if has_logo:
             try:
                 contents.append(Image.open(logo_path))
             except Exception:
                 pass
 
-        # Attach user/product images (guide: combining multiple images)
-        if user_images:
-            for user_img_path in [p.strip() for p in user_images.split(",") if p.strip()][:5]:
-                if os.path.exists(user_img_path):
-                    try:
-                        contents.append(Image.open(user_img_path))
-                    except Exception:
-                        pass
-
+        print(f"[IMAGE_GEN] Full prompt (first 500 chars): {full_prompt[:500]}", file=sys.stderr, flush=True)
+        print(f"[IMAGE_GEN] has_product_image={has_product} has_logo={has_logo}", file=sys.stderr, flush=True)
+        print(f"[IMAGE_GEN] Sending to Gemini: {len(contents)} items (product={len(product_pil_images)}, prompt=1, logo={1 if has_logo else 0})", file=sys.stderr, flush=True)
         time.sleep(1)
 
         # Validate aspect ratio

@@ -133,11 +133,49 @@ def build_agent_graph(
                 return "orchestrator"
         return "orchestrator"
 
+    # -- Custom tools node that auto-injects product images into generate_image --
+    tool_node = ToolNode(tools)
+
+    # Only these agents should have product images auto-injected
+    _PRODUCT_IMAGE_AGENTS = {"sales_poster", "product_video"}
+
+    def tools_with_injection(state: AgentState) -> dict:
+        """Wrap ToolNode to inject product images from brand context.
+
+        Only applies to sales_poster and product_video agents.
+        Other agents (single_post, campaign, carousel, etc.) should NOT
+        get product images injected — they generate original creative content.
+        """
+        brand_ctx = state.get("brand_context", {})
+        product_images = brand_ctx.get("product_images", [])
+
+        if product_images and graph_name in _PRODUCT_IMAGE_AGENTS:
+            # Mutate the last AIMessage's tool_calls to inject user_images
+            messages = list(state["messages"])
+            last_ai = messages[-1] if messages and isinstance(messages[-1], AIMessage) else None
+            if last_ai and last_ai.tool_calls:
+                for tc in last_ai.tool_calls:
+                    if tc["name"] == "generate_image":
+                        args = tc["args"]
+                        # Only inject if LLM didn't provide user_images
+                        if not args.get("user_images"):
+                            args["user_images"] = ", ".join(product_images)
+                            print(f"[TOOLS] Auto-injected user_images into generate_image: {args['user_images']}", file=sys.stderr, flush=True)
+                        if not args.get("user_image_instructions"):
+                            args["user_image_instructions"] = "Feature this product prominently as the visual anchor of the poster"
+                    elif tc["name"] == "generate_video":
+                        args = tc["args"]
+                        if not args.get("reference_image_paths"):
+                            args["reference_image_paths"] = ", ".join(product_images)
+                            print(f"[TOOLS] Auto-injected reference_image_paths into generate_video: {args['reference_image_paths']}", file=sys.stderr, flush=True)
+
+        return tool_node.invoke(state)
+
     # -- Build graph --
     graph = StateGraph(AgentState)
 
     graph.add_node("orchestrator", orchestrator)
-    graph.add_node("tools", ToolNode(tools))
+    graph.add_node("tools", tools_with_injection)
 
     # Add sub-agent nodes if provided
     if sub_agent_nodes:

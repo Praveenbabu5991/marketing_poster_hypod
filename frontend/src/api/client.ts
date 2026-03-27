@@ -14,6 +14,11 @@ export async function fetchApi<T>(
     },
   });
   if (!res.ok) {
+    if (res.status === 401) {
+      useStore.getState().setToken('');
+      window.location.reload();
+      throw new Error('Session expired. Please log in again.');
+    }
     const body = await res.json().catch(() => ({ detail: res.statusText }));
     throw new Error(body.detail || `Request failed: ${res.status}`);
   }
