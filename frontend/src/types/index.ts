@@ -85,6 +85,7 @@ export interface InteractiveResponse {
     campaign_post_date?: string;
     campaign_post_caption?: string;
     campaign_post_hashtags?: string;
+    campaign_post_type?: string;
   };
 }
 

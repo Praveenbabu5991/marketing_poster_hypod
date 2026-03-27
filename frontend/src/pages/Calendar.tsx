@@ -8,6 +8,8 @@ import { createSession } from '../api/sessions';
 import { CalendarGrid } from '../components/CalendarGrid';
 import { CalendarPopover, type SlotConfig } from '../components/CalendarPopover';
 import { AddSlotPopover, type AddSlotData } from '../components/AddSlotPopover';
+import { CampaignPopover } from '../components/CampaignPopover';
+import { PlanPopover } from '../components/PlanPopover';
 import { CalendarSidebar } from '../components/CalendarSidebar';
 import type { Brand, CalendarPlan, CalendarSlot, CalendarSlotUpdate } from '../types';
 
@@ -28,9 +30,10 @@ export function Calendar() {
   const [plan, setPlan] = useState<CalendarPlan | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<CalendarSlot | null>(null);
   const [addSlotDate, setAddSlotDate] = useState<string | null>(null);
+  const [campaignPopoverOpen, setCampaignPopoverOpen] = useState(false);
+  const [planPopoverOpen, setPlanPopoverOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const maxDays = daysInMonth(year, month);
-  const [postsCount, setPostsCount] = useState(selectedBrand?.max_posts_per_month ?? 12);
 
   const [sidebarMode, setSidebarMode] = useState<SidebarMode>('planner');
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
@@ -74,9 +77,6 @@ export function Calendar() {
     processedCampaignDatesRef.current = new Set();
     lastProcessedPlanMsgIdRef.current = null;
     setSidebarMode('planner');
-    const days = daysInMonth(year, month);
-    const brandDefault = brands.find((b) => b.id === selectedBrandId)?.max_posts_per_month ?? 12;
-    setPostsCount(Math.min(brandDefault, days));
 
     setLoading(true);
     getPlan(selectedBrandId, year, month)
@@ -185,24 +185,26 @@ export function Calendar() {
 
     for (const msg of messages) {
       const media = msg.interactive?.media;
-      if (!media?.image_path || !media.campaign_post_date) continue;
+      if (!media?.campaign_post_date) continue;
+      if (!media.image_path && !media.video_path) continue;
 
       const postDate = media.campaign_post_date;
       if (processedCampaignDatesRef.current.has(postDate)) continue;
       processedCampaignDatesRef.current.add(postDate);
 
-      const imagePath = media.image_path;
+      const mediaPath = media.image_path || media.video_path || '';
       const caption = media.campaign_post_caption || '';
       const hashtags = media.campaign_post_hashtags || '';
+      const postType = media.campaign_post_type || 'campaign';
 
       addSlot(plan.id, {
         date: postDate,
         status: 'generated',
         session_id: activeSessionId,
-        generated_image: imagePath,
+        generated_image: mediaPath,
         caption,
         hashtags,
-        post_type: 'campaign',
+        post_type: postType,
       })
         .then((saved) => {
           setPlan((prev) => {
@@ -217,6 +219,53 @@ export function Calendar() {
           });
         })
         .catch(console.error);
+    }
+  }, [messages, sidebarMode, plan, activeSessionId]);
+
+  // Watch for campaign_plan in Phase D — create placeholder "suggested" slots
+  // so the calendar shows planned dates before content is generated.
+  useEffect(() => {
+    if (sidebarMode !== 'content' || !plan || !activeSessionId) return;
+
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const msg = messages[i];
+      const media = msg.interactive?.media as Record<string, unknown> | undefined;
+      if (!media || !('campaign_plan' in media)) continue;
+
+      const campaignPlan = media.campaign_plan;
+      if (!Array.isArray(campaignPlan) || campaignPlan.length === 0) continue;
+
+      for (const item of campaignPlan) {
+        const rec = item as Record<string, string>;
+        const date = rec.date;
+        if (!date) continue;
+        // Use "plan_" prefix to avoid conflict with the generated-content tracker
+        if (processedCampaignDatesRef.current.has(`plan_${date}`)) continue;
+        processedCampaignDatesRef.current.add(`plan_${date}`);
+
+        addSlot(plan.id, {
+          date,
+          event_name: rec.event_name || '',
+          post_type: rec.post_type || 'single_post',
+          post_idea: rec.post_idea || '',
+          status: 'suggested',
+          session_id: activeSessionId,
+        })
+          .then((saved) => {
+            setPlan((prev) => {
+              if (!prev) return prev;
+              const exists = prev.slots.some((s) => s.slot_date === date);
+              return {
+                ...prev,
+                slots: exists
+                  ? prev.slots.map((s) => (s.slot_date === date ? saved : s))
+                  : [...prev.slots, saved],
+              };
+            });
+          })
+          .catch(console.error);
+      }
+      break;
     }
   }, [messages, sidebarMode, plan, activeSessionId]);
 
@@ -301,11 +350,12 @@ export function Calendar() {
     else setMonth(month + 1);
   }
 
-  async function triggerPlanGeneration() {
+  async function triggerPlanGeneration(postsCount: number) {
     if (!selectedBrandId || streaming) return;
 
     // Mark that we're actively generating — enables the plan watcher
     expectingPlanRef.current = true;
+    setPlanPopoverOpen(false);
 
     try {
       const session = await createSession({ brand_id: selectedBrandId, agent_type: 'content_calendar' });
@@ -316,7 +366,15 @@ export function Calendar() {
       }
 
       plannerSessionRef.current = session.id;
-      pendingMessageRef.current = `Plan ${postsCount} posts`;
+
+      // Tell the planner which dates are already occupied by campaign slots
+      const campaignDates = (plan?.slots || [])
+        .filter((s) => s.session_id && (s.status === 'generated' || s.status === 'generating'))
+        .map((s) => s.slot_date);
+      const skipNote = campaignDates.length > 0
+        ? `. Skip these dates (already have campaign content): ${campaignDates.join(', ')}`
+        : '';
+      pendingMessageRef.current = `Plan ${postsCount} posts${skipNote}`;
       setSidebarMode('planner');
       setActiveSessionId(session.id);
       refreshSessions();
@@ -398,6 +456,21 @@ export function Calendar() {
     setActiveSessionId(slot.session_id);
   }
 
+  async function handleGenerateCampaign(theme: string, fromDate: string, toDate: string, postsCount: number) {
+    if (!selectedBrandId || streaming) return;
+    try {
+      const session = await createSession({ brand_id: selectedBrandId, agent_type: 'campaign' });
+      setSidebarMode('content');
+      setContentSlotId(null);
+      pendingMessageRef.current = `Generate campaign from ${fromDate} to ${toDate}, ${postsCount} posts: ${theme}`;
+      setActiveSessionId(session.id);
+      setCampaignPopoverOpen(false);
+      refreshSessions();
+    } catch (err) {
+      console.error('Failed to create campaign session:', err);
+    }
+  }
+
   function handleBackToPlanner() {
     expectingContentRef.current = false;
     setSidebarMode('planner');
@@ -410,7 +483,7 @@ export function Calendar() {
   const handleSidebarMessage = useCallback(
     (text: string) => {
       if (!activeSessionId) {
-        triggerPlanGeneration();
+        setPlanPopoverOpen(true);
         return;
       }
       sendMessage(text);
@@ -440,7 +513,7 @@ export function Calendar() {
 
     // If no planner session exists, can't regenerate a single slot — need full plan first
     if (!plannerSessionRef.current) {
-      triggerPlanGeneration();
+      setPlanPopoverOpen(true);
       return;
     }
 
@@ -531,39 +604,8 @@ export function Calendar() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5">
-              <label className="text-xs text-text-muted whitespace-nowrap">Posts:</label>
-              <div className="flex items-center rounded-md border border-border bg-bg-surface">
-                <button
-                  onClick={() => setPostsCount((c) => Math.max(1, c - 1))}
-                  disabled={streaming || loading || postsCount <= 1}
-                  className="px-1.5 py-1 text-text-muted hover:text-text-primary disabled:opacity-30 transition-colors text-xs"
-                >
-                  -
-                </button>
-                <input
-                  type="number"
-                  min={1}
-                  max={maxDays}
-                  value={postsCount}
-                  onChange={(e) => {
-                    const v = parseInt(e.target.value, 10);
-                    if (!isNaN(v)) setPostsCount(Math.max(1, Math.min(maxDays, v)));
-                  }}
-                  disabled={streaming || loading}
-                  className="w-8 bg-transparent text-center text-sm text-text-primary outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                />
-                <button
-                  onClick={() => setPostsCount((c) => Math.min(maxDays, c + 1))}
-                  disabled={streaming || loading || postsCount >= maxDays}
-                  className="px-1.5 py-1 text-text-muted hover:text-text-primary disabled:opacity-30 transition-colors text-xs"
-                >
-                  +
-                </button>
-              </div>
-            </div>
             <button
-              onClick={triggerPlanGeneration}
+              onClick={() => setPlanPopoverOpen(true)}
               disabled={streaming || loading}
               className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50 transition-colors"
             >
@@ -577,6 +619,13 @@ export function Calendar() {
               ) : (
                 'Generate Plan'
               )}
+            </button>
+            <button
+              onClick={() => setCampaignPopoverOpen(true)}
+              disabled={streaming || loading}
+              className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-primary hover:bg-bg-elevated disabled:opacity-50 transition-colors"
+            >
+              Generate Campaign
             </button>
           </div>
         </div>
@@ -618,6 +667,27 @@ export function Calendar() {
           date={addSlotDate}
           onSubmit={handleAddSlot}
           onClose={() => setAddSlotDate(null)}
+        />
+      )}
+
+      {/* Campaign Popover */}
+      {campaignPopoverOpen && (
+        <CampaignPopover
+          year={year}
+          month={month}
+          onSubmit={handleGenerateCampaign}
+          onClose={() => setCampaignPopoverOpen(false)}
+        />
+      )}
+
+      {/* Plan Popover */}
+      {planPopoverOpen && (
+        <PlanPopover
+          maxDays={maxDays}
+          defaultCount={selectedBrand?.max_posts_per_month ?? 12}
+          isRegenerate={plan?.status === 'active'}
+          onSubmit={triggerPlanGeneration}
+          onClose={() => setPlanPopoverOpen(false)}
         />
       )}
     </div>

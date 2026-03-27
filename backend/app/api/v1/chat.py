@@ -28,6 +28,74 @@ router = APIRouter()
 
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 
+import re
+
+_AGENT_LABELS = {
+    "single_post": "Post",
+    "carousel": "Carousel",
+    "campaign": "Campaign",
+    "sales_poster": "Sales Poster",
+    "motion_graphics": "Motion Graphics",
+    "product_video": "Product Video",
+    "content_calendar": "Calendar Plan",
+}
+
+
+def _generate_title(message: str, agent_type: str, brand_name: str = "") -> str | None:
+    """Extract a short, readable title from a user message.
+
+    Returns None for generic/uninformative messages (e.g. "start", "1", "yes")
+    so the caller can retry on the next message.
+    """
+    # Strip [System Context: ...] and [Calendar Context: ...] blocks
+    clean = re.sub(r"\[(?:System|Calendar) Context:[^\]]*\]", "", message).strip()
+    # Strip [Current Calendar Slots: ...] blocks
+    clean = re.sub(r"\[Current Calendar Slots:[^\]]*\]", "", clean).strip()
+    clean = clean.strip()
+
+    # Campaign date-range: "Generate campaign from 2026-02-07 to 2026-02-14, 4 posts: Valentine Week"
+    m = re.match(r"Generate campaign from [\d-]+ to [\d-]+,?\s*\d*\s*posts?:\s*(.+)", clean, re.I)
+    if m:
+        return m.group(1).strip()[:80]
+
+    # Per-slot campaign: "Plan a campaign for Women's Day on 2026-03-08: ..."
+    m = re.match(r"Plan a campaign(?:\s+for\s+(.+?))?(?:\s+on\s+[\d-]+)?:\s*(.+)", clean, re.I)
+    if m:
+        theme = (m.group(2) or m.group(1) or "").strip()
+        return theme[:80] if theme else None
+
+    # Calendar slot content: "Create this specific post for X on YYYY-MM-DD: idea"
+    m = re.match(r"Create (?:this specific post|a sales poster|a product video)(?:\s+for\s+(.+?))?(?:\s+on\s+[\d-]+)?:\s*(.+?)\.?\s*(?:Skip|Use|$)", clean, re.I | re.S)
+    if m:
+        event = m.group(1) or ""
+        idea = m.group(2) or ""
+        title = f"{event}: {idea}".strip(": ") if event else idea.strip()
+        return title[:80] if title else None
+
+    # Skip generic/uninformative messages → return None so we retry next turn
+    lower = clean.lower()
+    if lower in ("start", ""):
+        return None
+    # Skip pure number selections ("1", "2", etc.)
+    if re.match(r"^\d+$", clean):
+        return None
+    # Skip very short confirmations
+    if lower in ("yes", "no", "ok", "sure", "next", "done", "continue",
+                 "generate", "next post", "start generating", "finish campaign"):
+        return None
+    # Skip "Plan N posts" → planner sessions get titled from calendar slot
+    if re.match(r"Plan \d+ posts", clean, re.I):
+        return None
+    # Skip "Regenerate YYYY-MM-DD" planner commands
+    if re.match(r"Regenerate \d{4}-\d{2}-\d{2}", clean, re.I):
+        return None
+
+    # Fallback: use first line, up to 60 chars
+    fallback = clean.split("\n")[0].strip()
+    if len(fallback) > 60:
+        fallback = fallback[:57] + "..."
+    return fallback or None
+
 
 @router.post("/sessions/{session_id}/chat")
 async def chat(
@@ -96,6 +164,13 @@ async def chat(
             message = f"{context_block}\n\n{message}"
             import sys
             print(f"[CALENDAR] Injected context for plan {plan.id} ({plan.year}-{plan.month:02d}), {len(slots_data)} slots", file=sys.stderr, flush=True)
+
+    # Auto-title: keep trying on each message until we get something meaningful
+    if not session.title:
+        title = _generate_title(request.message, session.agent_type, brand.name)
+        if title:
+            session.title = title
+            await db.flush()
 
     # Get and compile agent graph with PostgreSQL checkpointer
     graph = get_agent_graph(session.agent_type)

@@ -60,3 +60,35 @@ class TestFormatResponse:
             "input_placeholder": "Enter your idea...",
         })
         assert result["input_placeholder"] == "Enter your idea..."
+
+    def test_campaign_post_type_merged_into_media(self):
+        result = format_response.invoke({
+            "message": "Post 1",
+            "media": {"image_path": "/generated/img.png"},
+            "campaign_post_date": "2026-04-03",
+            "campaign_post_caption": "Caption here",
+            "campaign_post_hashtags": "#test",
+            "campaign_post_type": "single_post",
+        })
+        assert result["media"]["campaign_post_date"] == "2026-04-03"
+        assert result["media"]["campaign_post_caption"] == "Caption here"
+        assert result["media"]["campaign_post_hashtags"] == "#test"
+        assert result["media"]["campaign_post_type"] == "single_post"
+
+    def test_campaign_post_type_motion_graphics(self):
+        result = format_response.invoke({
+            "message": "Video post",
+            "media": {"video_path": "/generated/video.mp4"},
+            "campaign_post_date": "2026-04-04",
+            "campaign_post_type": "motion_graphics",
+        })
+        assert result["media"]["video_path"] == "/generated/video.mp4"
+        assert result["media"]["campaign_post_type"] == "motion_graphics"
+
+    def test_campaign_post_type_without_date_not_merged(self):
+        """campaign_post_type requires campaign_post_date to trigger merge."""
+        result = format_response.invoke({
+            "message": "No date",
+            "campaign_post_type": "single_post",
+        })
+        assert "media" not in result

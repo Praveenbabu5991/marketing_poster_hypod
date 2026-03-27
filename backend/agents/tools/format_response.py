@@ -21,6 +21,7 @@ def format_response(
     campaign_post_date: Optional[str] = None,
     campaign_post_caption: Optional[str] = None,
     campaign_post_hashtags: Optional[str] = None,
+    campaign_post_type: Optional[str] = None,
 ) -> dict:
     """Build an interactive response for the UI.
 
@@ -48,6 +49,8 @@ def format_response(
             Automatically merged into media.
         campaign_post_hashtags: (Calendar-mode campaigns only) Hashtags string.
             Automatically merged into media.
+        campaign_post_type: (Calendar-mode campaigns only) Content type for this post,
+            e.g. "single_post", "carousel", "motion_graphics". Merged into media.
     """
     result = {
         "type": "interactive_response",
@@ -88,5 +91,7 @@ def format_response(
             result["media"]["campaign_post_caption"] = campaign_post_caption
         if campaign_post_hashtags:
             result["media"]["campaign_post_hashtags"] = campaign_post_hashtags
+        if campaign_post_type:
+            result["media"]["campaign_post_type"] = campaign_post_type
 
     return result

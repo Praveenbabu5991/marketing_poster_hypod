@@ -5,6 +5,7 @@ from langchain_core.language_models import BaseChatModel
 from agents.base import build_agent_graph
 from agents.campaign.prompts import CAMPAIGN_PROMPT
 from agents.tools.image_gen import generate_image, edit_image
+from agents.tools.video_gen import generate_video
 from agents.tools.caption import write_caption
 from agents.tools.hashtag import generate_hashtags
 from agents.tools.format_response import format_response
@@ -15,6 +16,7 @@ from agents.tools.calendar import get_upcoming_events
 CAMPAIGN_TOOLS = [
     generate_image,
     edit_image,
+    generate_video,
     write_caption,
     generate_hashtags,
     format_response,

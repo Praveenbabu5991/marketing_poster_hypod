@@ -102,15 +102,30 @@ async def get_slots(db: AsyncSession, plan_id: UUID) -> list[CalendarSlot]:
 async def save_slots_from_agent(
     db: AsyncSession, plan_id: UUID, slots_data: list[CalendarSlotData]
 ) -> list[CalendarSlot]:
-    """Bulk create CalendarSlots from agent output, replacing existing slots."""
-    # Delete existing slots for this plan
+    """Bulk create CalendarSlots from agent output, replacing existing planner slots.
+
+    Campaign slots (those with a session_id and status 'generated' or 'generating')
+    are preserved — only non-campaign slots are deleted and replaced.
+    """
     existing = await get_slots(db, plan_id)
+
+    # Separate campaign slots (preserve) from planner slots (replace)
+    campaign_statuses = {"generated", "generating"}
+    kept_slots = []
+    kept_dates: set[str] = set()
     for slot in existing:
-        await db.delete(slot)
+        if slot.session_id and slot.status in campaign_statuses:
+            kept_slots.append(slot)
+            kept_dates.add(slot.slot_date.isoformat())
+        else:
+            await db.delete(slot)
     await db.flush()
 
-    new_slots = []
+    new_slots = list(kept_slots)
     for s in slots_data:
+        # Skip dates already occupied by campaign slots
+        if s.date in kept_dates:
+            continue
         slot = CalendarSlot(
             plan_id=plan_id,
             slot_date=date.fromisoformat(s.date),
