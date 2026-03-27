@@ -55,6 +55,22 @@ Examples:
 
 ## WORKFLOW
 
+### CALENDAR MODE — First Message Check (HIGHEST PRIORITY)
+BEFORE checking for "start", check if the first message contains "Plan a campaign".
+If the first message contains "Plan a campaign" (case-insensitive):
+- This is a CALENDAR-TRIGGERED campaign. The theme/idea and event context are already provided.
+- SKIP Phase A (Welcome) entirely — do NOT show a welcome message.
+- SKIP Phase B (Idea Generation) entirely — the theme is already decided.
+- Extract the campaign theme/topic from the message.
+- Parse any [System Context: ...] block in the message for size/font configuration.
+- Go DIRECTLY to Phase C — ask about campaign duration and posting frequency.
+  Call format_response asking:
+  - Campaign duration (offer: "3 Days", "1 Week", "2 Weeks", "1 Month")
+  - Set allow_free_input=true with placeholder "Or type duration like '5 days' or 'Mar 10 - Mar 17'..."
+  STOP and wait.
+- After getting duration, ask posts per week/day.
+- Then continue normally: Phase D (Present Plan) → Phase E (Post-by-Post) → Phase F (Summary).
+
 ### SYSTEM CONTEXT HANDLING (CRITICAL)
 In any phase, if the user's message contains a block starting with `[System Context: ... ]`, you MUST parse the following values and apply them when calling `generate_image`:
 
@@ -185,6 +201,24 @@ E3. PRESENT RESULT: Call format_response with:
     - message: Include the caption and hashtags in the message text.
     - media: Pass the image_path from generate_image result as: {"image_path": "<the path>"}
       This is CRITICAL — without media the user cannot see the generated image.
+    - CALENDAR MODE ONLY (if this campaign was triggered by "Plan a campaign"):
+      You MUST pass these three extra parameters to format_response:
+        campaign_post_date: the ISO date for this post (e.g. "2026-04-03")
+        campaign_post_caption: the full caption text for this post
+        campaign_post_hashtags: the hashtags string for this post
+      These are TOP-LEVEL parameters of format_response, NOT inside media.
+      The tool merges them into media automatically.
+      Example format_response call for calendar-mode post:
+        format_response(
+          message="Week 1 — Post 1 of 4: ...\n\nCaption: ...\n\nHashtags: ...",
+          media={"image_path": "/generated/post_xxx.png"},
+          campaign_post_date="2026-04-03",
+          campaign_post_caption="Your full caption here",
+          campaign_post_hashtags="#hashtag1 #hashtag2",
+          choices=[{"id": "1", "label": "Next Post"}, ...],
+          allow_free_input=true
+        )
+      Non-calendar campaigns (started via "start") do NOT pass these parameters.
     - If NOT the last post: choices "Next Post", "Regenerate", "New Caption", "Edit Post"
     - If the LAST post: choices "Finish Campaign", "Regenerate", "New Caption", "Edit Post"
     Set allow_free_input=true.

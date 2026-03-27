@@ -18,6 +18,9 @@ def format_response(
     allow_free_input: bool = True,
     input_placeholder: str = "Or type your own...",
     media: Optional[dict] = None,
+    campaign_post_date: Optional[str] = None,
+    campaign_post_caption: Optional[str] = None,
+    campaign_post_hashtags: Optional[str] = None,
 ) -> dict:
     """Build an interactive response for the UI.
 
@@ -39,6 +42,12 @@ def format_response(
         media: Media object to display:
             {"image_path": "/path/to/image.png"} or
             {"video_path": "/path/to/video.mp4"}
+        campaign_post_date: (Calendar-mode campaigns only) ISO date for this post,
+            e.g. "2026-04-03". Automatically merged into media.
+        campaign_post_caption: (Calendar-mode campaigns only) Full caption text.
+            Automatically merged into media.
+        campaign_post_hashtags: (Calendar-mode campaigns only) Hashtags string.
+            Automatically merged into media.
     """
     result = {
         "type": "interactive_response",
@@ -69,5 +78,15 @@ def format_response(
                 media = None
         if media:
             result["media"] = media
+
+    # Auto-inject campaign fields into media when provided
+    if campaign_post_date:
+        if "media" not in result:
+            result["media"] = {}
+        result["media"]["campaign_post_date"] = campaign_post_date
+        if campaign_post_caption:
+            result["media"]["campaign_post_caption"] = campaign_post_caption
+        if campaign_post_hashtags:
+            result["media"]["campaign_post_hashtags"] = campaign_post_hashtags
 
     return result

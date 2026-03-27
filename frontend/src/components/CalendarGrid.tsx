@@ -136,6 +136,13 @@ export function CalendarGrid({
                 {day}
               </span>
 
+              {/* "+" hint on empty days */}
+              {!slot && (
+                <span className="absolute inset-0 flex items-center justify-center text-text-muted opacity-0 group-hover:opacity-40 transition-opacity text-2xl font-light pointer-events-none">
+                  +
+                </span>
+              )}
+
               {/* Slot indicator */}
               {slot && (
                 <div

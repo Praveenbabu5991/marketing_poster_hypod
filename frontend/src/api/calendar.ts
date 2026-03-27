@@ -33,6 +33,28 @@ export function updatePlanSession(planId: string, plannerSessionId: string): Pro
   });
 }
 
+export function addSlot(
+  planId: string,
+  data: {
+    date: string;
+    event_name?: string;
+    event_type?: string;
+    post_idea?: string;
+    post_type?: string;
+    posting_time?: string;
+    status?: string;
+    session_id?: string;
+    generated_image?: string;
+    caption?: string;
+    hashtags?: string;
+  },
+): Promise<CalendarSlot> {
+  return fetchApi(`/api/v1/calendar/plans/${planId}/slots/add`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
 export function createSlotContent(slotId: string): Promise<CreateContentResponse> {
   return fetchApi(`/api/v1/calendar/slots/${slotId}/create-content`, {
     method: 'POST',

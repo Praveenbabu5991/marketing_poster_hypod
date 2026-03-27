@@ -51,6 +51,8 @@ export interface Session {
   title: string | null;
   created_at: string;
   updated_at: string;
+  calendar_slot_date: string | null;
+  calendar_slot_event: string | null;
 }
 
 export interface SessionCreate {
@@ -80,6 +82,9 @@ export interface InteractiveResponse {
   media?: {
     image_path?: string;
     video_path?: string;
+    campaign_post_date?: string;
+    campaign_post_caption?: string;
+    campaign_post_hashtags?: string;
   };
 }
 
@@ -194,6 +199,7 @@ export interface CalendarSlotUpdate {
   post_type?: string;
   posting_time?: string;
   status?: string;
+  metadata_json?: Record<string, unknown>;
 }
 
 export interface CreateContentResponse {

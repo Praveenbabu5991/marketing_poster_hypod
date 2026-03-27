@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.calendar import CalendarPlan, CalendarSlot
-from app.schemas.calendar import CalendarPlanUpdate, CalendarSlotData, CalendarSlotUpdate
+from app.schemas.calendar import AddSlotRequest, CalendarPlanUpdate, CalendarSlotData, CalendarSlotUpdate
 
 
 async def get_or_create_plan(
@@ -147,6 +147,73 @@ async def update_slot(
     for key, value in update_data.items():
         setattr(slot, key, value)
     slot.updated_at = datetime.now(timezone.utc)
+    await db.flush()
+    await db.refresh(slot)
+    return slot
+
+
+async def add_slot(
+    db: AsyncSession, plan_id: UUID, user_id: UUID, data: AddSlotRequest
+) -> CalendarSlot | None:
+    """Add or update a single slot by date (upsert). Does NOT delete other slots."""
+    # Verify user owns the plan
+    plan_result = await db.execute(
+        select(CalendarPlan).where(CalendarPlan.id == plan_id, CalendarPlan.user_id == user_id)
+    )
+    plan = plan_result.scalar_one_or_none()
+    if not plan:
+        return None
+
+    slot_date = date.fromisoformat(data.date)
+
+    # Check if slot already exists for this date
+    result = await db.execute(
+        select(CalendarSlot).where(
+            CalendarSlot.plan_id == plan_id,
+            CalendarSlot.slot_date == slot_date,
+        )
+    )
+    slot = result.scalar_one_or_none()
+
+    if slot:
+        # Update existing slot
+        slot.event_name = data.event_name or slot.event_name
+        slot.event_type = data.event_type or slot.event_type
+        slot.post_idea = data.post_idea or slot.post_idea
+        slot.post_type = data.post_type or slot.post_type
+        slot.posting_time = data.posting_time or slot.posting_time
+        slot.status = data.status
+        if data.session_id:
+            slot.session_id = uuid.UUID(data.session_id)
+        if data.generated_image:
+            slot.generated_image = data.generated_image
+        if data.caption:
+            slot.caption = data.caption
+        if data.hashtags:
+            slot.hashtags = data.hashtags
+        slot.updated_at = datetime.now(timezone.utc)
+    else:
+        # Create new slot
+        slot = CalendarSlot(
+            plan_id=plan_id,
+            slot_date=slot_date,
+            event_name=data.event_name,
+            event_type=data.event_type,
+            post_idea=data.post_idea,
+            post_type=data.post_type,
+            posting_time=data.posting_time,
+            status=data.status,
+        )
+        if data.session_id:
+            slot.session_id = uuid.UUID(data.session_id)
+        if data.generated_image:
+            slot.generated_image = data.generated_image
+        if data.caption:
+            slot.caption = data.caption
+        if data.hashtags:
+            slot.hashtags = data.hashtags
+        db.add(slot)
+
     await db.flush()
     await db.refresh(slot)
     return slot

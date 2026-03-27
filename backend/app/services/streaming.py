@@ -139,7 +139,8 @@ async def stream_agent(
                             pass
 
                     has_media = bool(isinstance(content, dict) and content.get("media"))
-                    print(f"[SSE] interactive event has_media={has_media}", file=sys.stderr, flush=True)
+                    campaign_date = content.get("media", {}).get("campaign_post_date") if isinstance(content, dict) else None
+                    print(f"[SSE] interactive event has_media={has_media} campaign_date={campaign_date}", file=sys.stderr, flush=True)
                     yield _sse_event({
                         "type": "interactive",
                         "content": content,

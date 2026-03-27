@@ -24,6 +24,7 @@ class CalendarSlotUpdate(BaseModel):
     post_type: Optional[str] = None
     posting_time: Optional[str] = None
     status: Optional[str] = None
+    metadata_json: Optional[dict] = None
 
 
 class CalendarSlotResponse(BaseModel):
@@ -69,6 +70,21 @@ class CalendarPlanUpdate(BaseModel):
 class SaveSlotsRequest(BaseModel):
     """Request body for saving AI-generated slots to a plan."""
     slots: list[CalendarSlotData]
+
+
+class AddSlotRequest(BaseModel):
+    """Request body for adding/upserting a single slot by date."""
+    date: str  # ISO date string
+    event_name: str = ""
+    event_type: str = "regular"
+    post_idea: str = ""
+    post_type: str = "single_post"
+    posting_time: Optional[str] = None
+    status: str = "suggested"
+    session_id: Optional[str] = None
+    generated_image: Optional[str] = None
+    caption: Optional[str] = None
+    hashtags: Optional[str] = None
 
 
 class CreateContentRequest(BaseModel):

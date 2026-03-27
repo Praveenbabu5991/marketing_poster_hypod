@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.schemas.calendar import (
+    AddSlotRequest,
     CalendarPlanResponse,
     CalendarPlanUpdate,
     CalendarSlotResponse,
@@ -101,6 +102,20 @@ async def list_slots(
     return [CalendarSlotResponse.model_validate(s) for s in slots]
 
 
+@router.post("/plans/{plan_id}/slots/add", response_model=CalendarSlotResponse)
+async def add_slot(
+    plan_id: UUID,
+    data: AddSlotRequest,
+    user: UserDetails = Depends(require_authenticated_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Add or update a single slot by date (upsert). Does NOT delete other slots."""
+    slot = await calendar_service.add_slot(db, plan_id, user.user_id, data)
+    if not slot:
+        raise HTTPException(status_code=404, detail="Plan not found")
+    return CalendarSlotResponse.model_validate(slot)
+
+
 @router.patch("/slots/{slot_id}", response_model=CalendarSlotResponse)
 async def update_slot(
     slot_id: UUID,
@@ -144,6 +159,9 @@ async def create_content_for_slot(
 
     # Link session to slot
     await calendar_service.link_session_to_slot(db, slot_id, session.id)
+
+    # Commit so the chat endpoint (which opens a new DB session) sees the slot+session link
+    await db.commit()
 
     return {
         "session_id": str(session.id),

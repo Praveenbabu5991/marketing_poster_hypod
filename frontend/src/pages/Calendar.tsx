@@ -2,10 +2,12 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 import { useChat } from '../hooks/useChat';
-import { getPlan, saveSlots, updateSlot, createSlotContent, updatePlanSession } from '../api/calendar';
+import { uploadProductImage, updateBrand } from '../api/brands';
+import { getPlan, saveSlots, addSlot, updateSlot, createSlotContent, updatePlanSession } from '../api/calendar';
 import { createSession } from '../api/sessions';
 import { CalendarGrid } from '../components/CalendarGrid';
-import { CalendarPopover } from '../components/CalendarPopover';
+import { CalendarPopover, type SlotConfig } from '../components/CalendarPopover';
+import { AddSlotPopover, type AddSlotData } from '../components/AddSlotPopover';
 import { CalendarSidebar } from '../components/CalendarSidebar';
 import type { Brand, CalendarPlan, CalendarSlot, CalendarSlotUpdate } from '../types';
 
@@ -27,7 +29,7 @@ type SidebarMode = 'planner' | 'content';
 
 export function Calendar() {
   const { selectedBrandId } = useStore();
-  const { brands, refreshSessions } = useOutletContext<{ brands: Brand[]; refreshSessions: () => void }>();
+  const { brands, refreshBrands, refreshSessions } = useOutletContext<{ brands: Brand[]; refreshBrands: () => void; refreshSessions: () => void }>();
   const selectedBrand = brands.find((b) => b.id === selectedBrandId);
 
   const now = new Date();
@@ -35,6 +37,7 @@ export function Calendar() {
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [plan, setPlan] = useState<CalendarPlan | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<CalendarSlot | null>(null);
+  const [addSlotDate, setAddSlotDate] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const [sidebarMode, setSidebarMode] = useState<SidebarMode>('planner');
@@ -49,6 +52,9 @@ export function Calendar() {
   // Gate flags: only true during active generation, NOT when restoring history
   const expectingPlanRef = useRef(false);
   const expectingContentRef = useRef(false);
+
+  // Track processed campaign post dates to avoid duplicate slot creation
+  const processedCampaignDatesRef = useRef<Set<string>>(new Set());
 
   // Fetch plan when brand/month changes — full reset
   useEffect(() => {
@@ -65,6 +71,7 @@ export function Calendar() {
     setSelectedSlot(null);
     expectingPlanRef.current = false;
     expectingContentRef.current = false;
+    processedCampaignDatesRef.current = new Set();
     setSidebarMode('planner');
 
     setLoading(true);
@@ -124,52 +131,119 @@ export function Calendar() {
     }
   }, [messages, plan, sidebarMode]);
 
-  // Watch for generated content (content mode) — persist image to DB
+  // Watch for campaign posts — detect campaign_post_date in any interactive message
+  // and create calendar slots. Scans forward through ALL messages, independent of
+  // expectingContentRef (which is only for single-slot content).
+  useEffect(() => {
+    if (sidebarMode !== 'content' || !plan || !activeSessionId) return;
+
+    for (const msg of messages) {
+      const media = msg.interactive?.media;
+      if (!media?.image_path || !media.campaign_post_date) continue;
+
+      const postDate = media.campaign_post_date;
+      if (processedCampaignDatesRef.current.has(postDate)) continue;
+      processedCampaignDatesRef.current.add(postDate);
+
+      const imagePath = media.image_path;
+      const caption = media.campaign_post_caption || '';
+      const hashtags = media.campaign_post_hashtags || '';
+
+      addSlot(plan.id, {
+        date: postDate,
+        status: 'generated',
+        session_id: activeSessionId,
+        generated_image: imagePath,
+        caption,
+        hashtags,
+        post_type: 'campaign',
+      })
+        .then((saved) => {
+          setPlan((prev) => {
+            if (!prev) return prev;
+            const exists = prev.slots.some((s) => s.slot_date === postDate);
+            return {
+              ...prev,
+              slots: exists
+                ? prev.slots.map((s) => (s.slot_date === postDate ? saved : s))
+                : [...prev.slots, saved],
+            };
+          });
+        })
+        .catch(console.error);
+    }
+  }, [messages, sidebarMode, plan, activeSessionId]);
+
+  // Watch for regular (non-campaign) generated content — persist image to DB
   // Only processes when expectingContentRef is true (active generation)
   useEffect(() => {
     if (sidebarMode !== 'content' || !contentSlotId) return;
-    if (!expectingContentRef.current) return; // Skip when restoring history
+    if (!expectingContentRef.current) return;
 
     for (let i = messages.length - 1; i >= 0; i--) {
       const msg = messages[i];
-      if (msg.interactive?.media?.image_path) {
-        expectingContentRef.current = false; // Done — don't re-process
+      const media = msg.interactive?.media;
+      if (!media?.image_path) continue;
 
-        const imagePath = msg.interactive.media.image_path;
+      // Skip campaign posts — handled by the separate campaign watcher
+      if (media.campaign_post_date) continue;
 
-        // Persist to DB via PATCH
-        updateSlot(contentSlotId, { status: 'generated' })
-          .then((updated) => {
-            setPlan((prev) => {
-              if (!prev) return prev;
-              return {
-                ...prev,
-                slots: prev.slots.map((s) =>
-                  s.id === contentSlotId
-                    ? { ...s, ...updated, generated_image: imagePath }
-                    : s
-                ),
-              };
-            });
-          })
-          .catch(console.error);
+      expectingContentRef.current = false;
+      const imagePath = media.image_path;
 
-        // Also update local state immediately for responsiveness
-        setPlan((prev) => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            slots: prev.slots.map((s) =>
-              s.id === contentSlotId
-                ? { ...s, status: 'generated', generated_image: imagePath }
-                : s
-            ),
-          };
-        });
-        break;
-      }
+      updateSlot(contentSlotId, { status: 'generated' })
+        .then((updated) => {
+          setPlan((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              slots: prev.slots.map((s) =>
+                s.id === contentSlotId
+                  ? { ...s, ...updated, generated_image: imagePath }
+                  : s
+              ),
+            };
+          });
+        })
+        .catch(console.error);
+
+      // Immediate local update for responsiveness
+      setPlan((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          slots: prev.slots.map((s) =>
+            s.id === contentSlotId
+              ? { ...s, status: 'generated', generated_image: imagePath }
+              : s
+          ),
+        };
+      });
+      break;
     }
   }, [messages, sidebarMode, contentSlotId]);
+
+  async function handleAddSlot(data: AddSlotData) {
+    if (!plan) return;
+    const date = addSlotDate;
+    if (!date) return;
+    setAddSlotDate(null);
+    try {
+      const saved = await addSlot(plan.id, { date, ...data, status: 'suggested' });
+      setPlan((prev) => {
+        if (!prev) return prev;
+        const exists = prev.slots.some((s) => s.slot_date === date);
+        return {
+          ...prev,
+          slots: exists
+            ? prev.slots.map((s) => (s.slot_date === date ? saved : s))
+            : [...prev.slots, saved],
+        };
+      });
+    } catch (err) {
+      console.error('Failed to add slot:', err);
+    }
+  }
 
   function handlePrevMonth() {
     if (month === 1) { setYear(year - 1); setMonth(12); }
@@ -206,7 +280,7 @@ export function Calendar() {
   }
 
   // Generate content for a slot — stays on calendar, uses sidebar
-  async function handleGenerateContent(slotId: string) {
+  async function handleGenerateContent(slotId: string, config?: SlotConfig) {
     if (!selectedBrandId || streaming) return;
 
     const slot = plan?.slots.find((s) => s.id === slotId);
@@ -235,7 +309,29 @@ export function Calendar() {
 
       const idea = slot.post_idea || slot.event_name || 'a branded post';
       const eventContext = slot.event_name ? ` for ${slot.event_name} on ${slot.slot_date}` : '';
-      pendingMessageRef.current = `Create this specific post${eventContext}: ${idea}. Skip the suggestion phase — go straight to writing the image prompt and showing it for approval.`;
+
+      // Build config instructions
+      let configInstructions = '';
+      if (config?.image_size) configInstructions += ` Image size: ${config.image_size}.`;
+      if (config?.font_style) configInstructions += ` Font style: ${config.font_style}.`;
+      if (config?.aspect_ratio) configInstructions += ` Aspect ratio: ${config.aspect_ratio}.`;
+      if (config?.duration) configInstructions += ` Duration: ${config.duration} seconds.`;
+
+      // Build System Context block for agents that parse it (size/font/aspect_ratio)
+      const systemContext = configInstructions.trim()
+        ? ` [System Context:${configInstructions}]`
+        : '';
+
+      // Sales poster: tell it to skip interactive phases and use product images from brand context
+      if (result.agent_type === 'sales_poster') {
+        pendingMessageRef.current = `Create a sales poster${eventContext}: ${idea}. Use the product images from the brand context. Skip the welcome and product info phases — go directly to choosing a headline, then show the image prompt for approval.${systemContext}`;
+      } else if (result.agent_type === 'product_video') {
+        pendingMessageRef.current = `Create a product video${eventContext}: ${idea}. Use the product images from the brand context. Skip the suggestion phase — go straight to creating the video.${systemContext}`;
+      } else if (result.agent_type === 'campaign') {
+        pendingMessageRef.current = `Plan a campaign${eventContext}: ${idea}. Ask me about campaign duration, posting frequency, and content mix before generating any content.${systemContext}`;
+      } else {
+        pendingMessageRef.current = `Create this specific post${eventContext}: ${idea}. Skip the suggestion phase — go straight to writing the image prompt and showing it for approval.${configInstructions}`;
+      }
       setActiveSessionId(result.session_id);
     } catch (err) {
       expectingContentRef.current = false;
@@ -275,14 +371,60 @@ export function Calendar() {
     [activeSessionId, sendMessage],
   );
 
-  async function handleApproveAndGenerate(slotId: string) {
+  async function handleApproveAndGenerate(slotId: string, config?: SlotConfig) {
     if (!selectedBrandId || streaming) return;
     try {
-      await handleSlotUpdate(slotId, { status: 'approved' });
+      // Save config to metadata_json if provided
+      const updateData: CalendarSlotUpdate = { status: 'approved' };
+      if (config && Object.keys(config).length > 0) {
+        updateData.metadata_json = config as Record<string, unknown>;
+      }
+      await handleSlotUpdate(slotId, updateData);
       setSelectedSlot(null);
-      await handleGenerateContent(slotId);
+      await handleGenerateContent(slotId, config);
     } catch (err) {
       console.error('Failed to approve and generate:', err);
+    }
+  }
+
+  // Regenerate a single slot's idea via the planner
+  function handleRegenerateSlot(slot: CalendarSlot) {
+    setSelectedSlot(null);
+
+    // Switch to planner mode if needed
+    if (sidebarMode !== 'planner') {
+      expectingContentRef.current = false;
+      setSidebarMode('planner');
+      setContentSlotId(null);
+    }
+
+    // If no planner session exists, can't regenerate a single slot — need full plan first
+    if (!plannerSessionRef.current) {
+      triggerPlanGeneration();
+      return;
+    }
+
+    // Ensure planner session is active
+    setActiveSessionId(plannerSessionRef.current);
+
+    // Enable the plan watcher so the updated plan gets saved
+    expectingPlanRef.current = true;
+
+    const eventName = slot.event_name || 'the post';
+    const dateStr = slot.slot_date;
+    sendMessage(
+      `Change the idea for the slot on ${dateStr} (${eventName}). Suggest a completely different, fresh concept for this date. Keep the same date and event_type. Return the full updated calendar_plan with all slots.`
+    );
+  }
+
+  async function handleUploadProductImage(file: File) {
+    if (!selectedBrandId) return;
+    try {
+      const result = await uploadProductImage(file);
+      await updateBrand(selectedBrandId, { product_images: [result.image_path] });
+      refreshBrands();
+    } catch (err) {
+      console.error('Failed to upload product image:', err);
     }
   }
 
@@ -371,7 +513,7 @@ export function Calendar() {
             onPrevMonth={handlePrevMonth}
             onNextMonth={handleNextMonth}
             onSlotClick={setSelectedSlot}
-            onEmptyDayClick={() => {}}
+            onEmptyDayClick={setAddSlotDate}
           />
         )}
       </div>
@@ -384,6 +526,18 @@ export function Calendar() {
           onUpdate={handleSlotUpdate}
           onApproveAndGenerate={handleApproveAndGenerate}
           onViewSession={handleViewSlotSession}
+          onRegenerate={handleRegenerateSlot}
+          hasProductImages={(selectedBrand?.product_images?.length ?? 0) > 0}
+          onUploadProductImage={handleUploadProductImage}
+        />
+      )}
+
+      {/* Add Slot Popover */}
+      {addSlotDate && (
+        <AddSlotPopover
+          date={addSlotDate}
+          onSubmit={handleAddSlot}
+          onClose={() => setAddSlotDate(null)}
         />
       )}
     </div>
