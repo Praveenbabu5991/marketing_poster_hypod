@@ -165,7 +165,9 @@ If the user types a free-text idea/topic (e.g., "ugadi", "summer sale") instead 
      Example: "The scene is bathed in warm coral (#FF6B6B) lighting, with deep navy
      (#1A1B2E) shadows and accent elements in soft gold (#DAA520)."
      Describe colors in props, clothing, backgrounds, lighting gels, set design.
-     - NEVER ask the video model to spell the brand name or any text. Video models cannot spell and will create gibberish. Rely solely on the logo reference image for branding.
+     - NEVER include the brand name in the video prompt. Do NOT write "H&M" or "Nike" —
+       describe scenes generically. Brand names trigger safety filters and Veo cannot render text.
+       The logo is added automatically as a reference image.
      - Describe the brand logo (as a shape/symbol) appearing naturally in the scene context. DO NOT ask for the brand name to be written.   - Keep visual prompt 50-175 words.
 
 2. Call format_response showing the video prompt, the generated audio script, and settings.
