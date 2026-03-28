@@ -9,6 +9,7 @@ Supports two mutually exclusive modes:
 import io
 import logging
 import os
+import subprocess
 import uuid
 import time
 from datetime import datetime
@@ -88,6 +89,39 @@ def _composite_logo_onto_image(source_image: Image.Image, logo_path: str, brand_
         pass
 
     return source_image
+
+
+def _get_media_duration(path: str) -> float:
+    """Get duration of a media file in seconds using ffprobe."""
+    try:
+        result = subprocess.run(
+            ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+             "-of", "default=noprint_wrappers=1:nokey=1", path],
+            capture_output=True, text=True
+        )
+        return float(result.stdout.strip()) if result.stdout.strip() else 0.0
+    except Exception:
+        return 0.0
+
+
+def _build_atempo_chain(ratio: float) -> str:
+    """Build chained atempo filters for ffmpeg.
+
+    atempo only supports 0.5-2.0 per filter. For ratios outside this range,
+    chain multiple filters (e.g., 3.0 → atempo=2.0,atempo=1.5).
+    """
+    if ratio <= 0:
+        return "atempo=1.0"
+    filters = []
+    remaining = ratio
+    while remaining > 2.0:
+        filters.append("atempo=2.0")
+        remaining /= 2.0
+    while remaining < 0.5:
+        filters.append("atempo=0.5")
+        remaining /= 0.5
+    filters.append(f"atempo={remaining:.4f}")
+    return ",".join(filters)
 
 
 def _generate_single_video(
@@ -184,13 +218,26 @@ def _generate_single_video(
                 "on packaging, signage, clothing, or as a natural element in the environment."
             )
 
+        # Anatomy & physics constraints (tool-level enforcement, not just LLM guidelines)
+        brand_narrative.append(
+            "ANATOMICAL CONSTRAINT: Show only one pair of normal human hands with exactly five fingers each. "
+            "Never generate extra hands, floating hands, disembodied limbs, or merging limbs. "
+            "Restrict to ONE single simple action per shot — only holding OR only pouring OR only applying. "
+            "Never combine multiple hand actions (e.g., never show opening AND squeezing AND applying in one shot)."
+        )
+        brand_narrative.append(
+            "PHYSICS CONSTRAINT: Maintain stable, consistent geometry, lighting, and proportions throughout. "
+            "No morphing, warping, or scale changes on the product or human subject. "
+            "Background must remain stable and fixed. All object interactions must follow real-world physics — "
+            "caps open from the top, lids lift upward, products stay grounded on surfaces."
+        )
         brand_narrative.append("Tell a good story based on the visual elements, creating a compelling narrative arc.")
 
         enhanced_prompt = prompt.rstrip()
         if brand_narrative:
             enhanced_prompt += " " + " ".join(brand_narrative)
 
-        base_negatives = "text, titles, captions, words, letters, watermarks, subtitles, extra hands, extra fingers, three hands, four hands, mutated limbs, merging limbs, floating objects, clipping, unrealistic physics, deformed, distorted, animated, cartoon, opening from bottom, broken physics, morphing, flickering, jitter, warped face, asymmetrical eyes, disembodied limbs, scale issues, changing proportions, shifting background"
+        base_negatives = "text, titles, captions, words, letters, watermarks, subtitles, misspelled text, garbled text, distorted labels, illegible text, wrong spelling, extra hands, extra fingers, three hands, four hands, six fingers, mutated hands, mutated limbs, merging limbs, overlapping hands, floating hands, floating objects, clipping, unrealistic physics, deformed, distorted, animated, cartoon, opening from bottom, broken physics, morphing, flickering, jitter, warped face, asymmetrical eyes, disembodied limbs, scale issues, changing proportions, shifting background, melting background, inconsistent lighting"
         if negative_prompt:
             full_negative = f"{negative_prompt}, {base_negatives}"
         else:
@@ -258,9 +305,24 @@ def _generate_single_video(
 
             if ref_images:
                 config_kwargs["reference_images"] = ref_images[:3]
+                # CRITICAL: negative_prompt API param is incompatible with reference_images.
+                # Append negatives to prompt text as "Avoid: ..."
+                # Use SAFE subset — words like "deformed", "mutated", "warped face" trigger
+                # Vertex AI's RAI safety filter when embedded in prompt text.
+                safe_negatives = (
+                    "text, titles, captions, words, letters, watermarks, subtitles, "
+                    "misspelled text, garbled labels, illegible text, wrong spelling, "
+                    "extra hands, extra fingers, three hands, four hands, six fingers, "
+                    "overlapping hands, floating hands, floating objects, "
+                    "unrealistic physics, animated, cartoon, opening from bottom, "
+                    "broken physics, morphing, flickering, jitter, "
+                    "scale issues, changing proportions, shifting background, "
+                    "melting background, inconsistent lighting"
+                )
                 if negative_prompt:
-                    enhanced_prompt += f"\nAvoid: {negative_prompt}"
-                    gen_kwargs["prompt"] = enhanced_prompt
+                    safe_negatives += f", {negative_prompt}"
+                enhanced_prompt += f"\nAvoid: {safe_negatives}"
+                gen_kwargs["prompt"] = enhanced_prompt
 
             mode = "text_to_video_with_refs"
 
@@ -270,10 +332,13 @@ def _generate_single_video(
 
         gen_kwargs["config"] = types.GenerateVideosConfig(**config_kwargs)
 
-        logger.info("[VIDEO] Starting generation mode=%s model=%s", mode, VIDEO_MODEL)
-        logger.info("[VIDEO] Prompt (first 200 chars): %s", enhanced_prompt[:200])
+        import sys as _sys
+        print(f"[VIDEO] Starting generation mode={mode} model={VIDEO_MODEL}", file=_sys.stderr, flush=True)
+        print(f"[VIDEO] Prompt (first 300 chars): {enhanced_prompt[:300]}", file=_sys.stderr, flush=True)
         if "reference_images" in config_kwargs:
-            logger.info("[VIDEO] Reference images: %d", len(config_kwargs["reference_images"]))
+            print(f"[VIDEO] Reference images: {len(config_kwargs['reference_images'])}", file=_sys.stderr, flush=True)
+        else:
+            print(f"[VIDEO] No reference images in config", file=_sys.stderr, flush=True)
 
         operation = client.models.generate_videos(**gen_kwargs)
         logger.info("[VIDEO] Operation received — done=%s name=%s",
@@ -320,10 +385,48 @@ def _generate_single_video(
         filename = f"video_{timestamp}_{video_id}.mp4"
         video_path = output_path / filename
 
-        client.files.download(file=video.video)
-        video.video.save(str(video_path))
+        # Download video — different methods for Developer vs Vertex AI clients
+        try:
+            client.files.download(file=video.video)
+            video.video.save(str(video_path))
+        except (ValueError, NotImplementedError):
+            # Vertex AI client doesn't support client.files.download()
+            # Try saving directly (video bytes may already be in the response)
+            video_data = getattr(video.video, 'video_bytes', None)
+            if video_data:
+                with open(video_path, 'wb') as f:
+                    f.write(video_data)
+                logger.info("[VIDEO] Saved via video_bytes (Vertex AI)")
+            else:
+                # Try the URI-based approach for Vertex AI
+                uri = getattr(video.video, 'uri', None)
+                if uri:
+                    logger.info("[VIDEO] Downloading from URI: %s", uri)
+                    if uri.startswith("gs://"):
+                        from google.cloud import storage as gcs_storage
+                        from app.config import GOOGLE_SERVICE_ACCOUNT_FILE
+                        from google.oauth2.service_account import Credentials as SACredentials
+                        creds = SACredentials.from_service_account_file(
+                            GOOGLE_SERVICE_ACCOUNT_FILE,
+                            scopes=["https://www.googleapis.com/auth/cloud-platform"],
+                        )
+                        gcs_client = gcs_storage.Client(credentials=creds)
+                        # Parse gs://bucket/path
+                        parts = uri.replace("gs://", "").split("/", 1)
+                        bucket = gcs_client.bucket(parts[0])
+                        blob = bucket.blob(parts[1])
+                        blob.download_to_filename(str(video_path))
+                        logger.info("[VIDEO] Downloaded from GCS")
+                    else:
+                        import urllib.request
+                        urllib.request.urlretrieve(uri, str(video_path))
+                        logger.info("[VIDEO] Downloaded from HTTP URI")
+                else:
+                    # Last resort: try save() directly
+                    video.video.save(str(video_path))
+                    logger.info("[VIDEO] Saved via direct save() call")
 
-        logger.info("[VIDEO] Success: %s", filename)
+        print(f"[VIDEO] Success: {filename} mode={mode}", file=_sys.stderr, flush=True)
         return {
             "status": "success",
             "video_path": str(video_path),
@@ -337,12 +440,11 @@ def _generate_single_video(
         }
 
     except Exception as e:
-        logger.error("[VIDEO] Generation failed: %s", str(e), exc_info=True)
+        import sys as _sys
+        import traceback
+        print(f"[VIDEO] Generation failed: {e}", file=_sys.stderr, flush=True)
+        traceback.print_exc(file=_sys.stderr)
         return {"status": "error", "message": f"Video generation failed: {str(e)[:300]}", "model": VIDEO_MODEL}
-
-import subprocess
-import tempfile
-from langchain_core.tools import tool
 
 @tool
 def generate_video(
@@ -420,21 +522,27 @@ def generate_video(
         
         if reference_image_paths:
             logger.info("[VIDEO] Generating part 2 (%ss) using Multi-Shot Mode A", part2_duration)
-            part2_prompt = prompt + " [CUT TO SHOT 2: Different dynamic camera angle, close-up hero shot of the product.]"
+            part2_prompt = (
+                prompt + " [SMOOTH CONTINUATION: The camera smoothly transitions to a closer angle "
+                "within the SAME scene and environment. Maintain identical lighting, color grading, "
+                "and subject positioning. The visual flow must feel like one continuous unbroken shot — "
+                "no jump cuts, no scene changes. Gradually push in for an intimate close-up of the product "
+                "with the human still present in frame.]"
+            )
             part2_res = _generate_single_video(
-                prompt=part2_prompt, 
-                image_path="", 
-                reference_image_paths=reference_image_paths, 
-                duration_seconds=part2_duration, 
+                prompt=part2_prompt,
+                image_path="",
+                reference_image_paths=reference_image_paths,
+                duration_seconds=part2_duration,
                 aspect_ratio=aspect_ratio,
-                logo_path=logo_path, 
-                brand_name=brand_name, 
-                brand_colors=brand_colors, 
-                company_overview=company_overview, 
+                logo_path=logo_path,
+                brand_name=brand_name,
+                brand_colors=brand_colors,
+                company_overview=company_overview,
                 target_audience=target_audience,
-                products_services=products_services, 
-                cta_text=cta_text, 
-                negative_prompt=negative_prompt, 
+                products_services=products_services,
+                cta_text=cta_text,
+                negative_prompt=negative_prompt,
                 output_dir=output_dir
             )
         else:
@@ -475,28 +583,57 @@ def generate_video(
             
         part2_video = part2_res["video_path"]
         
-        list_path = os.path.join(save_dir, f"list_{uuid.uuid4().hex[:8]}.txt")
-        with open(list_path, "w") as f:
-            f.write(f"file '{os.path.abspath(part1_video)}'\n")
-            f.write(f"file '{os.path.abspath(part2_video)}'\n")
-            
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         final_filename = f"video_{timestamp}_{uuid.uuid4().hex[:8]}.mp4"
         final_video = os.path.join(save_dir, final_filename)
-        
-        logger.info("[VIDEO] Concatenating %s and %s into %s", part1_video, part2_video, final_video)
+
+        # Use xfade crossfade filter (0.5s) for smooth transition between parts
+        crossfade_duration = 0.5
+        logger.info("[VIDEO] Joining %s + %s with %.1fs crossfade into %s",
+                     part1_video, part2_video, crossfade_duration, final_video)
         try:
+            # Get Part 1 duration for xfade offset
+            probe_result = subprocess.run(
+                ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                 "-of", "default=noprint_wrappers=1:nokey=1", part1_video],
+                capture_output=True, text=True
+            )
+            p1_dur = float(probe_result.stdout.strip()) if probe_result.stdout.strip() else float(part1_duration)
+            xfade_offset = max(0, p1_dur - crossfade_duration)
+
             subprocess.run([
-                "ffmpeg", "-f", "concat", "-safe", "0", "-i", list_path,
-                "-c", "copy", final_video, "-y"
+                "ffmpeg",
+                "-i", part1_video,
+                "-i", part2_video,
+                "-filter_complex",
+                f"[0:v][1:v]xfade=transition=fade:duration={crossfade_duration}:offset={xfade_offset},format=yuv420p[v]",
+                "-map", "[v]",
+                "-c:v", "libx264", "-preset", "fast", "-crf", "18",
+                final_video, "-y"
             ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except Exception as e:
-            logger.error("[VIDEO] Failed to concatenate videos: %s", e)
-            return {"status": "error", "message": f"Failed to concatenate videos: {e}"}
-            
+            # Fallback to simple concat if xfade fails
+            logger.warning("[VIDEO] Crossfade failed (%s), falling back to concat", e)
+            list_path = os.path.join(save_dir, f"list_{uuid.uuid4().hex[:8]}.txt")
+            with open(list_path, "w") as f:
+                f.write(f"file '{os.path.abspath(part1_video)}'\n")
+                f.write(f"file '{os.path.abspath(part2_video)}'\n")
+            try:
+                subprocess.run([
+                    "ffmpeg", "-f", "concat", "-safe", "0", "-i", list_path,
+                    "-c", "copy", final_video, "-y"
+                ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            except Exception as e2:
+                logger.error("[VIDEO] Concat also failed: %s", e2)
+                return {"status": "error", "message": f"Failed to join video parts: {e2}"}
+            finally:
+                try:
+                    os.remove(list_path)
+                except:
+                    pass
+
         try:
             if os.path.exists(last_frame_path): os.remove(last_frame_path)
-            if os.path.exists(list_path): os.remove(list_path)
         except:
             pass
             
@@ -515,36 +652,53 @@ def generate_video(
     if res.get("status") == "success" and audio_script:
         import uuid
         from datetime import datetime
-        
+
         _, _, GENERATED_DIR = _get_config()
         save_dir = output_dir or str(GENERATED_DIR)
-        
+
         video_path = res["video_path"]
         audio_path = os.path.join(save_dir, f"audio_{uuid.uuid4().hex[:8]}.mp3")
-        logger.info("[VIDEO] Generating audio for script...")
-        
+        logger.info("[VIDEO] Generating audio for script: %s", audio_script[:100])
+
         try:
-            # We assume edge-tts is in the venv
             edge_tts_bin = os.path.join(os.getcwd(), ".venv", "bin", "edge-tts")
             if not os.path.exists(edge_tts_bin):
-                # Fallback to global if venv not found
                 edge_tts_bin = "edge-tts"
-                
+
             subprocess.run([
-                edge_tts_bin, "--voice", "en-US-JennyNeural", "--text", audio_script, "--write-media", audio_path
+                edge_tts_bin, "--voice", "en-US-JennyNeural",
+                "--text", audio_script, "--write-media", audio_path
             ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            
+
             if os.path.exists(audio_path):
+                # Measure video and audio durations for sync
+                video_dur = _get_media_duration(video_path)
+                audio_dur = _get_media_duration(audio_path)
+                logger.info("[VIDEO] Duration — video=%.2fs audio=%.2fs", video_dur, audio_dur)
+
                 video_with_audio_path = os.path.join(save_dir, f"with_audio_{uuid.uuid4().hex[:8]}.mp4")
-                
-                # We use -shortest to ensure the video stops playing exactly when the audio finishes, 
-                # eliminating any awkward silence at the end of the clip.
-                subprocess.run([
-                    "ffmpeg", "-i", video_path, "-i", audio_path, 
-                    "-c:v", "copy", "-c:a", "aac", "-map", "0:v:0", "-map", "1:a:0",
-                    "-shortest", video_with_audio_path, "-y"
-                ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                
+
+                if video_dur > 0 and audio_dur > 0 and abs(video_dur - audio_dur) > 0.5:
+                    # Stretch/compress audio to match video duration using atempo filter
+                    tempo_ratio = audio_dur / video_dur
+                    # atempo only supports 0.5-2.0 range; chain filters for extreme ratios
+                    atempo_filters = _build_atempo_chain(tempo_ratio)
+                    logger.info("[VIDEO] Adjusting audio tempo: ratio=%.3f filters=%s", tempo_ratio, atempo_filters)
+
+                    subprocess.run([
+                        "ffmpeg", "-i", video_path, "-i", audio_path,
+                        "-c:v", "copy", "-filter:a", atempo_filters,
+                        "-c:a", "aac", "-map", "0:v:0", "-map", "1:a:0",
+                        video_with_audio_path, "-y"
+                    ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                else:
+                    # Durations close enough — merge directly
+                    subprocess.run([
+                        "ffmpeg", "-i", video_path, "-i", audio_path,
+                        "-c:v", "copy", "-c:a", "aac", "-map", "0:v:0", "-map", "1:a:0",
+                        "-shortest", video_with_audio_path, "-y"
+                    ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
                 if os.path.exists(video_with_audio_path):
                     try:
                         os.remove(video_path)
@@ -553,12 +707,12 @@ def generate_video(
                     res["video_path"] = video_with_audio_path
                     res["filename"] = os.path.basename(video_with_audio_path)
                     res["url"] = f"/generated/{res['filename']}"
-                
+
                 try:
                     os.remove(audio_path)
                 except:
                     pass
         except Exception as e:
             logger.error("[VIDEO] Failed to merge audio: %s", e)
-            
+
     return res

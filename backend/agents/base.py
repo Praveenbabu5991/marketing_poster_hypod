@@ -165,9 +165,12 @@ def build_agent_graph(
                             args["user_image_instructions"] = "Feature this product prominently as the visual anchor of the poster"
                     elif tc["name"] == "generate_video":
                         args = tc["args"]
+                        print(f"[TOOLS] generate_video args BEFORE injection: reference_image_paths='{args.get('reference_image_paths', '')}' logo_path='{args.get('logo_path', '')}' image_path='{args.get('image_path', '')}'", file=sys.stderr, flush=True)
                         if not args.get("reference_image_paths"):
                             args["reference_image_paths"] = ", ".join(product_images)
                             print(f"[TOOLS] Auto-injected reference_image_paths into generate_video: {args['reference_image_paths']}", file=sys.stderr, flush=True)
+                        else:
+                            print(f"[TOOLS] LLM already set reference_image_paths, skipping injection", file=sys.stderr, flush=True)
 
         return tool_node.invoke(state)
 
