@@ -162,7 +162,298 @@ def _overlay_logo_on_video(video_path: str, logo_path: str, output_path: str) ->
         return False
 
 
+
+def _get_api_keys():
+    from app.config import GOOGLE_API_KEY
+    runway_key = os.getenv("RUNWAY_API_KEY", "")
+    kling_key = os.getenv("KLING_API_KEY", "")
+    return GOOGLE_API_KEY, runway_key, kling_key
+
+def _generate_runway_video(
+    prompt: str,
+    image_path: str = "",
+    duration_seconds: int = 10,
+    aspect_ratio: str = "9:16",
+    output_dir: str = "",
+) -> dict:
+    _, RUNWAY_API_KEY, _ = _get_api_keys()
+    _, VIDEO_MODEL, GENERATED_DIR = _get_config()
+    save_dir = output_dir or str(GENERATED_DIR)
+    
+    if not RUNWAY_API_KEY:
+        return {"status": "error", "message": "RUNWAY_API_KEY not configured", "model": VIDEO_MODEL}
+        
+    import base64
+    import httpx
+    
+    clamped_duration = 10 if duration_seconds > 5 else 5
+    
+    headers = {
+        "Authorization": f"Bearer {RUNWAY_API_KEY}",
+        "X-Runway-Version": "2024-11-06"
+    }
+    
+    payload = {
+        "model": "gen3a_turbo",
+        "promptText": prompt,
+    }
+    
+    # Runway requires promptImage as a data URI
+    if image_path:
+        import mimetypes
+        from PIL import Image
+        import io
+        resolved_img = _resolve_image_path(image_path)
+        if os.path.exists(resolved_img):
+            mime_type, _ = mimetypes.guess_type(resolved_img)
+            mime_type = mime_type or "image/jpeg"
+            
+            target_size = (768, 1280) if aspect_ratio == "9:16" else (1280, 768) if aspect_ratio == "16:9" else (1024, 1024)
+            img = Image.open(resolved_img)
+            img_resized = img.resize(target_size, Image.LANCZOS)
+            
+            if img_resized.mode in ("RGBA", "LA", "P") and mime_type == "image/jpeg":
+                img_resized = img_resized.convert("RGB")
+                
+            buf = io.BytesIO()
+            if mime_type == "image/webp":
+                format_str = "WEBP"
+            elif "jpeg" in mime_type or "jpg" in mime_type:
+                format_str = "JPEG"
+            else:
+                format_str = "PNG"
+            
+            img_resized.save(buf, format=format_str)
+            b64 = base64.b64encode(buf.getvalue()).decode('utf-8')
+            
+            payload["promptImage"] = f"data:{mime_type};base64,{b64}"
+            
+    # For text-to-video, Runway requires ratio if no image
+    if not image_path:
+        ratio_map = {"9:16": "768:1280", "16:9": "1280:768", "1:1": "1024:1024"}
+        payload["ratio"] = ratio_map.get(aspect_ratio, "768:1280")
+        
+    try:
+        print(f"[RUNWAY] Starting task...", flush=True)
+        res = httpx.post("https://api.dev.runwayml.com/v1/image_to_video", json=payload, headers=headers, timeout=120.0)
+        if res.status_code != 200:
+            return {"status": "error", "message": f"Runway API Error: {res.text}", "model": VIDEO_MODEL}
+            
+        task_id = res.json().get("id")
+        
+        # Poll for completion
+        max_wait = 300
+        while max_wait > 0:
+            time.sleep(10)
+            max_wait -= 10
+            status_res = httpx.get(f"https://api.dev.runwayml.com/v1/tasks/{task_id}", headers=headers, timeout=120.0)
+            if status_res.status_code == 200:
+                status_data = status_res.json()
+                status = status_data.get("status")
+                if status == "SUCCEEDED":
+                    video_url = status_data.get("output", [])[0]
+                    
+                    # Download the video
+                    output_path = Path(save_dir)
+                    output_path.mkdir(parents=True, exist_ok=True)
+                    filename = f"runway_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{str(uuid.uuid4())[:8]}.mp4"
+                    video_path = output_path / filename
+                    
+                    vid_res = httpx.get(video_url, timeout=120.0)
+                    with open(video_path, 'wb') as f:
+                        f.write(vid_res.content)
+                        
+                    print(f"[RUNWAY] Success: {filename}", flush=True)
+                    return {
+                        "status": "success",
+                        "video_path": str(video_path),
+                        "filename": filename,
+                        "url": f"/generated/{filename}",
+                        "duration_seconds": clamped_duration,
+                        "model": "runwayml/gen3a-turbo"
+                    }
+                elif status in ["FAILED", "CANCELLED"]:
+                    return {"status": "error", "message": f"Runway Task {status}: {status_data.get('failure', 'Unknown')}", "model": VIDEO_MODEL}
+                    
+        return {"status": "timeout", "message": "Runway generation timed out", "model": VIDEO_MODEL}
+    except Exception as e:
+        return {"status": "error", "message": f"Runway integration error: {str(e)}", "model": VIDEO_MODEL}
+
+
+def _generate_kling_video(
+    prompt: str,
+    image_path: str = "",
+    duration_seconds: int = 10,
+    aspect_ratio: str = "9:16",
+    output_dir: str = "",
+) -> dict:
+    _, _, KLING_API_KEY = _get_api_keys()
+    _, VIDEO_MODEL, GENERATED_DIR = _get_config()
+    save_dir = output_dir or str(GENERATED_DIR)
+    
+    if not KLING_API_KEY:
+        return {"status": "error", "message": "KLING_API_KEY not configured", "model": VIDEO_MODEL}
+        
+    # Kling uses AK/SK separated by colon
+    if ":" not in KLING_API_KEY:
+        return {"status": "error", "message": "KLING_API_KEY must be format AccessKey:SecretKey", "model": VIDEO_MODEL}
+        
+    ak, sk = KLING_API_KEY.split(":", 1)
+    
+    import jwt
+    import httpx
+    import base64
+    
+    # Generate JWT for Kling
+    now = int(time.time())
+    headers = {"alg": "HS256", "typ": "JWT"}
+    payload = {"iss": ak, "exp": now + 1800, "nbf": now - 5}
+    token = jwt.encode(payload, sk, algorithm="HS256", headers=headers)
+    
+    clamped_duration = "10" if duration_seconds > 5 else "5"
+    ratio_map = {"9:16": "9:16", "16:9": "16:9", "1:1": "1:1"}
+    
+    req_headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
+    
+    if image_path:
+        endpoint = "https://open.klingai.com/v1/videos/image2video"
+        resolved_img = _resolve_image_path(image_path)
+        with open(resolved_img, "rb") as f:
+            b64 = base64.b64encode(f.read()).decode('utf-8')
+        payload_data = {
+            "model": "kling-v1",
+            "image": b64,
+            "prompt": prompt,
+            "duration": clamped_duration
+        }
+    else:
+        endpoint = "https://open.klingai.com/v1/videos/text2video"
+        payload_data = {
+            "model": "kling-v1",
+            "prompt": prompt,
+            "aspect_ratio": ratio_map.get(aspect_ratio, "9:16"),
+            "duration": clamped_duration
+        }
+        
+    try:
+        print(f"[KLING] Starting task...", flush=True)
+        res = httpx.post(endpoint, json=payload_data, headers=req_headers, timeout=120.0)
+        if res.status_code != 200:
+            return {"status": "error", "message": f"Kling API Error: {res.text}", "model": VIDEO_MODEL}
+            
+        task_id = res.json().get("data", {}).get("task_id")
+        if not task_id:
+            return {"status": "error", "message": f"Kling API Error: No task ID returned. {res.text}", "model": VIDEO_MODEL}
+            
+        # Poll for completion
+        max_wait = 300
+        while max_wait > 0:
+            time.sleep(10)
+            max_wait -= 10
+            # Token might expire if polling takes >30min, regenerate if needed
+            now = int(time.time())
+            poll_token = jwt.encode({"iss": ak, "exp": now + 1800, "nbf": now - 5}, sk, algorithm="HS256", headers={"alg": "HS256", "typ": "JWT"})
+            poll_headers = {"Authorization": f"Bearer {poll_token}", "Content-Type": "application/json"}
+            
+            status_res = httpx.get(f"{endpoint}/{task_id}", headers=poll_headers, timeout=120.0)
+            if status_res.status_code == 200:
+                status_data = status_res.json().get("data", {})
+                status = status_data.get("task_status")
+                
+                if status == "succeed":
+                    video_url = status_data.get("task_result", {}).get("videos", [{}])[0].get("url")
+                    
+                    # Download the video
+                    output_path = Path(save_dir)
+                    output_path.mkdir(parents=True, exist_ok=True)
+                    filename = f"kling_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{str(uuid.uuid4())[:8]}.mp4"
+                    video_path = output_path / filename
+                    
+                    vid_res = httpx.get(video_url, timeout=120.0)
+                    with open(video_path, 'wb') as f:
+                        f.write(vid_res.content)
+                        
+                    print(f"[KLING] Success: {filename}", flush=True)
+                    return {
+                        "status": "success",
+                        "video_path": str(video_path),
+                        "filename": filename,
+                        "url": f"/generated/{filename}",
+                        "duration_seconds": int(clamped_duration),
+                        "model": "kling/kling-v1"
+                    }
+                elif status in ["failed", "killed"]:
+                    return {"status": "error", "message": f"Kling Task {status}: {status_data.get('task_status_msg', 'Unknown')}", "model": VIDEO_MODEL}
+                    
+        return {"status": "timeout", "message": "Kling generation timed out", "model": VIDEO_MODEL}
+    except Exception as e:
+        return {"status": "error", "message": f"Kling integration error: {str(e)}", "model": VIDEO_MODEL}
+
 def _generate_single_video(
+    prompt: str,
+    image_path: str = "",
+    reference_image_paths: str = "",
+    duration_seconds: int = 8,
+    aspect_ratio: str = "9:16",
+    logo_path: str = "",
+    brand_name: str = "",
+    brand_colors: str = "",
+    company_overview: str = "",
+    target_audience: str = "",
+    products_services: str = "",
+    cta_text: str = "",
+    negative_prompt: str = "",
+    output_dir: str = "",
+    audio_script: str = "",
+) -> dict:
+    _, VIDEO_MODEL, _ = _get_config()
+    
+    # Add logo using PIL for Mode B if logo exists (Runway/Kling/Veo all benefit from this)
+    effective_image_path = image_path
+    if image_path and logo_path:
+        try:
+            resolved_img = _resolve_image_path(image_path)
+            if os.path.exists(resolved_img):
+                source_image = Image.open(resolved_img)
+                if source_image.mode in ("RGBA", "LA", "P"):
+                    source_image = source_image.convert("RGB")
+                composited = _composite_logo_onto_image(source_image, logo_path, brand_name)
+                # Save composited to a temp file
+                import uuid
+                temp_img = os.path.join(output_dir or os.getcwd(), f"temp_{uuid.uuid4().hex[:8]}.jpg")
+                composited.save(temp_img, format="JPEG")
+                effective_image_path = temp_img
+        except Exception as e:
+            print(f"[VIDEO] Logo composite warning: {e}", flush=True)
+
+    try:
+        if VIDEO_MODEL.startswith("runway"):
+            res = _generate_runway_video(prompt, effective_image_path, duration_seconds, aspect_ratio, output_dir)
+        elif VIDEO_MODEL.startswith("kling"):
+            res = _generate_kling_video(prompt, effective_image_path, duration_seconds, aspect_ratio, output_dir)
+        else:
+            res = _generate_veo_video(
+                prompt, effective_image_path, reference_image_paths, duration_seconds, aspect_ratio,
+                "", brand_name, brand_colors, company_overview, target_audience,
+                products_services, cta_text, negative_prompt, output_dir, audio_script
+            )
+            
+        # Clean up temp image
+        if effective_image_path and effective_image_path != image_path and os.path.exists(effective_image_path):
+            try:
+                os.remove(effective_image_path)
+            except:
+                pass
+                
+        return res
+    except Exception as e:
+        return {"status": "error", "message": f"Router exception: {str(e)}", "model": VIDEO_MODEL}
+
+
+def _generate_veo_video(
     prompt: str,
     image_path: str = "",
     reference_image_paths: str = "",
@@ -539,15 +830,18 @@ def generate_video(
             effective_image_path = first_product
             print(f"[VIDEO] Mode A → Mode B: product image as starting frame: {first_product}", file=_sys2.stderr, flush=True)
 
-    if clamped_duration <= 8:
+    _, VIDEO_MODEL, _ = _get_config()
+    max_native_duration = 10 if (VIDEO_MODEL.startswith("runway") or VIDEO_MODEL.startswith("kling")) else 8
+    
+    if clamped_duration <= max_native_duration:
         res = _generate_single_video(
             prompt, effective_image_path, "", clamped_duration, aspect_ratio,
             logo_path, brand_name, brand_colors, company_overview, target_audience,
             products_services, cta_text, negative_prompt, output_dir
         )
     else:
-        part1_duration = 8
-        part2_duration = max(5, min(8, clamped_duration - 8))
+        part1_duration = max_native_duration
+        part2_duration = max(5, min(max_native_duration, clamped_duration - max_native_duration))
 
         print(f"[VIDEO] Generating part 1 (8s) mode={'image_to_video' if effective_image_path else 'text'}", file=_sys2.stderr, flush=True)
         part1_res = _generate_single_video(

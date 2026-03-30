@@ -30,6 +30,8 @@ CHECKPOINT_URL = DATABASE_URL.replace("+asyncpg", "")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY", "")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+RUNWAY_API_KEY = os.getenv("RUNWAY_API_KEY", "")
+KLING_API_KEY = os.getenv("KLING_API_KEY", "")
 
 # --- Google Cloud / Vertex AI ---
 GOOGLE_SERVICE_ACCOUNT_FILE = os.getenv("GOOGLE_SERVICE_ACCOUNT_FILE", "")
