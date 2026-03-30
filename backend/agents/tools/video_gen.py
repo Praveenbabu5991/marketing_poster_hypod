@@ -251,19 +251,18 @@ def _generate_single_video(
     output_dir: str = "",
     audio_script: str = "",
 ) -> dict:
-    """Generate a video using Veo 3.1.
+    """Generate a video using Veo 3.1 with reference images.
 
-    Supports two mutually exclusive modes:
-    - Mode A: text-to-video + reference_images (logos/assets as visual guides)
-    - Mode B: image-to-video + image= (starting frame, logo composited via PIL)
+    Uses text-to-video + reference_images for product/logo as visual asset guides.
+    Product image and logo are passed as VideoGenerationReferenceImage(reference_type="asset").
 
     Args:
-        prompt: Video generation prompt (50-175 words).
-        image_path: Source image for image-to-video mode (Mode B).
-        reference_image_paths: Comma-separated paths to reference images (Mode A only).
+        prompt: Video generation prompt.
+        image_path: Product image path (used as reference_image asset).
+        reference_image_paths: Comma-separated paths to additional reference images.
         duration_seconds: Video length 5-8 seconds.
         aspect_ratio: "9:16" (Reels), "16:9" (YouTube), "1:1" (Feed).
-        logo_path: Brand logo path.
+        logo_path: Brand logo path (used as reference_image asset).
         brand_name: Company name for prompt enhancement.
         brand_colors: Comma-separated hex colors.
         company_overview: Company description.
@@ -290,8 +289,6 @@ def _generate_single_video(
         }
 
         # Build MINIMAL brand enhancement — keep prompt concise to avoid RAI filter triggers.
-        # The LLM agent prompt already writes detailed video prompts; tool-level additions
-        # should be brief (brand colors, target audience) not multi-paragraph constraints.
         colors_list = [c.strip() for c in brand_colors.split(",") if c.strip()] if brand_colors else []
         primary = colors_list[0] if colors_list else ""
         secondary = colors_list[1] if len(colors_list) > 1 else ""
@@ -307,28 +304,15 @@ def _generate_single_video(
         if target_audience:
             brand_narrative.append(f"Human subject matches target audience: {target_audience}.")
 
-        # Short guidance (no RAI-triggering words)
-        if image_path:
-            brand_narrative.append(
-                "The starting image shows the actual product — keep it clearly visible and "
-                "recognizable throughout. Animate around it without replacing or transforming it. "
-                "CRITICAL COLOR CONSISTENCY: The product's exact colors from the starting image "
-                "must remain identical in every frame — do not change, shift, lighten, or darken "
-                "the product's colors at any point. The product in frame 100 must look exactly "
-                "the same color as in frame 1."
-            )
-
         brand_narrative.append(
             "One pair of hands, one simple action per shot. Stable background, consistent lighting."
         )
 
         enhanced_prompt = prompt.rstrip()
         # Strip brand name from prompt — known brand names (e.g. "H&M", "Nike")
-        # trigger Veo's RAI filter for brand impersonation. Veo can't render text
-        # anyway; the logo is composited via PIL in Mode B.
+        # trigger Veo's RAI filter for brand impersonation.
         if brand_name:
             import re as _re
-            # Remove brand name (case-insensitive, whole word or with possessives)
             enhanced_prompt = _re.sub(
                 r"\b" + _re.escape(brand_name) + r"(?:'s)?\b",
                 "the brand's",
@@ -338,12 +322,11 @@ def _generate_single_video(
         if brand_narrative:
             enhanced_prompt += " " + " ".join(brand_narrative)
 
-        # Two tiers of negatives:
-        # - base_negatives: RAI-safe, can go in negative_prompt API param (Mode B)
-        # - For Mode A (refs), only a SHORT "Avoid:" is appended to prompt text
+        # Build negative prompt text — negative_prompt API param is NOT supported
+        # with reference_images, so we append it to the prompt as "Avoid: ..."
         base_negatives = (
             "text, titles, captions, words, letters, watermarks, subtitles, "
-            "misspelled text, extra hands, extra fingers, three hands, four hands, "
+            "extra hands, extra fingers, three hands, four hands, "
             "overlapping hands, floating objects, animated, cartoon, "
             "morphing, flickering, jitter, shifting background, inconsistent lighting"
         )
@@ -352,30 +335,81 @@ def _generate_single_video(
         else:
             full_negative = base_negatives
 
+        # Build reference images list — product image + logo as assets
+        ref_images = []
+        all_ref_paths = []
+
+        # Add product image as reference
+        if image_path:
+            resolved_img = _resolve_image_path(image_path)
+            if os.path.exists(resolved_img):
+                img = Image.open(resolved_img)
+                if img.mode in ("RGBA", "LA", "P"):
+                    img = img.convert("RGB")
+                buf = io.BytesIO()
+                img.save(buf, format="JPEG")
+                ref_images.append(
+                    types.VideoGenerationReferenceImage(
+                        image=types.Image(image_bytes=buf.getvalue(), mime_type="image/jpeg"),
+                        reference_type="asset",
+                    )
+                )
+                all_ref_paths.append(resolved_img)
+
+        # Add any additional reference image paths
+        if reference_image_paths:
+            for ref_path in reference_image_paths.split(","):
+                ref_path = ref_path.strip()
+                if not ref_path:
+                    continue
+                resolved = _resolve_image_path(ref_path)
+                if os.path.exists(resolved) and resolved not in all_ref_paths:
+                    img = Image.open(resolved)
+                    if img.mode in ("RGBA", "LA", "P"):
+                        img = img.convert("RGB")
+                    buf = io.BytesIO()
+                    img.save(buf, format="JPEG")
+                    ref_images.append(
+                        types.VideoGenerationReferenceImage(
+                            image=types.Image(image_bytes=buf.getvalue(), mime_type="image/jpeg"),
+                            reference_type="asset",
+                        )
+                    )
+                    all_ref_paths.append(resolved)
+
+        # Add logo as reference image
+        if logo_path:
+            resolved_logo = _resolve_image_path(logo_path)
+            if os.path.exists(resolved_logo) and resolved_logo not in all_ref_paths:
+                logo_img = Image.open(resolved_logo)
+                if logo_img.mode in ("RGBA", "LA", "P"):
+                    logo_img = logo_img.convert("RGB")
+                buf = io.BytesIO()
+                logo_img.save(buf, format="JPEG")
+                ref_images.append(
+                    types.VideoGenerationReferenceImage(
+                        image=types.Image(image_bytes=buf.getvalue(), mime_type="image/jpeg"),
+                        reference_type="asset",
+                    )
+                )
+                all_ref_paths.append(resolved_logo)
+
         gen_kwargs = {"model": VIDEO_MODEL, "prompt": enhanced_prompt}
 
-        if image_path:
-            # Mode B: image-to-video — product image as starting frame
-            resolved_img = _resolve_image_path(image_path)
-            if not os.path.exists(resolved_img):
-                return {"status": "error", "message": f"Source image not found: {image_path}", "model": VIDEO_MODEL}
-
-            source_image = Image.open(resolved_img)
-            if source_image.mode in ("RGBA", "LA", "P"):
-                source_image = source_image.convert("RGB")
-
-            # Composite logo onto the product image so both appear in the starting frame
-            if logo_path:
-                source_image = _composite_logo_onto_image(source_image, logo_path, brand_name)
-
-            buf = io.BytesIO()
-            source_image.save(buf, format="JPEG")
-            gen_kwargs["image"] = types.Image(image_bytes=buf.getvalue(), mime_type="image/jpeg")
-            config_kwargs["negative_prompt"] = full_negative
-            mode = "image_to_video"
-
+        if ref_images:
+            # Text-to-video with reference images (product + logo as assets)
+            # negative_prompt is NOT supported with reference_images — append to prompt
+            config_kwargs["reference_images"] = ref_images
+            # Append short "Avoid:" to prompt (keep it brief to avoid RAI triggers)
+            safe_negatives = (
+                "text, titles, words, extra hands, extra fingers, floating objects, "
+                "cartoon, morphing, flickering, shifting background"
+            )
+            enhanced_prompt += f" Avoid: {safe_negatives}."
+            gen_kwargs["prompt"] = enhanced_prompt
+            mode = "text_to_video_with_refs"
         else:
-            # Pure text-to-video (no product image)
+            # Pure text-to-video (no reference images at all)
             config_kwargs["negative_prompt"] = full_negative
             mode = "text_to_video"
 
@@ -384,10 +418,7 @@ def _generate_single_video(
         import sys as _sys
         print(f"[VIDEO] Starting generation mode={mode} model={VIDEO_MODEL}", file=_sys.stderr, flush=True)
         print(f"[VIDEO] Prompt FULL: {enhanced_prompt}", file=_sys.stderr, flush=True)
-        if "reference_images" in config_kwargs:
-            print(f"[VIDEO] Reference images: {len(config_kwargs['reference_images'])}", file=_sys.stderr, flush=True)
-        else:
-            print(f"[VIDEO] No reference images in config", file=_sys.stderr, flush=True)
+        print(f"[VIDEO] Reference images: {len(ref_images)} paths={all_ref_paths}", file=_sys.stderr, flush=True)
 
         operation = client.models.generate_videos(**gen_kwargs)
         logger.info("[VIDEO] Operation received — done=%s name=%s",
@@ -460,10 +491,9 @@ def _generate_single_video(
                 "number_of_videos": 1,
                 "duration_seconds": clamped_duration,
             }
-            if image_path:
-                # Re-use the same image for Mode B
-                retry_kwargs["image"] = gen_kwargs.get("image")
-                retry_config["negative_prompt"] = full_negative
+            if ref_images:
+                # Re-use same reference images
+                retry_config["reference_images"] = ref_images
             else:
                 retry_config["negative_prompt"] = full_negative
 
@@ -571,19 +601,18 @@ def generate_video(
     output_dir: str = "",
     audio_script: str = "",
 ) -> dict:
-    """Generate a video using Veo 3.1.
+    """Generate a video using Veo 3.1 with reference images.
 
-    Supports two mutually exclusive modes:
-    - Mode A: text-to-video + reference_images (logos/assets as visual guides)
-    - Mode B: image-to-video + image= (starting frame, logo composited via PIL)
+    Product image and logo are passed as reference_images (reference_type="asset")
+    to guide Veo's generation while keeping product and brand consistency.
 
     Args:
         prompt: Video generation prompt (50-175 words).
-        image_path: Source image for image-to-video mode (Mode B).
-        reference_image_paths: Comma-separated paths to reference images (Mode A only).
-        duration_seconds: Video length 5-8 seconds.
+        image_path: Product image path (used as reference_image asset).
+        reference_image_paths: Comma-separated paths to product images (used as reference_image assets).
+        duration_seconds: Video length 5-16 seconds.
         aspect_ratio: "9:16" (Reels), "16:9" (YouTube), "1:1" (Feed).
-        logo_path: Brand logo path.
+        logo_path: Brand logo path (used as reference_image asset).
         brand_name: Company name for prompt enhancement.
         brand_colors: Comma-separated hex colors.
         company_overview: Company description.
@@ -594,22 +623,20 @@ def generate_video(
         output_dir: Directory to save video.
         audio_script: Voiceover text to generate and merge into the video.
     """
-    
+
     import sys as _sys2
 
     clamped_duration = max(5, min(16, duration_seconds))
 
-    # Convert Mode A → Mode B: use the product image as the starting frame.
-    # Mode A reference_images is unreliable — Veo generates different colored products.
-    # Mode B (image=) guarantees the exact uploaded product appears in the video.
-    # Logo is composited onto the product image via PIL so both appear in starting frame.
+    # Merge image_path and reference_image_paths into a single reference list.
+    # Both product images and logo are passed as reference_images (asset type).
     effective_image_path = image_path
     if reference_image_paths and not image_path:
         ref_list = [p.strip() for p in reference_image_paths.split(",") if p.strip()]
         first_product = _resolve_image_path(ref_list[0]) if ref_list else ""
         if first_product and os.path.exists(first_product):
             effective_image_path = first_product
-            print(f"[VIDEO] Mode A → Mode B: product image as starting frame: {first_product}", file=_sys2.stderr, flush=True)
+            print(f"[VIDEO] Using product image as reference: {first_product}", file=_sys2.stderr, flush=True)
 
     if clamped_duration <= 8:
         res = _generate_single_video(
@@ -644,10 +671,10 @@ def generate_video(
         _, _, GENERATED_DIR = _get_config()
         save_dir = output_dir or str(GENERATED_DIR)
 
-        # Part 2: Extract last frame from Part 1 → Mode B continuation.
-        # Same product image ensures visual consistency between parts.
+        # Part 2: Extract last frame from Part 1 for visual continuity.
+        # Part 2 gets 3 reference images: last frame + original product + logo.
         last_frame_path = os.path.join(save_dir, f"frame_{uuid.uuid4().hex[:8]}.jpg")
-        print(f"[VIDEO] Extracting last frame from Part 1 for continuation", file=_sys2.stderr, flush=True)
+        print(f"[VIDEO] Extracting last frame from Part 1 for Part 2 reference", file=_sys2.stderr, flush=True)
         try:
             subprocess.run([
                 "ffmpeg", "-sseof", "-1", "-i", part1_video,
@@ -657,14 +684,20 @@ def generate_video(
             print(f"[VIDEO] Failed to extract frame: {e}", file=_sys2.stderr, flush=True)
             return {"status": "error", "message": f"Failed to extract frame for Part 2: {e}"}
 
-        print(f"[VIDEO] Generating part 2 ({part2_duration}s) using Mode B continuation", file=_sys2.stderr, flush=True)
+        # Part 2 needs BOTH the last frame (for visual continuity) AND the original
+        # product image (so Veo knows what the product looks like). Without the product
+        # image, Veo hallucinates a different product (e.g. bottle instead of saree).
+        part2_extra_refs = last_frame_path
+        if effective_image_path and effective_image_path != last_frame_path:
+            part2_extra_refs = f"{last_frame_path}, {effective_image_path}"
+        print(f"[VIDEO] Generating part 2 ({part2_duration}s) with refs: {part2_extra_refs} + logo", file=_sys2.stderr, flush=True)
         part2_res = _generate_single_video(
             prompt=part2_prompt,
-            image_path=last_frame_path,
-            reference_image_paths="",
+            image_path="",
+            reference_image_paths=part2_extra_refs,
             duration_seconds=part2_duration,
             aspect_ratio=aspect_ratio,
-            logo_path="",
+            logo_path=logo_path,
             brand_name=brand_name,
             brand_colors=brand_colors,
             company_overview=company_overview,
