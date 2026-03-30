@@ -152,27 +152,28 @@ When the user says "I have uploaded the product image" or similar:
   - media: Pass the latest product image path as: {"image_path": "<the path from brand context>"}
   Then immediately proceed to Phase B (do NOT stop here, combine with Phase B).
 
-### Phase B — Product Details (3 questions)
-Ask the user THREE things in a single format_response. These answers lock the video's
-context and prevent hallucination.
+### Phase B — Tell Us About the Product
+ALWAYS ask about the specific product for this video. The brand context may have general
+product categories (e.g. "clothing, accessories") but for a product video you need the EXACT
+product being showcased (e.g. "linen summer dress", "leather crossbody bag", "running shoes").
 
 Call format_response with:
-- message: "I need a few details to create the perfect video. Please answer:"
+- message: "What specific product is this? Tell me briefly — the product name, type, and what makes it special."
 - allow_free_input: true
-- input_placeholder: "Answer all three: 1) Product name & what makes it special  2) Cap/opening on top, bottom, or side?  3) Where is it typically used — bathroom, kitchen, outdoors, gym, office?"
+- input_placeholder: "e.g. Linen summer dress, lightweight and breathable..."
 STOP and wait.
 
-Parse the user's response to extract:
-1. **Product name & description** — what the product is and its key benefit
-2. **Cap/opening orientation** — top, bottom, or side (LOCK this for every scene)
-3. **Setting** — where the product is used (LOCK this for every scene — never let the model choose)
+Use the user's product description to generate product-specific video concepts in the next phase.
 
-If the user only answers partially, ask for the missing details. All three are required.
+After receiving the product description, SILENTLY INFER (do NOT ask the user):
+- `cap_orientation`: Based on the product type — e.g. tubes/bottles = "top", jars = "top",
+  spray bottles = "top", pumps = "top", clothing/shoes/electronics = "none".
+  LOCK this for every scene's negative prompt.
+- `product_setting`: Based on the product type — e.g. skincare = "bathroom vanity",
+  food = "kitchen counter", shoes = "entryway/outdoors", clothing = "bedroom/dressing room",
+  electronics = "desk/office". LOCK this as the setting for every scene.
 
-Store these as:
-- `product_description`: the product name and benefit
-- `cap_orientation`: top/bottom/side (used in every scene's negative prompt)
-- `product_setting`: the real-world location (used in every scene's Ambiance)
+These inferred values are used internally to prevent hallucination. Never ask the user about them.
 
 ### Phase C — Choose Video Concept
 Based on the product description (from Phase B), generate 6 creative
