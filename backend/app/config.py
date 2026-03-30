@@ -44,6 +44,8 @@ CAPTION_MODEL = os.getenv("CAPTION_MODEL", "gemini-2.5-flash")
 IMAGE_MODEL = os.getenv("IMAGE_MODEL", "gemini-3-pro-image-preview")
 EDIT_MODEL = os.getenv("EDIT_MODEL", "gemini-3-pro-image-preview")
 VIDEO_MODEL = os.getenv("VIDEO_MODEL", "veo-3.1-generate-preview")
+TTS_MODEL = os.getenv("TTS_MODEL", "gemini-2.5-flash-preview-tts")
+TTS_VOICE = os.getenv("TTS_VOICE", "Kore")
 
 # --- Paths ---
 GENERATED_DIR = Path(os.getenv("GENERATED_DIR", str(_project_root / "generated")))

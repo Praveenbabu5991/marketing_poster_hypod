@@ -379,39 +379,36 @@ Scene transitions must maintain the same background — no location changes betw
 - DO NOT request photorealistic children/minors — causes safety filter failure.
 
 #### AUDIO SCRIPT (separate from video prompt):
-Generate a high-energy, persuasive voiceover script for the video.
-- SCRIPT LENGTH — THIS IS CRITICAL (natural speech is ~2.5 words/second):
-  - For 8-second videos: exactly 15-18 words. Count them.
-  - For 16-second videos: exactly 30-38 words. Count them.
-  A 16-second video needs TWICE the words of an 8-second video. If you write only 15-18 words
-  for a 16-second video, the audio will be stretched and sound unnatural. ALWAYS match word count
-  to the duration. After writing the script, COUNT THE WORDS and verify.
-- MANDATORY WORD COUNT CHECK: After writing the script, print:
-  "Word count: [N]. Required: 15-18 for 8s / 30-38 for 16s. [PASS/FAIL]"
-  If FAIL, rewrite the script to match the required word count before proceeding.
-- Sync to visual: first 1/3 matches Scene 1 (hook), middle matches action, end matches payoff.
-- Persuasive ad copy, not narration. Sell the feeling.
-- For 16s: the script should have 3-4 sentences covering all 5 scenes.
-- AUDIO-VISUAL SYNC: The voiceover must NEVER mention a specific body part (cheeks, hands, face)
-  that does not appear in the corresponding visual scene. Audio and visual must match per scene.
-- BRAND NAME: The brand name in the audio script must match EXACTLY the brand name from brand
-  context — no abbreviations, no variations, no nicknames.
+Generate a persuasive voiceover script with INLINE PACING CUES for Gemini TTS.
 
-2. Call format_response showing the video prompt, the generated audio script, and settings.
-   The message MUST display the information clearly in this format:
+AVAILABLE CUES (use in the script text):
+`[short pause]` (beat between phrases), `[medium pause]` (dramatic emphasis),
+`[whispering]` (intimate/luxury), `[sigh]` (satisfaction)
+
+EXAMPLE: "Your skin deserves the best. [short pause] Feel the luxury [medium pause] of pure silk. [short pause] Try it today."
+
+RULES:
+- 8s videos: 15-18 words (excluding tags). 16s videos: 30-38 words (excluding tags).
+- After writing, verify: "Word count: [N]. Required: [15-18 or 30-38]. [PASS/FAIL]"
+- Hook first 1/3, benefit middle 1/3, CTA final 1/3. Sell the feeling, not narration.
+- NEVER mention body parts not visible in the matching scene.
+- Brand name must match brand context exactly.
+
+2. CRITICAL: You MUST call `format_response` (the tool) to present the prompt. NEVER output the
+   prompt as raw text. The message parameter of format_response MUST contain:
    ---
    **VIDEO PROMPT:**
    [The visual prompt here]
 
    **AUDIO SCRIPT (Voiceover):**
    [The voiceover script here]
-   Word count: [N]. Required: [15-18 or 30-38]. [PASS/FAIL]
+   Word count: [N] (excluding tags). Required: [15-18 or 30-38]. [PASS/FAIL]
 
    **SETTINGS:**
    - Duration: [8 or 16] Seconds
    - Size: [Aspect Ratio from settings]
    ---
-   Choices: "Generate Video" and "Edit Prompt"   Set allow_free_input=true with placeholder "Or type a new prompt/script..."
+   choices: ["Generate Video", "Edit Prompt"], allow_free_input=true, input_placeholder="Or type a new prompt/script..."
 3. STOP and wait for approval.
 
 If user edits the prompt: update it and re-present for approval.

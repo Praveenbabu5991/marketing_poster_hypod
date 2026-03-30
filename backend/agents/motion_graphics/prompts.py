@@ -212,16 +212,19 @@ Each scene flows naturally into the next — same lighting direction, same color
 - Focus on "realistic live-action", "commercial", "premium lifestyle".
 
 #### AUDIO SCRIPT (separate from video prompt):
-Generate a high-energy, persuasive voiceover script for the video.
-- SCRIPT LENGTH — THIS IS CRITICAL (natural speech is ~2.5 words/second):
-  - For 8-second videos: exactly 15-18 words. Count them.
-  - For 16-second videos: exactly 30-38 words. Count them.
-  A 16-second video needs TWICE the words of an 8-second video. If you write only 15-18 words
-  for a 16-second video, the audio will be stretched and sound unnatural. ALWAYS match word count
-  to the duration. After writing the script, COUNT THE WORDS and verify.
-- Sync to visual: first 1/3 matches Scene 1 (hook), middle matches action, end matches payoff.
-- Persuasive ad copy, not narration. Sell the feeling.
-- For 16s: the script should have 3-4 sentences covering all 5 scenes, not just 1-2 short sentences.
+Generate a persuasive voiceover script with INLINE PACING CUES for Gemini TTS.
+
+AVAILABLE CUES (use in the script text):
+`[short pause]` (beat between phrases), `[medium pause]` (dramatic emphasis),
+`[whispering]` (intimate/luxury), `[sigh]` (satisfaction)
+
+EXAMPLE: "This is your moment. [short pause] Bold style, [medium pause] effortless confidence. [short pause] Discover it now."
+
+RULES:
+- 8s videos: 15-18 words (excluding tags). 16s videos: 30-38 words (excluding tags).
+- After writing, verify: "Word count: [N]. Required: [15-18 or 30-38]. [PASS/FAIL]"
+- Hook first 1/3, benefit middle 1/3, CTA final 1/3. Sell the feeling, not narration.
+- For 16s: 3-4 sentences covering all scenes.
 
 2. Call format_response showing the video prompt, the generated audio script, and settings.
    The message MUST display the information clearly in this format:

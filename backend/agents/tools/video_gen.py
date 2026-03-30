@@ -775,13 +775,13 @@ def generate_video(
 
     if res.get("status") == "success" and audio_script:
         import uuid
+        import wave
         from datetime import datetime
 
         _, _, GENERATED_DIR = _get_config()
         save_dir = output_dir or str(GENERATED_DIR)
 
         video_path = res["video_path"]
-        audio_path = os.path.join(save_dir, f"audio_{uuid.uuid4().hex[:8]}.mp3")
 
         # Warn if audio script seems too short for the video duration
         word_count = len(audio_script.split())
@@ -791,29 +791,60 @@ def generate_video(
         print(f"[VIDEO] Audio script ({word_count} words for {clamped_duration}s): {audio_script[:150]}", file=_sys2.stderr, flush=True)
 
         try:
-            edge_tts_bin = os.path.join(os.getcwd(), ".venv", "bin", "edge-tts")
-            if not os.path.exists(edge_tts_bin):
-                edge_tts_bin = "edge-tts"
+            # Generate voiceover using Gemini TTS — expressive, emotional ad voice
+            from app.config import TTS_MODEL, TTS_VOICE
+            from google.genai import types as tts_types
 
-            subprocess.run([
-                edge_tts_bin, "--voice", "en-US-JennyNeural",
-                "--text", audio_script, "--write-media", audio_path
-            ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            tts_client = _get_client()
+            # The audio_script already contains inline emotion/pacing cues
+            # like [short pause], [medium pause], [whispering] etc.
+            # Just add a light style prefix to set the overall tone.
+            tts_prompt = (
+                f"Speak as a professional marketing voiceover artist "
+                f"with a warm, confident tone: {audio_script}"
+            )
+            print(f"[VIDEO] Generating TTS with {TTS_MODEL} voice={TTS_VOICE}", file=_sys2.stderr, flush=True)
+
+            tts_response = tts_client.models.generate_content(
+                model=TTS_MODEL,
+                contents=tts_prompt,
+                config=tts_types.GenerateContentConfig(
+                    response_modalities=["AUDIO"],
+                    speech_config=tts_types.SpeechConfig(
+                        voice_config=tts_types.VoiceConfig(
+                            prebuilt_voice_config=tts_types.PrebuiltVoiceConfig(
+                                voice_name=TTS_VOICE,
+                            )
+                        )
+                    ),
+                ),
+            )
+
+            audio_data = tts_response.candidates[0].content.parts[0].inline_data.data
+
+            # Save as WAV (Gemini TTS returns 24kHz 16-bit PCM)
+            audio_path = os.path.join(save_dir, f"audio_{uuid.uuid4().hex[:8]}.wav")
+            with wave.open(audio_path, "wb") as wf:
+                wf.setnchannels(1)
+                wf.setsampwidth(2)
+                wf.setframerate(24000)
+                wf.writeframes(audio_data)
+
+            print(f"[VIDEO] TTS generated: {audio_path}", file=_sys2.stderr, flush=True)
 
             if os.path.exists(audio_path):
                 # Measure video and audio durations for sync
                 video_dur = _get_media_duration(video_path)
                 audio_dur = _get_media_duration(audio_path)
-                logger.info("[VIDEO] Duration — video=%.2fs audio=%.2fs", video_dur, audio_dur)
+                print(f"[VIDEO] Duration — video={video_dur:.2f}s audio={audio_dur:.2f}s", file=_sys2.stderr, flush=True)
 
                 video_with_audio_path = os.path.join(save_dir, f"with_audio_{uuid.uuid4().hex[:8]}.mp4")
 
                 if video_dur > 0 and audio_dur > 0 and abs(video_dur - audio_dur) > 0.5:
                     # Stretch/compress audio to match video duration using atempo filter
                     tempo_ratio = audio_dur / video_dur
-                    # atempo only supports 0.5-2.0 range; chain filters for extreme ratios
                     atempo_filters = _build_atempo_chain(tempo_ratio)
-                    logger.info("[VIDEO] Adjusting audio tempo: ratio=%.3f filters=%s", tempo_ratio, atempo_filters)
+                    print(f"[VIDEO] Adjusting audio tempo: ratio={tempo_ratio:.3f} filters={atempo_filters}", file=_sys2.stderr, flush=True)
 
                     subprocess.run([
                         "ffmpeg", "-i", video_path, "-i", audio_path,
@@ -843,6 +874,8 @@ def generate_video(
                 except:
                     pass
         except Exception as e:
-            logger.error("[VIDEO] Failed to merge audio: %s", e)
+            import traceback
+            print(f"[VIDEO] Failed to generate/merge audio: {e}", file=_sys2.stderr, flush=True)
+            traceback.print_exc(file=_sys2.stderr)
 
     return res
