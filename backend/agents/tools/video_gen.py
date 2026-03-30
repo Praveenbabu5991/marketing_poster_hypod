@@ -124,6 +124,78 @@ def _build_atempo_chain(ratio: float) -> str:
     return ",".join(filters)
 
 
+def _split_prompt_for_parts(prompt: str) -> tuple[str, str]:
+    """Split a scene-based prompt into Part 1 and Part 2 for 16s videos.
+
+    If the prompt has scene markers (SCENE 1, SCENE 2, etc.), split the scenes:
+    - Part 1: AD NARRATIVE + first half of scenes + Global specs
+    - Part 2: second half of scenes + Global specs + continuation instructions
+
+    If no scene markers, returns (full_prompt, full_prompt + continuation).
+    """
+    import re as _re
+
+    # Find all scene markers
+    scene_pattern = r'(SCENE\s+\d+[^\n]*)'
+    scene_matches = list(_re.finditer(scene_pattern, prompt, _re.IGNORECASE))
+
+    if len(scene_matches) < 3:
+        # Not a scene-based prompt — return full prompt for both parts
+        continuation = (
+            " [SMOOTH CONTINUATION from the previous shot within the SAME scene. "
+            "Maintain identical lighting, color grading, subject, and environment. "
+            "The visual flow must feel like one continuous unbroken shot.]"
+        )
+        return prompt, prompt + continuation
+
+    # Extract sections
+    # Everything before first scene = preamble (AD NARRATIVE, etc.)
+    preamble = prompt[:scene_matches[0].start()].strip()
+
+    # Split scenes into first half and second half
+    mid = len(scene_matches) // 2
+    # Ensure at least 2 scenes in Part 1
+    if mid < 2:
+        mid = 2
+
+    # Get scene text blocks
+    scenes = []
+    for i, match in enumerate(scene_matches):
+        start = match.start()
+        end = scene_matches[i + 1].start() if i + 1 < len(scene_matches) else len(prompt)
+        scenes.append(prompt[start:end].strip())
+
+    # Find Global Technical Specifications section
+    global_pattern = r'(Global Technical Specifications.*)'
+    global_match = _re.search(global_pattern, prompt, _re.IGNORECASE | _re.DOTALL)
+    global_specs = ""
+    if global_match:
+        global_specs = global_match.group(1).strip()
+        # Remove global specs from the last scene if it was captured there
+        last_scene = scenes[-1]
+        global_idx = _re.search(r'Global Technical Specifications', last_scene, _re.IGNORECASE)
+        if global_idx:
+            scenes[-1] = last_scene[:global_idx.start()].strip()
+
+    # Build Part 1: preamble + first half scenes + global specs
+    part1_scenes = "\n\n".join(scenes[:mid])
+    part1_prompt = f"{preamble}\n\n{part1_scenes}"
+    if global_specs:
+        part1_prompt += f"\n\n{global_specs}"
+
+    # Build Part 2: continuation context + second half scenes + global specs
+    part2_scenes = "\n\n".join(scenes[mid:])
+    part2_prompt = (
+        f"[SMOOTH CONTINUATION from the previous shot. Maintain identical lighting, "
+        f"color grading, environment, and subject. The visual flow must feel like one "
+        f"continuous unbroken shot.]\n\n{part2_scenes}"
+    )
+    if global_specs:
+        part2_prompt += f"\n\n{global_specs}"
+
+    return part1_prompt, part2_prompt
+
+
 def _overlay_logo_on_video(video_path: str, logo_path: str, output_path: str) -> bool:
     """Overlay brand logo as a persistent watermark on the video using ffmpeg.
 
@@ -311,7 +383,7 @@ def _generate_single_video(
 
         import sys as _sys
         print(f"[VIDEO] Starting generation mode={mode} model={VIDEO_MODEL}", file=_sys.stderr, flush=True)
-        print(f"[VIDEO] Prompt (first 300 chars): {enhanced_prompt[:300]}", file=_sys.stderr, flush=True)
+        print(f"[VIDEO] Prompt FULL: {enhanced_prompt}", file=_sys.stderr, flush=True)
         if "reference_images" in config_kwargs:
             print(f"[VIDEO] Reference images: {len(config_kwargs['reference_images'])}", file=_sys.stderr, flush=True)
         else:
@@ -549,9 +621,14 @@ def generate_video(
         part1_duration = 8
         part2_duration = max(5, min(8, clamped_duration - 8))
 
+        # Split prompt for 16s: Part 1 gets first-half scenes, Part 2 gets second-half.
+        # This prevents both parts from trying to render ALL scenes.
+        part1_prompt, part2_prompt = _split_prompt_for_parts(prompt)
+        print(f"[VIDEO] 16s split — Part 1 prompt: {len(part1_prompt)} chars, Part 2 prompt: {len(part2_prompt)} chars", file=_sys2.stderr, flush=True)
+
         print(f"[VIDEO] Generating part 1 (8s) mode={'image_to_video' if effective_image_path else 'text'}", file=_sys2.stderr, flush=True)
         part1_res = _generate_single_video(
-            prompt, effective_image_path, "", part1_duration, aspect_ratio,
+            part1_prompt, effective_image_path, "", part1_duration, aspect_ratio,
             logo_path, brand_name, brand_colors, company_overview, target_audience,
             products_services, cta_text, negative_prompt, output_dir
         )
@@ -580,12 +657,6 @@ def generate_video(
             print(f"[VIDEO] Failed to extract frame: {e}", file=_sys2.stderr, flush=True)
             return {"status": "error", "message": f"Failed to extract frame for Part 2: {e}"}
 
-        part2_prompt = (
-            prompt + " [SMOOTH CONTINUATION from the previous shot within the SAME scene. "
-            "Maintain identical lighting, color grading, subject, and environment. "
-            "The visual flow must feel like one continuous unbroken shot. "
-            "Push in for an intimate close-up of the product.]"
-        )
         print(f"[VIDEO] Generating part 2 ({part2_duration}s) using Mode B continuation", file=_sys2.stderr, flush=True)
         part2_res = _generate_single_video(
             prompt=part2_prompt,

@@ -134,41 +134,89 @@ If the user types a free-text idea/topic (e.g., "ugadi", "summer sale") instead 
 2. If their input is a SPECIFIC, DETAILED CONCEPT (e.g. "ugadi: new year, new skin resolution" or a full sentence describing a scene), they are telling you EXACTLY what they want. Do NOT generate another list of 6 choices. Accept their idea and PROCEED IMMEDIATELY to the next phase (Show Prompt/Approval) using their specific concept.
 
 ### Phase C — Show Prompt for Approval
-1. Based on the selected concept, write a detailed video prompt following the Veo 5-part formula:
-   [Camera + lens] + [Subject] + [Action] + [Setting + atmosphere] + [Style]
 
-   AUDIO SCRIPT GENERATION:
-   - Generate a high-energy, persuasive voiceover script designed specifically for a REALISTIC, FAST-PACED ADVERTISEMENT.
-   - SCRIPT LENGTH (CRITICAL — natural speech is ~2.5 words/second):
-     - For 8-second videos: The script MUST be exactly 15-18 words. No more, no less.
-     - For 16-second videos: The script MUST be exactly 30-38 words. No more, no less.
-     Count your words carefully. Too many words = rushed/cut-off audio. Too few = awkward silence.
-   - SYNC AUDIO TO VISUAL ACTION: Write the voiceover so its natural spoken pacing aligns with the visual sequence. The first 1/3 of the words should match the "Setup" visual, the next 1/3 match the "Action", and the final words land perfectly on the "Payoff/Logo Reveal".
+Write the video prompt as a SCENE-BY-SCENE AD SCRIPT following this exact structure.
+This is the format that produces the best results with Veo 3.1.
 
-   HIGH-END COMMERCIAL DIRECTOR AESTHETIC (CRITICAL):
-   - You must write the prompt like an award-winning commercial director crafting a multi-million dollar live-action ad.
-   - REALISTIC LIVE-ACTION COMMERCIALS: This must look like a real, high-budget TV commercial filmed with real human actors. Do NOT use abstract 3D, CGI metaphors, glowing nodes, or cartoon styles. Show REAL PEOPLE in high-end, realistic environments (e.g., modern offices, sleek cafes, bright studios).
-   - CINEMATIC HUMAN-AI INTEGRATION: Show humans interacting seamlessly with technology in a grounded, realistic way. For "AI", show them using sleek, modern interfaces, transparent screens, or subtle augmented reality projections that look grounded in reality, not sci-fi magic. 
-   - DYNAMIC CAMERA MOVEMENTS: You MUST script highly dynamic, aggressive camera motions to keep the energy high. Start the prompt with explosive movement like "A kinetic tracking shot", "An orbital drone shot", "A rapid dolly push-in", or "A sudden whip pan".
-   - ADVANCED LIGHTING: Specify the lighting setup explicitly to make the live-action footage look expensive (e.g., "soft golden hour rim lighting", "cinematic studio lighting with deep shadows", "bright, airy natural light").
-   - CREATIVE HOOKS & PACING: Script dramatic pacing explicitly. E.g., "The camera starts on a tight close-up of a person's focused expression, then crash-zooms out to reveal their sleek workspace."
-   - Always append keywords that force a high-end live-action commercial look: "hyper-realistic, 8k resolution, cinematic lighting, shot on RED Digital Cinema camera, 35mm lens, professional commercial advertising photography, highly detailed, premium lifestyle aesthetic."
-   - Avoid words like "creative", "artistic", "cartoon", "abstract", "3D render", or "illustration". Focus on "realistic live-action", "commercial", and "premium lifestyle".
+#### PROMPT STRUCTURE (follow exactly):
 
-   Important prompt rules for Veo:
-   - NO AUDIO/SOUND IN VIDEO PROMPT: Do NOT mention "audio", "sound", "music", "speaking", "talking", or "voiceover" in the visual prompt itself. Veo's audio safety filters strictly reject prompts that generate speech or sound, causing the video to fail completely. If a person is speaking, describe it purely visually (e.g., "moving lips engaged in conversation") without requesting sound.
-     Instead, the voiceover text is handled SEPARATELY. You will pass it to the `generate_video` tool via the `audio_script` parameter later.
-   - Do NOT include text, titles, words, or letters in the prompt — Veo cannot render text.
-   - DO NOT request photorealistic children, babies, or minors in the prompt. Google's safety filters strictly block generating photorealistic children and will cause the video to fail. Always prompt for adults or young adults.
-   - Focus on visual motion: camera movements, transitions, lighting changes.
-   - WEAVE brand colors INTO the scene description — don't just list hex codes.
-     Example: "The scene is bathed in warm coral (#FF6B6B) lighting, with deep navy
-     (#1A1B2E) shadows and accent elements in soft gold (#DAA520)."
-     Describe colors in props, clothing, backgrounds, lighting gels, set design.
-     - NEVER include the brand name in the video prompt. Do NOT write "H&M" or "Nike" —
-       describe scenes generically. Brand names trigger safety filters and Veo cannot render text.
-       The logo is added automatically as a reference image.
-     - Describe the brand logo (as a shape/symbol) appearing naturally in the scene context. DO NOT ask for the brand name to be written.   - Keep visual prompt 50-175 words.
+```
+AD NARRATIVE
+[One line: Hook → Brand Story → Payoff framework]
+Hook: [What grabs attention immediately — explosive movement, surprising visual]
+Action: [How the brand story unfolds — lifestyle scene, product showcase, environment]
+Result: [The emotional payoff — aspiration, excitement, brand impression]
+Emotion: [Target emotions: excitement, trust, aspiration, energy, etc.]
+
+SCENE 1 — The Hook (0:00 – 0:03)
+Subject: [The visually striking opening element — a person, environment, or dramatic setup.
+         Describe with extreme detail: what we see, colors (with hex codes from brand palette),
+         textures, setting. This is text-to-video so there is no starting image — describe
+         the opening frame completely.]
+Action: [Explosive camera movement to grab attention: crash zoom, whip pan, rapid dolly,
+        kinetic tracking shot. The first frame MUST have immediate movement.]
+Camera: [Exact camera movement, lens, speed — e.g. "35mm lens, rapid dolly push-in"]
+Composition: [Center-weighted for vertical, subject fills frame]
+Focus: [Sharp focus on subject, cinematic bokeh background]
+Ambiance: [Cinematic lighting setup with brand colors woven in — e.g. "warm coral (#FF6B6B)
+          rim lighting with deep navy (#1A1B2E) shadows"]
+Negative Prompt: [Scene-specific: static frame, flat lighting, cartoon, text, etc.]
+
+SCENE 2 — The Reveal (0:03 – 0:06)
+Subject: [The brand story moment — a person interacting with the brand's world,
+         product in use, lifestyle scene that represents the brand]
+Action: [Smooth transition from Scene 1 — continuous camera flow, reveals the story.
+        ONE action per scene. Describe precisely.]
+Camera: [Medium shot or close-up, smooth orbital or push-in]
+Composition: [Subject + brand environment, brand colors prominent]
+Focus: [Sharp on the action point, shallow depth of field]
+Ambiance: [Same lighting direction as Scene 1 for continuity]
+Negative Prompt: [Scene-specific artifacts to avoid]
+
+SCENE 3 — The Payoff (0:06 – 0:08)
+Subject: [Emotional climax — the aspirational moment, brand impression]
+Action: [Satisfying visual conclusion: elegant slow-motion, smooth pull-back reveal,
+        symmetrical composition settling into place]
+Camera: [Slow push-in or pull-back, cinematic payoff angle]
+Composition: [Brand colors dominate, clean aspirational composition]
+Focus: [Sharp, premium look]
+Ambiance: [Warm, uplifting, aspirational — the "this is what we stand for" moment]
+Negative Prompt: [Scene-specific: dull, lifeless, abrupt ending, etc.]
+
+Global Technical Specifications
+Total Duration: [8 or 16] seconds
+Style: Premium commercial, hyper-realistic, 8k resolution, cinematic lighting, shot on RED Digital Cinema camera, 35mm lens
+Tone: [Match brand tone from brand context]
+Color Grading: [Warm/cool based on brand palette, consistent throughout all scenes]
+Geometry: Stable consistent geometry and lighting across all scenes, no morphing, no flickering
+```
+
+#### FOR 16-SECOND VIDEOS:
+Extend to 5-6 scenes instead of 3. The narrative arc expands:
+- Scene 1 (0:00-0:03): The Hook — explosive opening, immediate visual impact
+- Scene 2 (0:03-0:06): The Setup — establishing the brand world, lifestyle context
+- Scene 3 (0:06-0:09): The Reveal — brand/product hero moment, the story unfolds
+- Scene 4 (0:09-0:12): The Climax — peak energy, transformation, or emotional high
+- Scene 5 (0:12-0:16): The Payoff — aspirational close, brand impression lingers
+Each scene flows naturally into the next — same lighting direction, same color palette, continuous narrative.
+
+#### CRITICAL RULES FOR THE PROMPT:
+- NEVER include the brand name. Describe scenes generically. Brand names trigger safety filters.
+- NO audio/sound/music/speaking words in the prompt — causes Veo to fail.
+  Audio is handled separately via the audio_script parameter.
+- Per-scene Negative Prompts are CRITICAL — they prevent scene-specific artifacts.
+- ONE action per scene. Multi-step actions cause visual artifacts.
+- DO NOT request photorealistic children/minors — causes safety filter failure.
+- WEAVE brand colors with hex codes INTO the scene descriptions — don't just list them.
+- Avoid words like "creative", "artistic", "cartoon", "abstract", "3D render", "illustration".
+- Focus on "realistic live-action", "commercial", "premium lifestyle".
+
+#### AUDIO SCRIPT (separate from video prompt):
+- SCRIPT LENGTH (natural speech ~2.5 words/second):
+  - 8-second videos: exactly 15-18 words
+  - 16-second videos: exactly 30-38 words
+- Sync to visual: first 1/3 matches Scene 1 (hook), middle matches action, end matches payoff.
+- Persuasive ad copy, not narration. Sell the feeling.
 
 2. Call format_response showing the video prompt, the generated audio script, and settings.
    The message MUST display the information clearly in this format:

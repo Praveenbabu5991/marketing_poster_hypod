@@ -204,84 +204,91 @@ If the user types a free-text idea/topic (e.g., "ugadi", "summer sale") instead 
 2. If their input is a SPECIFIC, DETAILED CONCEPT (e.g. "ugadi: new year, new skin resolution" or a full sentence describing a scene), they are telling you EXACTLY what they want. Do NOT generate another list of 6 choices. Accept their idea and PROCEED IMMEDIATELY to the next phase (Show Prompt/Approval) using their specific concept.
 
 ### Phase D — Show Prompt for Approval
-1. Based on the selected concept, write a Veo video prompt (50-175 words):
-   - Tell a good story based on the given image or motion graphics concept.
-   - The prompt must describe a continuous narrative and visual arc.
-   - Describe a clear progression: Setup → Action/Interaction → Hero Moment → Payoff.
-   [Camera + lens] + [Human + product] + [Action] + [Setting + atmosphere] + [Style]
 
-   AUDIO SCRIPT GENERATION:
-   - Generate a high-energy, persuasive voiceover script designed specifically for a REALISTIC, FAST-PACED ADVERTISEMENT.
-   - SCRIPT LENGTH (CRITICAL — natural speech is ~2.5 words/second):
-     - For 8-second videos: The script MUST be exactly 15-18 words. No more, no less.
-     - For 16-second videos: The script MUST be exactly 30-38 words. No more, no less.
-     Count your words carefully. Too many words = rushed/cut-off audio. Too few = awkward silence.
-   - SYNC AUDIO TO VISUAL ACTION: Write the voiceover so its natural spoken pacing aligns with the visual sequence. The first 1/3 of the script should match the "Setup" visual, the middle matches the "Action/Interaction", and the final words land perfectly on the "Payoff/Logo Reveal".
+Write the video prompt as a SCENE-BY-SCENE AD SCRIPT following this exact structure.
+This is the format that produces the best results with Veo 3.1.
 
-   HIGH-END COMMERCIAL DIRECTOR AESTHETIC (CRITICAL):
-   - You must write the prompt like an award-winning commercial director crafting a multi-million dollar ad.
-   - DYNAMIC CAMERA MOVEMENTS: You MUST script highly dynamic, aggressive camera motions. Start the prompt with explosive movement like "A kinetic tracking shot", "An orbital drone shot", "A rapid dolly push-in", or "A sudden whip pan".
-   - ADVANCED LIGHTING: Specify the lighting setup explicitly (e.g., "volumetric lighting with god rays", "neon cyberpunk glow", "golden hour rim lighting", "chiaroscuro contrast").
-   - CREATIVE HOOKS & PACING: Script dramatic pacing explicitly in the visual description. E.g., "The camera starts on an extreme macro close-up of the texture, then crash-zooms out to reveal the product," or "The motion starts in dramatic slow-motion before speed-ramping back to real-time."
-   - Always append keywords that force a high-end commercial look: "hyper-realistic, 8k resolution, cinematic lighting, professional commercial advertising photography, shot on RED Digital Cinema camera, highly detailed."
-   - Avoid words like "creative", "artistic", or "illustration". Focus on "realistic", "commercial", and "premium".
+#### PROMPT STRUCTURE (follow exactly):
 
-   PRODUCT PROMINENCE (Critical — the product is the HERO):
-   - MODE B STARTING FRAME (HOW IT WORKS): The uploaded product image (with brand logo composited
-     on it) is the video's FIRST FRAME. Veo animates starting from this exact image. Your prompt
-     MUST describe a scene that begins with the product visible and then shows a person interacting
-     with it. If you describe a completely different scene, Veo will morph the product image into
-     something unrecognizable within the first second.
+```
+AD NARRATIVE
+[One line: Problem → Product → Result framework]
+Hook: [What makes the product look premium/desirable]
+Action: [How a real customer uses it]
+Result: [The emotional payoff — what the customer looks/feels like after]
+Emotion: [Target emotions: confidence, freshness, elegance, etc.]
 
-   - DESCRIBE THE SCENE STARTING FROM THE PRODUCT IMAGE (CRITICAL):
-     Think about what the starting frame looks like — the product sitting there (with logo visible).
-     Now describe what happens NEXT: a hand reaches in to pick it up, a person walks into frame
-     and examines it, the camera slowly orbits while a hand touches the fabric, etc.
-     Good: "The camera holds on a [exact product description] resting on a marble surface.
-            A young woman's hand reaches into frame and picks it up, turning it to admire the texture."
-     Bad: "A woman dances in a festival" (completely unrelated to the starting image — Veo morphs away)
+SCENE 1 — The Hero Shot (0:00 – 0:03)
+Subject: [EXTREME detail of the product: exact shape, color with hex code, material, label,
+         cap position, size. Use the product description from Phase B. This MUST match the
+         uploaded product image exactly since it's the starting frame.]
+Action: [Camera movement starting FROM the product image. The product is already on screen.
+        Describe what happens: slow dolly push-in, orbiting shot, etc. NO hands, NO person yet.]
+Camera: [Exact camera movement, angle, speed]
+Composition: [Product-only hero shot. Centered, label visible.]
+Focus: [Sharp focus on product, soft bokeh background]
+Ambiance: [Lighting, mood, color temperature — weave brand colors here with hex codes]
+Negative Prompt: [Scene-specific things to avoid: hands in frame, open cap, wrong shape, etc.]
 
-   - DESCRIBE THE EXACT PRODUCT IN DETAIL: Use the product description from Phase B.
-     Example: Instead of "a cream product", write "a white cylindrical tube with a silver metallic cap,
-     pink and gold label". Instead of "a saree", write "a deep crimson silk saree with intricate gold
-     zari border and paisley motifs". The more precise, the longer Veo preserves it.
-   - COLOR CONSISTENCY (CRITICAL): Explicitly state the product's exact colors in the prompt AND
-     add "The product maintains its exact colors throughout" to prevent Veo from shifting colors.
-     Example: "...a deep crimson (#CC2424) silk saree — the saree maintains this exact deep crimson
-     color throughout every frame of the video, never changing shade."
-     Without this, Veo often shifts the product to a different color after frame 1.
+SCENE 2 — The Customer Action (0:03 – 0:06)
+Subject: [A person from the target audience — age, appearance matching the demographic.
+         ONE pair of natural human hands interacting with the product.]
+Action: [ONE single simple action: picking up, draping, applying, unboxing, wearing.
+        NEVER combine multiple actions (causes extra hands). Describe the motion precisely.]
+Camera: [Medium portrait or close-up, slight push-in]
+Composition: [Person + product, centered, product prominent]
+Focus: [Sharp on the interaction point, shallow depth of field]
+Ambiance: [Same lighting as Scene 1 for continuity — same color temperature]
+Negative Prompt: [Scene-specific: extra hands, product wrong color, etc.]
 
-   - SHOW A REAL CUSTOMER USING THE PRODUCT: The video is a marketing ad — show a person from the
-     target audience naturally using the product. For clothes: wearing/draping it. For skincare:
-     applying it. For food: tasting it. For electronics: unboxing/using it. The customer interaction
-     is what makes it a marketing video, not just a product showcase.
+SCENE 3 — The Result (0:06 – 0:08)
+Subject: [Same person, showing the result of using the product — satisfaction, confidence]
+Action: [Person reacts: looks at camera with confidence, admires the product, etc.
+        The product is still visible in frame.]
+Camera: [Slow push-in to close portrait, emotional payoff]
+Composition: [Tight portrait, product visible, brand colors in scene]
+Focus: [Sharp on person's expression + product]
+Ambiance: [Warm, uplifting, aspirational — payoff mood]
+Negative Prompt: [Scene-specific: dull expression, product missing from frame, etc.]
 
-   - ONE ACTION ONLY (CRITICAL TO PREVENT EXTRA HANDS): Restrict to ONE single, simple motion
-     (e.g., ONLY holding it, OR ONLY applying it). Never combine multiple hand actions.
-   - Use TIGHT FRAMING: close-ups, center-frame, product filling 40-50% of frame.
-   - Specify "one pair of natural human hands" in the prompt.
-   - DO NOT request photorealistic children/minors. Always prompt for adults.
-   - Product in sharp focus with shallow depth of field.
-   - NEVER describe a product that looks different from what the user uploaded.
+Global Technical Specifications
+Total Duration: [8 or 16] seconds
+Style: Premium commercial, hyper-realistic, 8k resolution, cinematic lighting, shot on RED Digital Cinema camera
+Tone: [Match brand tone from brand context]
+Color Grading: [Warm/cool based on brand, consistent throughout]
+Geometry: Stable consistent geometry and lighting across all scenes, no morphing, no flickering
+Hand: Always five well-defined fingers, natural adult hand, ONE pair only
+Product Color Lock: [Product name] maintains its exact [color with hex] in EVERY frame, never changing shade
+```
 
-   BRAND VISIBILITY:
-   - The brand logo is already composited onto the product image (top-right corner) in the
-     starting frame. You do NOT need to describe the logo in the prompt — it's already there.
-   - WEAVE brand colors INTO the scene description — don't just list hex codes.
-     Example: "The woman wears a dress in deep coral (#FF6B6B), standing in a room
-     with navy (#1A1B2E) accent walls and warm gold (#DAA520) ambient lighting."
-     Describe colors in clothing, backgrounds, props, lighting, set design.
-   - NEVER include the brand name in the video prompt. Do NOT write "H&M saree" or "Nike shoes" —
-     describe the product generically (e.g., "a luxurious silk saree", "premium running shoes").
-     Brand names trigger safety filters. The logo is already baked into the starting frame.
-   OTHER RULES:
-   - NO AUDIO/SOUND IN VIDEO PROMPT: Do NOT mention "audio", "sound", "music", "speaking", "talking", or "voiceover" in the visual prompt itself. Veo's audio safety filters strictly reject prompts that generate speech or sound, causing the video to fail completely. If a person is speaking, describe it purely visually (e.g., "moving lips engaged in conversation") without requesting sound.
-     Instead, the voiceover text is handled SEPARATELY. You will pass it to the `generate_video` tool via the `audio_script` parameter later.
-   - TEMPORAL CONSISTENCY: State that the video should have "stable, consistent geometry and lighting." Ban the AI from morphing, warping, or changing the scale/proportions of the product or human subject during the shot.
-   - AVOID BACKGROUND SHIFTING: Describe a "stable, fixed background" that does not melt or morph as the camera moves.
-   - The prompt must describe the product precisely so Veo keeps it recognizable as it animates from the starting frame.
-   - Focus on REALISTIC HUMAN/CUSTOMER INTERACTION. Show how the target audience uses this product in daily life.
-   - Do NOT ask the AI to add any NEW text/titles/words — Veo cannot render new text accurately.
+#### FOR 16-SECOND VIDEOS:
+Extend to 5-6 scenes instead of 3. The narrative arc expands:
+- Scene 1 (0:00-0:03): Hero Shot — product only, premium showcase
+- Scene 2 (0:03-0:06): Discovery — customer notices/picks up the product
+- Scene 3 (0:06-0:09): Action — customer uses the product (the key interaction)
+- Scene 4 (0:09-0:12): Transformation — visible result/benefit
+- Scene 5 (0:12-0:16): Payoff — confident customer, product visible, aspirational close
+Each scene flows naturally into the next — same lighting, same location, continuous narrative.
+
+#### CRITICAL RULES FOR THE PROMPT:
+- SCENE 1 MUST match the starting frame: The uploaded product image IS the first frame.
+  Describe the product exactly as it appears in the image. If you describe something different,
+  Veo morphs the product into something unrecognizable.
+- NEVER include the brand name. Describe the product generically. The logo is composited
+  onto the starting frame automatically.
+- NO audio/sound/music/speaking words in the prompt — causes Veo to fail.
+  Audio is handled separately via the audio_script parameter.
+- Per-scene Negative Prompts are CRITICAL — they prevent scene-specific artifacts.
+- ONE action per scene, ONE pair of hands. Multi-step actions cause extra hands.
+- DO NOT request photorealistic children/minors — causes safety filter failure.
+- Product color with hex code MUST appear in Scene 1 AND in Global Technical Specifications.
+
+#### AUDIO SCRIPT (separate from video prompt):
+- SCRIPT LENGTH (natural speech ~2.5 words/second):
+  - 8-second videos: exactly 15-18 words
+  - 16-second videos: exactly 30-38 words
+- Sync to visual: first 1/3 matches Scene 1 (hook), middle matches action, end matches payoff.
+- Persuasive ad copy, not narration. Sell the feeling.
 2. Call format_response showing the video prompt, the generated audio script, and settings.
    The message MUST display the information clearly in this format:
    ---
