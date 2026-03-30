@@ -749,7 +749,13 @@ def generate_video(
 
         video_path = res["video_path"]
         audio_path = os.path.join(save_dir, f"audio_{uuid.uuid4().hex[:8]}.mp3")
-        logger.info("[VIDEO] Generating audio for script: %s", audio_script[:100])
+
+        # Warn if audio script seems too short for the video duration
+        word_count = len(audio_script.split())
+        expected_min = 25 if clamped_duration > 8 else 12
+        if word_count < expected_min:
+            print(f"[VIDEO] WARNING: audio script only {word_count} words for {clamped_duration}s video (expected >= {expected_min}). Audio may be stretched.", file=_sys2.stderr, flush=True)
+        print(f"[VIDEO] Audio script ({word_count} words for {clamped_duration}s): {audio_script[:150]}", file=_sys2.stderr, flush=True)
 
         try:
             edge_tts_bin = os.path.join(os.getcwd(), ".venv", "bin", "edge-tts")

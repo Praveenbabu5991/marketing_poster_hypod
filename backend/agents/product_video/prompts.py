@@ -284,11 +284,17 @@ Each scene flows naturally into the next — same lighting, same location, conti
 - Product color with hex code MUST appear in Scene 1 AND in Global Technical Specifications.
 
 #### AUDIO SCRIPT (separate from video prompt):
-- SCRIPT LENGTH (natural speech ~2.5 words/second):
-  - 8-second videos: exactly 15-18 words
-  - 16-second videos: exactly 30-38 words
+Generate a high-energy, persuasive voiceover script for the video.
+- SCRIPT LENGTH — THIS IS CRITICAL (natural speech is ~2.5 words/second):
+  - For 8-second videos: exactly 15-18 words. Count them.
+  - For 16-second videos: exactly 30-38 words. Count them.
+  A 16-second video needs TWICE the words of an 8-second video. If you write only 15-18 words
+  for a 16-second video, the audio will be stretched and sound unnatural. ALWAYS match word count
+  to the duration. After writing the script, COUNT THE WORDS and verify.
 - Sync to visual: first 1/3 matches Scene 1 (hook), middle matches action, end matches payoff.
 - Persuasive ad copy, not narration. Sell the feeling.
+- For 16s: the script should have 3-4 sentences covering all 5 scenes, not just 1-2 short sentences.
+
 2. Call format_response showing the video prompt, the generated audio script, and settings.
    The message MUST display the information clearly in this format:
    ---
@@ -296,7 +302,7 @@ Each scene flows naturally into the next — same lighting, same location, conti
    [The visual prompt here]
 
    **AUDIO SCRIPT (Voiceover):**
-   [The 8 or 16-second summary script here]
+   [The voiceover script here — VERIFY word count matches duration]
 
    **SETTINGS:**
    - Duration: [8 or 16] Seconds
