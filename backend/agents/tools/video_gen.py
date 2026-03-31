@@ -107,64 +107,73 @@ def _get_media_duration(path: str) -> float:
 def _split_prompt_for_parts(prompt: str) -> tuple[str, str]:
     """Split a video prompt into Part 1 and Part 2 for 15s videos (8s + 7s extension).
 
-    For dialogue-driven prompts (single paragraph with quotes):
-    - Part 1: Full prompt (Veo generates first 8s from it)
-    - Part 2: Continuation prompt with ONLY the second half of dialogue
-      so the extension doesn't repeat what was already said.
+    Finds all quoted dialogue blocks in the prompt, splits them in half:
+    - Part 1: setup + FIRST HALF of dialogue + style (fits in 8s)
+    - Part 2: continuation + SECOND HALF of dialogue + style (fits in 7s)
 
-    The Veo extension API receives the Part 1 video object, so it already
-    knows the visual context. Part 2 only needs to describe what happens NEXT.
+    This prevents repetition — each part gets DIFFERENT dialogue.
     """
     import re as _re
 
-    # Extract all dialogue segments (text in single or double quotes after "speaks" / "says")
-    # Match patterns like: speaks clearly: 'dialogue here'  or  says, "dialogue here"
-    dialogue_pattern = r"""(?:speaks\s+\w+\s*:\s*|says\s*[\w\s,]*[,:]?\s*)['\"]([^'\"]+)['\"]"""
-    dialogue_matches = list(_re.finditer(dialogue_pattern, prompt, _re.IGNORECASE))
+    # Find ALL quoted strings (single or double) that are likely dialogue (10+ chars)
+    quote_pattern = r"""['\"]([^'\"]{10,})['\"]"""
+    all_quotes = list(_re.finditer(quote_pattern, prompt))
 
-    if len(dialogue_matches) >= 2:
-        # Dialogue-driven prompt — split dialogue in half
-        mid = len(dialogue_matches) // 2
+    if len(all_quotes) >= 2:
+        mid = len(all_quotes) // 2
 
-        # Part 1: everything up to and including the first half of dialogue
-        # Use the full prompt — Veo will generate the first 8s from it
-        part1_prompt = prompt
+        # Extract first-half and second-half dialogue
+        first_half = [m.group(1) for m in all_quotes[:mid]]
+        second_half = [m.group(1) for m in all_quotes[mid:]]
 
-        # Part 2: continuation with ONLY the second half of dialogue
-        # Extract the second-half dialogue lines
-        second_half_dialogues = []
-        for m in dialogue_matches[mid:]:
-            second_half_dialogues.append(m.group(1))
+        # Extract setup: everything before the first quote
+        first_quote_start = all_quotes[0].start()
+        # Walk back to find "speaks" or "says" before the quote
+        setup_end = first_quote_start
+        pre_quote = prompt[:first_quote_start].rstrip()
+        # Find the last "speaks" or "says" keyword to include in setup
+        speaks_match = list(_re.finditer(r'(?:speaks|says)\s', pre_quote, _re.IGNORECASE))
+        if speaks_match:
+            setup_end = speaks_match[-1].start()
+        setup = prompt[:setup_end].rstrip().rstrip(",:")
 
-        # Find the style/ambient line (usually at the end after last quote)
-        last_dialogue_end = dialogue_matches[-1].end()
-        style_suffix = prompt[last_dialogue_end:].strip().lstrip(".'\"")
+        # Extract style: everything after the last quote
+        last_quote_end = all_quotes[-1].end()
+        style = prompt[last_quote_end:].strip().lstrip(".'\"").strip()
 
-        # Build continuation prompt
-        dialogue_text = " ".join(
-            f'"{d}"' for d in second_half_dialogues
+        # Build Part 1: setup + first-half dialogue + smooth ending + style
+        p1_dialogue = " ".join(f"'{d}'" for d in first_half)
+        part1_prompt = (
+            f"{setup} speaks clearly: {p1_dialogue}. "
+            f"The person pauses with a natural expression. "
         )
+        if style:
+            part1_prompt += style
+
+        # Build Part 2: continuation + second-half dialogue + smooth ending + style
+        p2_dialogue = " ".join(f"'{d}'" for d in second_half)
         part2_prompt = (
             f"[SMOOTH CONTINUATION of the same scene. Same person, same setting, "
             f"same lighting, same camera angle. The person is still in frame. "
             f"Audio continues naturally — same ambient background. "
-            f"Do NOT repeat any dialogue from the previous segment. "
-            f"Only speak the NEW dialogue below. Do NOT add extra vocalizations.] "
-            f"The person continues speaking clearly: {dialogue_text}. "
+            f"Do NOT repeat any previous dialogue. "
+            f"Only speak the NEW dialogue below. No extra vocalizations.] "
+            f"The person continues speaking clearly: {p2_dialogue}. "
+            f"The person smiles gently as the scene comes to a natural, smooth close. "
         )
-        if style_suffix:
-            part2_prompt += style_suffix
+        if style:
+            part2_prompt += style
 
         return part1_prompt, part2_prompt
 
-    # Fallback: no clear dialogue structure — use full prompt with continuation cue
+    # Fallback: cannot split dialogue — use full prompt for Part 1,
+    # continuation-only for Part 2
     part2_prompt = (
         "[SMOOTH CONTINUATION of the same scene. Same person, same setting, "
-        "same lighting, same camera angle. Continue the action naturally. "
+        "same lighting, same camera angle. Continue naturally. "
         "Audio continues — same ambient background. "
-        "Do NOT repeat any dialogue or actions from the previous segment. "
-        "Do NOT add extra speech or vocalizations not described.] "
-        + prompt
+        "Do NOT repeat any dialogue or actions. No extra vocalizations.] "
+        "The person smiles gently as the scene comes to a natural, smooth close. "
     )
     return prompt, part2_prompt
 

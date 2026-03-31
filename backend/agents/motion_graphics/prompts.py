@@ -30,20 +30,35 @@ A motion graphics video prompt has 5 parts in one paragraph:
 
 2. DIALOGUE: The person speaks directly to camera about the brand's message/announcement/
    promo — based on the audio context provided by the user. This is the BULK of the prompt.
-   The person speaks clearly: "[dialogue about the announcement/promo]."
-   Write natural, energetic speech.
-   - 8s video: 2 dialogue blocks, 30-40 words total
-   - 15s video: 3-4 dialogue blocks, 60-80 words total.
+
+   CRITICAL — AUDIO CONTEXT DELIVERY:
+   - Every key point from the user's audio context MUST appear in the dialogue.
+   - If the user said "50% off" — the person MUST say "fifty percent off" in dialogue.
+   - If the user said "launches Monday" — the person MUST mention Monday.
+   - Do NOT dilute or skip the user's key message. Deliver it EXACTLY.
+
+   Each dialogue block MUST start with "speaks clearly:" or "says:" so the system
+   can identify it. Write each block as a SEPARATE quoted string.
+
+   - 8s video: 2 dialogue blocks, 30-40 words total.
+     Block 1: Hook + key announcement (the main point from audio context).
+     Block 2: Closing line — call to action or punchy sign-off.
+     ALL key points from audio context must fit in these 2 blocks.
+     The last block MUST feel like a natural ending — NOT an abrupt cut.
+
+   - 15s video: 4 dialogue blocks, 60-80 words total.
      For 15s, the video is generated in TWO parts (8s + 7s extension).
-     Structure dialogue so the FIRST 2 blocks cover the announcement (what's happening,
-     the exciting news) and the LAST 1-2 blocks cover the call-to-action/payoff (why it
-     matters, what to do next). Separate each block with a gesture/pause between them.
-     The extension will pick up from the second half — so the dialogue must NOT repeat
-     the same points. Each block should say something NEW.
+     Block 1: Hook — grab attention, set up the announcement.
+     Block 2: Key message — the main news from audio context.
+     --- (Part 1 ends here, Part 2 extension starts) ---
+     Block 3: Supporting details — why it matters, what's special.
+     Block 4: Closing — call to action or sign-off. Must feel like a natural end.
+     Each block is a SEPARATE quoted string with a gesture/pause between them.
+     Blocks 1-2 and Blocks 3-4 must say COMPLETELY DIFFERENT things — NO repetition.
 
 3. AMBIENT + PHYSICAL ACTIONS: Brief ambient sound and small natural gestures.
    "Upbeat background music." Small actions like pausing, smiling, gesturing with hands,
-   looking at camera — but keep these BETWEEN dialogue lines, not during.
+   looking at camera — put these BETWEEN dialogue blocks, not during.
 
 4. LOGO REMINDER: Reinforce logo visibility near the end.
    "The brand logo remains visible in the upper-right corner."
@@ -64,28 +79,39 @@ A motion graphics video prompt has 5 parts in one paragraph:
   lighting color that washes the entire scene.
 
 ## EXAMPLE 8-SECOND PROMPT (GOLD STANDARD):
+(Audio context was: "announce biggest sale, 50% off, starts Friday")
 
 "A medium close-up, eye-level shot of an energetic young Indian man standing in a modern,
 well-lit studio with bold brand-colored accent walls. A small, semi-transparent brand logo
 is visible in the upper-right corner of the frame. He looks directly into the camera with
 an enthusiastic expression and speaks clearly: 'Big news — our biggest sale of the year
-starts this Friday. Everything you love, up to fifty percent off. You do not want to miss
-this one.' He smiles and points at the camera. The brand logo remains visible in the corner.
-Upbeat energetic music in the background, bright studio lighting, shallow depth of field
-keeping focus on his face. Premium commercial style."
+starts this Friday, everything you love, up to fifty percent off.' He smiles and points
+at the camera and says: 'You do not want to miss this one.' The brand logo remains visible
+in the corner. Upbeat energetic music in the background, bright studio lighting, shallow
+depth of field keeping focus on his face. Premium commercial style."
+
+WHY: 2 separate dialogue blocks (speaks clearly: '...' and says: '...'). Block 1 delivers
+ALL key points (biggest sale, Friday, 50% off). Block 2 is a punchy closing. Ends naturally.
 
 ## EXAMPLE 15-SECOND PROMPT:
+(Audio context was: "new collection launch, about confidence, something for everyone, drops Monday")
 
 "A medium close-up, eye-level shot of a confident young Indian woman standing in a stylish
 café with warm ambient lighting and brand-colored decor accents. A small, semi-transparent
 brand logo is visible in the upper-right corner of the frame. She looks directly into the
 camera with a warm smile and speaks clearly: 'So we have been working on something really
-special for the past few months and I am so excited to finally share it with you. We are
-launching a whole new collection that is all about making you feel confident and comfortable
-every single day. Whether it is for work, for going out, or just for you — we have got
-something for everyone.' She pauses and tilts her head. 'Mark your calendars — it drops
-next Monday.' The brand logo remains visible in the corner. Soft upbeat background music,
-warm natural lighting, shallow depth of field. Cinematic, documentary style."
+special and I am so excited to finally share it with you.' She gestures with her hands and
+says: 'We are launching a whole new collection that is all about making you feel confident
+and comfortable every single day.' She tilts her head and smiles, then says: 'Whether it
+is for work, for going out, or just for you — we have got something for everyone.' She
+looks warmly at the camera and says: 'Mark your calendars — it drops next Monday.' The
+brand logo remains visible in the corner. Soft upbeat background music, warm natural
+lighting, shallow depth of field. Cinematic, documentary style."
+
+WHY: 4 separate dialogue blocks (speaks clearly: '...' then 3x says: '...').
+Blocks 1-2 = Part 1 (intro + collection launch). Blocks 3-4 = Part 2 extension
+(something for everyone + Monday CTA). Each block says something DIFFERENT.
+Block 4 is a clear call to action that feels like a natural ending.
 
 ## WHY THESE EXAMPLES WORK:
 - Simple shot setup — one line, no complex camera choreography
