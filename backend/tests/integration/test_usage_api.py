@@ -45,7 +45,7 @@ async def _seed_usage_logs(db_session):
         UsageLog(
             user_id=TEST_USER_ID,
             action_type="video",
-            model_name="veo-3.1-generate-preview",
+            model_name="veo-3.1-generate-001",
             tool_name="generate_video",
             status="success",
             cost_usd=3.20,
@@ -183,7 +183,7 @@ class TestUsageHistoryAPI:
         await _seed_usage_logs(db_session)
 
         resp = await client.get(
-            "/api/v1/usage/history?model_name=veo-3.1-generate-preview",
+            "/api/v1/usage/history?model_name=veo-3.1-generate-001",
             headers=auth_headers,
         )
         assert resp.status_code == 200
@@ -202,7 +202,7 @@ class TestUsageHistoryAPI:
 
         assert "id" in item
         assert item["action_type"] == "video"
-        assert item["model_name"] == "veo-3.1-generate-preview"
+        assert item["model_name"] == "veo-3.1-generate-001"
         assert item["tool_name"] == "generate_video"
         assert item["status"] == "success"
         assert item["cost_usd"] == pytest.approx(3.20, abs=0.01)

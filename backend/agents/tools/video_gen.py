@@ -1,9 +1,9 @@
 """Unified video generation tool using Veo 3.1 API.
 
 Adapted from v2 — wrapped with LangChain @tool decorator.
-Supports two mutually exclusive modes:
-- Mode A (text-to-video + reference_images)
-- Mode B (image-to-video + image=)
+Uses text-to-video + reference_images for product/logo as visual asset guides.
+Native audio generation via generate_audio=True (dialogue + SFX + ambient).
+Video extension API for 15s videos (8s + 7s continuation).
 """
 
 import io
@@ -104,28 +104,8 @@ def _get_media_duration(path: str) -> float:
         return 0.0
 
 
-def _build_atempo_chain(ratio: float) -> str:
-    """Build chained atempo filters for ffmpeg.
-
-    atempo only supports 0.5-2.0 per filter. For ratios outside this range,
-    chain multiple filters (e.g., 3.0 → atempo=2.0,atempo=1.5).
-    """
-    if ratio <= 0:
-        return "atempo=1.0"
-    filters = []
-    remaining = ratio
-    while remaining > 2.0:
-        filters.append("atempo=2.0")
-        remaining /= 2.0
-    while remaining < 0.5:
-        filters.append("atempo=0.5")
-        remaining /= 0.5
-    filters.append(f"atempo={remaining:.4f}")
-    return ",".join(filters)
-
-
 def _split_prompt_for_parts(prompt: str) -> tuple[str, str]:
-    """Split a scene-based prompt into Part 1 and Part 2 for 16s videos.
+    """Split a scene-based prompt into Part 1 and Part 2 for 15s videos.
 
     If the prompt has scene markers (SCENE 1, SCENE 2, etc.), split the scenes:
     - Part 1: AD NARRATIVE + first half of scenes + Global specs
@@ -144,7 +124,10 @@ def _split_prompt_for_parts(prompt: str) -> tuple[str, str]:
         continuation = (
             " [SMOOTH CONTINUATION from the previous shot within the SAME scene. "
             "Maintain identical lighting, color grading, subject, and environment. "
-            "The visual flow must feel like one continuous unbroken shot.]"
+            "The visual flow must feel like one continuous unbroken shot. "
+            "Audio must continue naturally — same ambient music, same tone. "
+            "Only speak dialogue explicitly written in quotes. "
+            "Do NOT add any extra speech, vocalizations, or sounds not described.]"
         )
         return prompt, prompt + continuation
 
@@ -188,7 +171,11 @@ def _split_prompt_for_parts(prompt: str) -> tuple[str, str]:
     part2_prompt = (
         f"[SMOOTH CONTINUATION from the previous shot. Maintain identical lighting, "
         f"color grading, environment, and subject. The visual flow must feel like one "
-        f"continuous unbroken shot.]\n\n{part2_scenes}"
+        f"continuous unbroken shot. "
+        f"Audio must continue naturally from the previous segment — same ambient music, "
+        f"same tone. Only speak dialogue explicitly written in quotes below. "
+        f"Do NOT add any extra speech, vocalizations, or sounds not described below.]\n\n"
+        f"{part2_scenes}"
     )
     if global_specs:
         part2_prompt += f"\n\n{global_specs}"
@@ -234,6 +221,182 @@ def _overlay_logo_on_video(video_path: str, logo_path: str, output_path: str) ->
         return False
 
 
+def _build_reference_images(
+    image_path: str,
+    reference_image_paths: str,
+    logo_path: str,
+) -> tuple[list, list[str]]:
+    """Build list of VideoGenerationReferenceImage objects from product + logo paths.
+
+    Returns (ref_images_list, resolved_paths_list).
+    """
+    from google.genai import types
+
+    ref_images = []
+    all_ref_paths = []
+
+    # Add product image as reference
+    if image_path:
+        resolved_img = _resolve_image_path(image_path)
+        if os.path.exists(resolved_img):
+            img = Image.open(resolved_img)
+            if img.mode in ("RGBA", "LA", "P"):
+                img = img.convert("RGB")
+            buf = io.BytesIO()
+            img.save(buf, format="JPEG")
+            ref_images.append(
+                types.VideoGenerationReferenceImage(
+                    image=types.Image(image_bytes=buf.getvalue(), mime_type="image/jpeg"),
+                    reference_type="asset",
+                )
+            )
+            all_ref_paths.append(resolved_img)
+
+    # Add any additional reference image paths
+    if reference_image_paths:
+        for ref_path in reference_image_paths.split(","):
+            ref_path = ref_path.strip()
+            if not ref_path:
+                continue
+            resolved = _resolve_image_path(ref_path)
+            if os.path.exists(resolved) and resolved not in all_ref_paths:
+                img = Image.open(resolved)
+                if img.mode in ("RGBA", "LA", "P"):
+                    img = img.convert("RGB")
+                buf = io.BytesIO()
+                img.save(buf, format="JPEG")
+                ref_images.append(
+                    types.VideoGenerationReferenceImage(
+                        image=types.Image(image_bytes=buf.getvalue(), mime_type="image/jpeg"),
+                        reference_type="asset",
+                    )
+                )
+                all_ref_paths.append(resolved)
+
+    # Add logo as reference image
+    if logo_path:
+        resolved_logo = _resolve_image_path(logo_path)
+        if os.path.exists(resolved_logo) and resolved_logo not in all_ref_paths:
+            logo_img = Image.open(resolved_logo)
+            if logo_img.mode in ("RGBA", "LA", "P"):
+                logo_img = logo_img.convert("RGB")
+            buf = io.BytesIO()
+            logo_img.save(buf, format="JPEG")
+            ref_images.append(
+                types.VideoGenerationReferenceImage(
+                    image=types.Image(image_bytes=buf.getvalue(), mime_type="image/jpeg"),
+                    reference_type="asset",
+                )
+            )
+            all_ref_paths.append(resolved_logo)
+
+    return ref_images, all_ref_paths
+
+
+def _enhance_prompt(
+    prompt: str,
+    brand_name: str,
+    brand_colors: str,
+    target_audience: str,
+) -> str:
+    """Apply brand enhancement and negative prompt suffix to a video prompt."""
+    import re as _re
+
+    colors_list = [c.strip() for c in brand_colors.split(",") if c.strip()] if brand_colors else []
+    primary = colors_list[0] if colors_list else ""
+    secondary = colors_list[1] if len(colors_list) > 1 else ""
+
+    brand_narrative = []
+    if colors_list:
+        color_str = ", ".join(colors_list[:3])
+        brand_narrative.append(
+            f"Scene color palette: brand colors {color_str}. "
+            f"Use {primary} as dominant tone."
+            + (f" {secondary} as accent." if secondary else "")
+        )
+    if target_audience:
+        brand_narrative.append(f"Human subject matches target audience: {target_audience}.")
+
+    brand_narrative.append(
+        "One pair of hands, one simple action per shot. Stable background, consistent lighting."
+    )
+
+    enhanced = prompt.rstrip()
+    # Strip brand name — known brand names trigger Veo's RAI filter
+    if brand_name:
+        enhanced = _re.sub(
+            r"\b" + _re.escape(brand_name) + r"(?:'s)?\b",
+            "the brand's",
+            enhanced,
+            flags=_re.IGNORECASE,
+        )
+    if brand_narrative:
+        enhanced += " " + " ".join(brand_narrative)
+
+    # Append short "Avoid:" (negative_prompt not supported with reference_images)
+    safe_negatives = (
+        "text, titles, words, extra hands, extra fingers, floating objects, "
+        "cartoon, morphing, flickering, shifting background"
+    )
+    enhanced += f" Avoid: {safe_negatives}."
+
+    return enhanced
+
+
+def _poll_operation(client, operation, timeout: int = 300) -> tuple:
+    """Poll a Veo operation until done. Returns (operation, timed_out)."""
+    poll_count = 0
+    remaining = timeout
+    while not operation.done:
+        time.sleep(10)
+        poll_count += 1
+        operation = client.operations.get(operation)
+        logger.info("[VIDEO] Poll %d — done=%s elapsed=%ds", poll_count, operation.done, poll_count * 10)
+        remaining -= 10
+        if remaining <= 0:
+            return operation, True
+    return operation, False
+
+
+def _download_video(client, video_obj, video_path: str) -> None:
+    """Download a Veo video object to a local file."""
+    try:
+        client.files.download(file=video_obj.video)
+        video_obj.video.save(str(video_path))
+    except (ValueError, NotImplementedError):
+        # Vertex AI client doesn't support client.files.download()
+        video_data = getattr(video_obj.video, 'video_bytes', None)
+        if video_data:
+            with open(video_path, 'wb') as f:
+                f.write(video_data)
+            logger.info("[VIDEO] Saved via video_bytes (Vertex AI)")
+        else:
+            uri = getattr(video_obj.video, 'uri', None)
+            if uri:
+                logger.info("[VIDEO] Downloading from URI: %s", uri)
+                if uri.startswith("gs://"):
+                    from google.cloud import storage as gcs_storage
+                    from app.config import GOOGLE_SERVICE_ACCOUNT_FILE
+                    from google.oauth2.service_account import Credentials as SACredentials
+                    creds = SACredentials.from_service_account_file(
+                        GOOGLE_SERVICE_ACCOUNT_FILE,
+                        scopes=["https://www.googleapis.com/auth/cloud-platform"],
+                    )
+                    gcs_client = gcs_storage.Client(credentials=creds)
+                    parts = uri.replace("gs://", "").split("/", 1)
+                    bucket = gcs_client.bucket(parts[0])
+                    blob = bucket.blob(parts[1])
+                    blob.download_to_filename(str(video_path))
+                    logger.info("[VIDEO] Downloaded from GCS")
+                else:
+                    import urllib.request
+                    urllib.request.urlretrieve(uri, str(video_path))
+                    logger.info("[VIDEO] Downloaded from HTTP URI")
+            else:
+                video_obj.video.save(str(video_path))
+                logger.info("[VIDEO] Saved via direct save() call")
+
+
 def _generate_single_video(
     prompt: str,
     image_path: str = "",
@@ -249,29 +412,15 @@ def _generate_single_video(
     cta_text: str = "",
     negative_prompt: str = "",
     output_dir: str = "",
-    audio_script: str = "",
 ) -> dict:
-    """Generate a video using Veo 3.1 with reference images.
+    """Generate a single video using Veo 3.1 with native audio.
 
-    Uses text-to-video + reference_images for product/logo as visual asset guides.
-    Product image and logo are passed as VideoGenerationReferenceImage(reference_type="asset").
+    Uses source/config pattern with:
+    - generate_audio=True for native dialogue, SFX, and ambient audio
+    - person_generation="allow_all" for scenes with people
+    - reference_images for product/logo consistency
 
-    Args:
-        prompt: Video generation prompt.
-        image_path: Product image path (used as reference_image asset).
-        reference_image_paths: Comma-separated paths to additional reference images.
-        duration_seconds: Video length 5-8 seconds.
-        aspect_ratio: "9:16" (Reels), "16:9" (YouTube), "1:1" (Feed).
-        logo_path: Brand logo path (used as reference_image asset).
-        brand_name: Company name for prompt enhancement.
-        brand_colors: Comma-separated hex colors.
-        company_overview: Company description.
-        target_audience: Target audience description.
-        products_services: Products/services description.
-        cta_text: Call-to-action text.
-        negative_prompt: Elements to exclude.
-        output_dir: Directory to save video.
-        audio_script: Voiceover text to generate and merge into the video.
+    Returns dict with video_path AND veo_video object (for extension API).
     """
     _, VIDEO_MODEL, GENERATED_DIR = _get_config()
     save_dir = output_dir or str(GENERATED_DIR)
@@ -282,159 +431,61 @@ def _generate_single_video(
 
         clamped_duration = max(5, min(8, duration_seconds))
 
+        # Enhance prompt with brand context
+        enhanced_prompt = _enhance_prompt(prompt, brand_name, brand_colors, target_audience)
+
+        # Build reference images (product + logo)
+        ref_images, all_ref_paths = _build_reference_images(
+            image_path, reference_image_paths, logo_path
+        )
+
+        # Build source with prompt only (reference_images go in config)
+        source = types.GenerateVideosSource(prompt=enhanced_prompt)
+
+        # Build config with native audio + reference images
         config_kwargs = {
             "aspect_ratio": aspect_ratio,
             "number_of_videos": 1,
             "duration_seconds": clamped_duration,
+            "generate_audio": True,
+            "person_generation": "allow_all",
+            "resolution": "720p",
         }
 
-        # Build MINIMAL brand enhancement — keep prompt concise to avoid RAI filter triggers.
-        colors_list = [c.strip() for c in brand_colors.split(",") if c.strip()] if brand_colors else []
-        primary = colors_list[0] if colors_list else ""
-        secondary = colors_list[1] if len(colors_list) > 1 else ""
-
-        brand_narrative = []
-        if colors_list:
-            color_str = ", ".join(colors_list[:3])
-            brand_narrative.append(
-                f"Scene color palette: brand colors {color_str}. "
-                f"Use {primary} as dominant tone."
-                + (f" {secondary} as accent." if secondary else "")
-            )
-        if target_audience:
-            brand_narrative.append(f"Human subject matches target audience: {target_audience}.")
-
-        brand_narrative.append(
-            "One pair of hands, one simple action per shot. Stable background, consistent lighting."
-        )
-
-        enhanced_prompt = prompt.rstrip()
-        # Strip brand name from prompt — known brand names (e.g. "H&M", "Nike")
-        # trigger Veo's RAI filter for brand impersonation.
-        if brand_name:
-            import re as _re
-            enhanced_prompt = _re.sub(
-                r"\b" + _re.escape(brand_name) + r"(?:'s)?\b",
-                "the brand's",
-                enhanced_prompt,
-                flags=_re.IGNORECASE,
-            )
-        if brand_narrative:
-            enhanced_prompt += " " + " ".join(brand_narrative)
-
-        # Build negative prompt text — negative_prompt API param is NOT supported
-        # with reference_images, so we append it to the prompt as "Avoid: ..."
-        base_negatives = (
-            "text, titles, captions, words, letters, watermarks, subtitles, "
-            "extra hands, extra fingers, three hands, four hands, "
-            "overlapping hands, floating objects, animated, cartoon, "
-            "morphing, flickering, jitter, shifting background, inconsistent lighting"
-        )
-        if negative_prompt:
-            full_negative = f"{negative_prompt}, {base_negatives}"
-        else:
-            full_negative = base_negatives
-
-        # Build reference images list — product image + logo as assets
-        ref_images = []
-        all_ref_paths = []
-
-        # Add product image as reference
-        if image_path:
-            resolved_img = _resolve_image_path(image_path)
-            if os.path.exists(resolved_img):
-                img = Image.open(resolved_img)
-                if img.mode in ("RGBA", "LA", "P"):
-                    img = img.convert("RGB")
-                buf = io.BytesIO()
-                img.save(buf, format="JPEG")
-                ref_images.append(
-                    types.VideoGenerationReferenceImage(
-                        image=types.Image(image_bytes=buf.getvalue(), mime_type="image/jpeg"),
-                        reference_type="asset",
-                    )
-                )
-                all_ref_paths.append(resolved_img)
-
-        # Add any additional reference image paths
-        if reference_image_paths:
-            for ref_path in reference_image_paths.split(","):
-                ref_path = ref_path.strip()
-                if not ref_path:
-                    continue
-                resolved = _resolve_image_path(ref_path)
-                if os.path.exists(resolved) and resolved not in all_ref_paths:
-                    img = Image.open(resolved)
-                    if img.mode in ("RGBA", "LA", "P"):
-                        img = img.convert("RGB")
-                    buf = io.BytesIO()
-                    img.save(buf, format="JPEG")
-                    ref_images.append(
-                        types.VideoGenerationReferenceImage(
-                            image=types.Image(image_bytes=buf.getvalue(), mime_type="image/jpeg"),
-                            reference_type="asset",
-                        )
-                    )
-                    all_ref_paths.append(resolved)
-
-        # Add logo as reference image
-        if logo_path:
-            resolved_logo = _resolve_image_path(logo_path)
-            if os.path.exists(resolved_logo) and resolved_logo not in all_ref_paths:
-                logo_img = Image.open(resolved_logo)
-                if logo_img.mode in ("RGBA", "LA", "P"):
-                    logo_img = logo_img.convert("RGB")
-                buf = io.BytesIO()
-                logo_img.save(buf, format="JPEG")
-                ref_images.append(
-                    types.VideoGenerationReferenceImage(
-                        image=types.Image(image_bytes=buf.getvalue(), mime_type="image/jpeg"),
-                        reference_type="asset",
-                    )
-                )
-                all_ref_paths.append(resolved_logo)
-
-        gen_kwargs = {"model": VIDEO_MODEL, "prompt": enhanced_prompt}
-
         if ref_images:
-            # Text-to-video with reference images (product + logo as assets)
-            # negative_prompt is NOT supported with reference_images — append to prompt
             config_kwargs["reference_images"] = ref_images
-            # Append short "Avoid:" to prompt (keep it brief to avoid RAI triggers)
-            safe_negatives = (
-                "text, titles, words, extra hands, extra fingers, floating objects, "
-                "cartoon, morphing, flickering, shifting background"
-            )
-            enhanced_prompt += f" Avoid: {safe_negatives}."
-            gen_kwargs["prompt"] = enhanced_prompt
-            mode = "text_to_video_with_refs"
-        else:
-            # Pure text-to-video (no reference images at all)
-            config_kwargs["negative_prompt"] = full_negative
-            mode = "text_to_video"
 
-        gen_kwargs["config"] = types.GenerateVideosConfig(**config_kwargs)
+        # negative_prompt not supported with reference_images
+        if not ref_images and negative_prompt:
+            base_negatives = (
+                "text, titles, captions, words, letters, watermarks, subtitles, "
+                "extra hands, extra fingers, three hands, four hands, "
+                "overlapping hands, floating objects, animated, cartoon, "
+                "morphing, flickering, jitter, shifting background, inconsistent lighting"
+            )
+            config_kwargs["negative_prompt"] = f"{negative_prompt}, {base_negatives}"
+
+        config = types.GenerateVideosConfig(**config_kwargs)
+
+        mode = "text_to_video_with_refs" if ref_images else "text_to_video"
 
         import sys as _sys
-        print(f"[VIDEO] Starting generation mode={mode} model={VIDEO_MODEL}", file=_sys.stderr, flush=True)
+        print(f"[VIDEO] Starting generation mode={mode} model={VIDEO_MODEL} audio=native", file=_sys.stderr, flush=True)
         print(f"[VIDEO] Prompt FULL: {enhanced_prompt}", file=_sys.stderr, flush=True)
         print(f"[VIDEO] Reference images: {len(ref_images)} paths={all_ref_paths}", file=_sys.stderr, flush=True)
 
-        operation = client.models.generate_videos(**gen_kwargs)
+        operation = client.models.generate_videos(
+            model=VIDEO_MODEL,
+            source=source,
+            config=config,
+        )
         logger.info("[VIDEO] Operation received — done=%s name=%s",
                      operation.done, getattr(operation, 'name', 'N/A'))
 
-        max_wait = 300
-        poll_count = 0
-        while not operation.done:
-            time.sleep(10)
-            poll_count += 1
-            operation = client.operations.get(operation)
-            logger.info("[VIDEO] Poll %d — done=%s elapsed=%ds", poll_count, operation.done, poll_count * 10)
-            max_wait -= 10
-            if max_wait <= 0:
-                logger.warning("[VIDEO] Timed out after 5 minutes")
-                return {"status": "timeout", "message": "Video generation timed out after 5 minutes.", "model": VIDEO_MODEL}
+        operation, timed_out = _poll_operation(client, operation)
+        if timed_out:
+            logger.warning("[VIDEO] Timed out after 5 minutes")
+            return {"status": "timeout", "message": "Video generation timed out after 5 minutes.", "model": VIDEO_MODEL}
 
         # Log full operation details for debugging
         op_error = getattr(operation, 'error', None)
@@ -462,17 +513,13 @@ def _generate_single_video(
             return {"status": "error", "message": msg, "model": VIDEO_MODEL}
 
         if rai_filtered:
-            # RAI safety filter triggered — retry with a generic, safe prompt.
-            # Strip brand names, product specifics, and constraint text that may
-            # have triggered the filter. Keep only the core visual description.
+            # RAI safety filter triggered — retry with simplified prompt
             import sys as _sys_rai
             print(f"[VIDEO] RAI filtered — retrying with simplified prompt", file=_sys_rai.stderr, flush=True)
 
-            # Extract just the first 2 sentences of the original prompt (the visual hook)
             import re as _re2
             sentences = _re2.split(r'(?<=[.!])\s+', prompt.strip())
             simple_prompt = " ".join(sentences[:3]) if sentences else prompt[:200]
-            # Remove any remaining brand references
             if brand_name:
                 simple_prompt = _re2.sub(
                     r"\b" + _re2.escape(brand_name) + r"(?:'s)?\b",
@@ -485,22 +532,26 @@ def _generate_single_video(
 
             print(f"[VIDEO] Retry prompt: {simple_prompt[:200]}", file=_sys_rai.stderr, flush=True)
 
-            retry_kwargs = {"model": VIDEO_MODEL, "prompt": simple_prompt}
-            retry_config = {
+            retry_source = types.GenerateVideosSource(prompt=simple_prompt)
+
+            retry_config_kwargs = {
                 "aspect_ratio": aspect_ratio,
                 "number_of_videos": 1,
                 "duration_seconds": clamped_duration,
+                "generate_audio": True,
+                "person_generation": "allow_all",
+                "resolution": "720p",
             }
             if ref_images:
-                # Re-use same reference images
-                retry_config["reference_images"] = ref_images
-            else:
-                retry_config["negative_prompt"] = full_negative
-
-            retry_kwargs["config"] = types.GenerateVideosConfig(**retry_config)
+                retry_config_kwargs["reference_images"] = ref_images
+            retry_config = types.GenerateVideosConfig(**retry_config_kwargs)
 
             try:
-                operation2 = client.models.generate_videos(**retry_kwargs)
+                operation2 = client.models.generate_videos(
+                    model=VIDEO_MODEL,
+                    source=retry_source,
+                    config=retry_config,
+                )
                 while not operation2.done:
                     time.sleep(10)
                     operation2 = client.operations.get(operation2)
@@ -522,48 +573,9 @@ def _generate_single_video(
         filename = f"video_{timestamp}_{video_id}.mp4"
         video_path = output_path / filename
 
-        # Download video — different methods for Developer vs Vertex AI clients
-        try:
-            client.files.download(file=video.video)
-            video.video.save(str(video_path))
-        except (ValueError, NotImplementedError):
-            # Vertex AI client doesn't support client.files.download()
-            # Try saving directly (video bytes may already be in the response)
-            video_data = getattr(video.video, 'video_bytes', None)
-            if video_data:
-                with open(video_path, 'wb') as f:
-                    f.write(video_data)
-                logger.info("[VIDEO] Saved via video_bytes (Vertex AI)")
-            else:
-                # Try the URI-based approach for Vertex AI
-                uri = getattr(video.video, 'uri', None)
-                if uri:
-                    logger.info("[VIDEO] Downloading from URI: %s", uri)
-                    if uri.startswith("gs://"):
-                        from google.cloud import storage as gcs_storage
-                        from app.config import GOOGLE_SERVICE_ACCOUNT_FILE
-                        from google.oauth2.service_account import Credentials as SACredentials
-                        creds = SACredentials.from_service_account_file(
-                            GOOGLE_SERVICE_ACCOUNT_FILE,
-                            scopes=["https://www.googleapis.com/auth/cloud-platform"],
-                        )
-                        gcs_client = gcs_storage.Client(credentials=creds)
-                        # Parse gs://bucket/path
-                        parts = uri.replace("gs://", "").split("/", 1)
-                        bucket = gcs_client.bucket(parts[0])
-                        blob = bucket.blob(parts[1])
-                        blob.download_to_filename(str(video_path))
-                        logger.info("[VIDEO] Downloaded from GCS")
-                    else:
-                        import urllib.request
-                        urllib.request.urlretrieve(uri, str(video_path))
-                        logger.info("[VIDEO] Downloaded from HTTP URI")
-                else:
-                    # Last resort: try save() directly
-                    video.video.save(str(video_path))
-                    logger.info("[VIDEO] Saved via direct save() call")
+        _download_video(client, video, str(video_path))
 
-        print(f"[VIDEO] Success: {filename} mode={mode}", file=_sys.stderr, flush=True)
+        print(f"[VIDEO] Success: {filename} mode={mode} audio=native", file=_sys.stderr, flush=True)
         return {
             "status": "success",
             "video_path": str(video_path),
@@ -574,6 +586,7 @@ def _generate_single_video(
             "model": VIDEO_MODEL,
             "mode": mode,
             "branded": bool(logo_path or brand_name),
+            "veo_video": video.video,  # Veo video object for extension API
         }
 
     except Exception as e:
@@ -583,12 +596,98 @@ def _generate_single_video(
         traceback.print_exc(file=_sys.stderr)
         return {"status": "error", "message": f"Video generation failed: {str(e)[:300]}", "model": VIDEO_MODEL}
 
+
+def _extend_video(
+    veo_video,
+    continuation_prompt: str,
+    output_dir: str = "",
+) -> dict:
+    """Extend a Veo video by 7 seconds using the extension API.
+
+    Uses the Veo video object from Part 1 to generate a seamless continuation.
+    Returns the combined 15s video (Veo returns it as a single file).
+    """
+    _, VIDEO_MODEL, GENERATED_DIR = _get_config()
+    save_dir = output_dir or str(GENERATED_DIR)
+
+    try:
+        client = _get_client()
+        from google.genai import types
+
+        import sys as _sys
+        print(f"[VIDEO] Starting video extension (7s) with continuation prompt", file=_sys.stderr, flush=True)
+        print(f"[VIDEO] Extension prompt: {continuation_prompt[:300]}", file=_sys.stderr, flush=True)
+
+        # Extension source: prompt + video from Part 1
+        source = types.GenerateVideosSource(
+            prompt=continuation_prompt,
+            video=veo_video,
+        )
+        config = types.GenerateVideosConfig(
+            number_of_videos=1,
+            resolution="720p",
+            generate_audio=True,
+        )
+
+        operation = client.models.generate_videos(
+            model=VIDEO_MODEL,
+            source=source,
+            config=config,
+        )
+        logger.info("[VIDEO] Extension operation received — done=%s", operation.done)
+
+        operation, timed_out = _poll_operation(client, operation)
+        if timed_out:
+            logger.warning("[VIDEO] Extension timed out after 5 minutes")
+            return {"status": "timeout", "message": "Video extension timed out after 5 minutes.", "model": VIDEO_MODEL}
+
+        result = operation.result
+        op_error = getattr(operation, 'error', None)
+
+        if not result or not result.generated_videos:
+            rai_filtered = (
+                result
+                and getattr(result, 'rai_media_filtered_count', 0) > 0
+            )
+            if rai_filtered:
+                return {"status": "error", "message": "Video extension was filtered by safety guidelines.", "model": VIDEO_MODEL}
+            error_detail = f" Error: {op_error}" if op_error else ""
+            return {"status": "error", "message": f"No video from extension.{error_detail}", "model": VIDEO_MODEL}
+
+        video = result.generated_videos[0]
+        output_path = Path(save_dir)
+        output_path.mkdir(parents=True, exist_ok=True)
+
+        video_id = str(uuid.uuid4())[:8]
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"video_{timestamp}_{video_id}_extended.mp4"
+        video_path = output_path / filename
+
+        _download_video(client, video, str(video_path))
+
+        print(f"[VIDEO] Extension success: {filename}", file=_sys.stderr, flush=True)
+        return {
+            "status": "success",
+            "video_path": str(video_path),
+            "filename": filename,
+            "url": f"/generated/{filename}",
+            "model": VIDEO_MODEL,
+        }
+
+    except Exception as e:
+        import sys as _sys
+        import traceback
+        print(f"[VIDEO] Extension failed: {e}", file=_sys.stderr, flush=True)
+        traceback.print_exc(file=_sys.stderr)
+        return {"status": "error", "message": f"Video extension failed: {str(e)[:300]}", "model": VIDEO_MODEL}
+
+
 @tool
 def generate_video(
     prompt: str,
     image_path: str = "",
     reference_image_paths: str = "",
-    duration_seconds: int = 16,
+    duration_seconds: int = 15,
     aspect_ratio: str = "9:16",
     logo_path: str = "",
     brand_name: str = "",
@@ -599,18 +698,21 @@ def generate_video(
     cta_text: str = "",
     negative_prompt: str = "",
     output_dir: str = "",
-    audio_script: str = "",
 ) -> dict:
-    """Generate a video using Veo 3.1 with reference images.
+    """Generate a video using Veo 3.1 with native audio and reference images.
 
     Product image and logo are passed as reference_images (reference_type="asset")
-    to guide Veo's generation while keeping product and brand consistency.
+    to guide Veo's generation with product and brand consistency.
+    Audio (dialogue, SFX, ambient) is generated natively by Veo — no separate TTS.
+
+    For 15s videos: generates 8s Part 1 with reference_images, then extends by 7s
+    using the Veo extension API for seamless continuation (no stitching).
 
     Args:
-        prompt: Video generation prompt (50-175 words).
+        prompt: Video generation prompt with Audio: lines for native audio.
         image_path: Product image path (used as reference_image asset).
         reference_image_paths: Comma-separated paths to product images (used as reference_image assets).
-        duration_seconds: Video length 5-16 seconds.
+        duration_seconds: Video length 5-15 seconds.
         aspect_ratio: "9:16" (Reels), "16:9" (YouTube), "1:1" (Feed).
         logo_path: Brand logo path (used as reference_image asset).
         brand_name: Company name for prompt enhancement.
@@ -621,15 +723,13 @@ def generate_video(
         cta_text: Call-to-action text.
         negative_prompt: Elements to exclude.
         output_dir: Directory to save video.
-        audio_script: Voiceover text to generate and merge into the video.
     """
 
     import sys as _sys2
 
-    clamped_duration = max(5, min(16, duration_seconds))
+    clamped_duration = max(5, min(15, duration_seconds))
 
     # Merge image_path and reference_image_paths into a single reference list.
-    # Both product images and logo are passed as reference_images (asset type).
     effective_image_path = image_path
     if reference_image_paths and not image_path:
         ref_list = [p.strip() for p in reference_image_paths.split(",") if p.strip()]
@@ -639,21 +739,22 @@ def generate_video(
             print(f"[VIDEO] Using product image as reference: {first_product}", file=_sys2.stderr, flush=True)
 
     if clamped_duration <= 8:
+        # Short video: single generation with native audio
         res = _generate_single_video(
             prompt, effective_image_path, "", clamped_duration, aspect_ratio,
             logo_path, brand_name, brand_colors, company_overview, target_audience,
             products_services, cta_text, negative_prompt, output_dir
         )
+        res.pop("veo_video", None)
     else:
+        # 15s video: Part 1 (8s) + extension (7s) = 15s combined
         part1_duration = 8
-        part2_duration = max(5, min(8, clamped_duration - 8))
 
-        # Split prompt for 16s: Part 1 gets first-half scenes, Part 2 gets second-half.
-        # This prevents both parts from trying to render ALL scenes.
+        # Split prompt for 15s: Part 1 gets first-half scenes, Part 2 gets second-half
         part1_prompt, part2_prompt = _split_prompt_for_parts(prompt)
-        print(f"[VIDEO] 16s split — Part 1 prompt: {len(part1_prompt)} chars, Part 2 prompt: {len(part2_prompt)} chars", file=_sys2.stderr, flush=True)
+        print(f"[VIDEO] 15s split — Part 1 prompt: {len(part1_prompt)} chars, Part 2 prompt: {len(part2_prompt)} chars", file=_sys2.stderr, flush=True)
 
-        print(f"[VIDEO] Generating part 1 (8s) mode={'image_to_video' if effective_image_path else 'text'}", file=_sys2.stderr, flush=True)
+        print(f"[VIDEO] Generating Part 1 (8s) with reference_images + native audio", file=_sys2.stderr, flush=True)
         part1_res = _generate_single_video(
             part1_prompt, effective_image_path, "", part1_duration, aspect_ratio,
             logo_path, brand_name, brand_colors, company_overview, target_audience,
@@ -661,221 +762,67 @@ def generate_video(
         )
 
         if part1_res.get("status") != "success":
+            part1_res.pop("veo_video", None)
             return part1_res
 
-        part1_video = part1_res["video_path"]
+        # Get the Veo video object for extension
+        veo_video = part1_res.get("veo_video")
+        if not veo_video:
+            print(f"[VIDEO] No veo_video object from Part 1 — cannot extend", file=_sys2.stderr, flush=True)
+            part1_res.pop("veo_video", None)
+            return part1_res
 
-        import uuid
-        from datetime import datetime
-
-        _, _, GENERATED_DIR = _get_config()
-        save_dir = output_dir or str(GENERATED_DIR)
-
-        # Part 2: Extract last frame from Part 1 for visual continuity.
-        # Part 2 gets 3 reference images: last frame + original product + logo.
-        last_frame_path = os.path.join(save_dir, f"frame_{uuid.uuid4().hex[:8]}.jpg")
-        print(f"[VIDEO] Extracting last frame from Part 1 for Part 2 reference", file=_sys2.stderr, flush=True)
-        try:
-            subprocess.run([
-                "ffmpeg", "-sseof", "-1", "-i", part1_video,
-                "-update", "1", "-q:v", "1", last_frame_path, "-y"
-            ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        except Exception as e:
-            print(f"[VIDEO] Failed to extract frame: {e}", file=_sys2.stderr, flush=True)
-            return {"status": "error", "message": f"Failed to extract frame for Part 2: {e}"}
-
-        # Part 2 needs BOTH the last frame (for visual continuity) AND the original
-        # product image (so Veo knows what the product looks like). Without the product
-        # image, Veo hallucinates a different product (e.g. bottle instead of saree).
-        part2_extra_refs = last_frame_path
-        if effective_image_path and effective_image_path != last_frame_path:
-            part2_extra_refs = f"{last_frame_path}, {effective_image_path}"
-        print(f"[VIDEO] Generating part 2 ({part2_duration}s) with refs: {part2_extra_refs} + logo", file=_sys2.stderr, flush=True)
-        part2_res = _generate_single_video(
-            prompt=part2_prompt,
-            image_path="",
-            reference_image_paths=part2_extra_refs,
-            duration_seconds=part2_duration,
-            aspect_ratio=aspect_ratio,
-            logo_path=logo_path,
-            brand_name=brand_name,
-            brand_colors=brand_colors,
-            company_overview=company_overview,
-            target_audience=target_audience,
-            products_services=products_services,
-            cta_text=cta_text,
-            negative_prompt=negative_prompt,
-            output_dir=output_dir
+        # Extend Part 1 by 7s using the Veo extension API
+        print(f"[VIDEO] Extending Part 1 by 7s using Veo extension API", file=_sys2.stderr, flush=True)
+        ext_res = _extend_video(
+            veo_video=veo_video,
+            continuation_prompt=part2_prompt,
+            output_dir=output_dir,
         )
 
-        if part2_res.get("status") != "success":
-            return part2_res
+        if ext_res.get("status") != "success":
+            # Extension failed — return Part 1 as-is (8s is better than nothing)
+            print(f"[VIDEO] Extension failed, returning Part 1 only (8s)", file=_sys2.stderr, flush=True)
+            part1_res.pop("veo_video", None)
+            part1_res["duration_seconds"] = part1_duration
+            return part1_res
 
-        part2_video = part2_res["video_path"]
-
-        # Clean up extracted frame
+        # Extension returns the combined video (Part 1 + extension as one file)
+        # Clean up Part 1 file since we have the combined video
         try:
-            if os.path.exists(last_frame_path):
-                os.remove(last_frame_path)
+            part1_path = part1_res.get("video_path")
+            if part1_path and os.path.exists(part1_path):
+                os.remove(part1_path)
         except Exception:
             pass
 
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        final_filename = f"video_{timestamp}_{uuid.uuid4().hex[:8]}.mp4"
-        final_video = os.path.join(save_dir, final_filename)
-
-        # Use xfade crossfade filter (0.5s) for smooth transition between parts
-        crossfade_duration = 0.5
-        print(f"[VIDEO] Joining parts with {crossfade_duration}s crossfade", file=_sys2.stderr, flush=True)
-        try:
-            p1_dur = _get_media_duration(part1_video) or float(part1_duration)
-            xfade_offset = max(0, p1_dur - crossfade_duration)
-
-            subprocess.run([
-                "ffmpeg",
-                "-i", part1_video,
-                "-i", part2_video,
-                "-filter_complex",
-                f"[0:v][1:v]xfade=transition=fade:duration={crossfade_duration}:offset={xfade_offset},format=yuv420p[v]",
-                "-map", "[v]",
-                "-c:v", "libx264", "-preset", "fast", "-crf", "18",
-                final_video, "-y"
-            ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        except Exception as e:
-            # Fallback to simple concat if xfade fails
-            print(f"[VIDEO] Crossfade failed ({e}), falling back to concat", file=_sys2.stderr, flush=True)
-            list_path = os.path.join(save_dir, f"list_{uuid.uuid4().hex[:8]}.txt")
-            with open(list_path, "w") as f:
-                f.write(f"file '{os.path.abspath(part1_video)}'\n")
-                f.write(f"file '{os.path.abspath(part2_video)}'\n")
-            try:
-                subprocess.run([
-                    "ffmpeg", "-f", "concat", "-safe", "0", "-i", list_path,
-                    "-c", "copy", final_video, "-y"
-                ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            except Exception as e2:
-                return {"status": "error", "message": f"Failed to join video parts: {e2}"}
-            finally:
-                try:
-                    os.remove(list_path)
-                except Exception:
-                    pass
-
         res = {
             "status": "success",
-            "video_path": final_video,
-            "filename": final_filename,
-            "url": f"/generated/{final_filename}",
-            "duration_seconds": clamped_duration,
+            "video_path": ext_res["video_path"],
+            "filename": ext_res["filename"],
+            "url": ext_res["url"],
+            "duration_seconds": 15,  # 8s + 7s
             "aspect_ratio": aspect_ratio,
-            "model": part1_res.get("model", ""),
-            "mode": "stitched",
+            "model": ext_res.get("model", ""),
+            "mode": "extended",
             "branded": bool(logo_path or brand_name),
         }
 
-    if res.get("status") == "success" and audio_script:
-        import uuid
-        import wave
-        from datetime import datetime
-
+    # Post-processing: overlay logo watermark via ffmpeg (reliable, Veo ignores logo refs)
+    if res.get("status") == "success" and logo_path:
         _, _, GENERATED_DIR = _get_config()
         save_dir = output_dir or str(GENERATED_DIR)
-
         video_path = res["video_path"]
-
-        # Warn if audio script seems too short for the video duration
-        word_count = len(audio_script.split())
-        expected_min = 25 if clamped_duration > 8 else 12
-        if word_count < expected_min:
-            print(f"[VIDEO] WARNING: audio script only {word_count} words for {clamped_duration}s video (expected >= {expected_min}). Audio may be stretched.", file=_sys2.stderr, flush=True)
-        print(f"[VIDEO] Audio script ({word_count} words for {clamped_duration}s): {audio_script[:150]}", file=_sys2.stderr, flush=True)
-
-        try:
-            # Generate voiceover using Gemini TTS — expressive, emotional ad voice
-            from app.config import TTS_MODEL, TTS_VOICE
-            from google.genai import types as tts_types
-
-            tts_client = _get_client()
-            # The audio_script already contains inline emotion/pacing cues
-            # like [short pause], [medium pause], [whispering] etc.
-            # Just add a light style prefix to set the overall tone.
-            tts_prompt = (
-                f"Speak as a professional marketing voiceover artist "
-                f"with a warm, confident tone: {audio_script}"
-            )
-            print(f"[VIDEO] Generating TTS with {TTS_MODEL} voice={TTS_VOICE}", file=_sys2.stderr, flush=True)
-
-            tts_response = tts_client.models.generate_content(
-                model=TTS_MODEL,
-                contents=tts_prompt,
-                config=tts_types.GenerateContentConfig(
-                    response_modalities=["AUDIO"],
-                    speech_config=tts_types.SpeechConfig(
-                        voice_config=tts_types.VoiceConfig(
-                            prebuilt_voice_config=tts_types.PrebuiltVoiceConfig(
-                                voice_name=TTS_VOICE,
-                            )
-                        )
-                    ),
-                ),
-            )
-
-            audio_data = tts_response.candidates[0].content.parts[0].inline_data.data
-
-            # Save as WAV (Gemini TTS returns 24kHz 16-bit PCM)
-            audio_path = os.path.join(save_dir, f"audio_{uuid.uuid4().hex[:8]}.wav")
-            with wave.open(audio_path, "wb") as wf:
-                wf.setnchannels(1)
-                wf.setsampwidth(2)
-                wf.setframerate(24000)
-                wf.writeframes(audio_data)
-
-            print(f"[VIDEO] TTS generated: {audio_path}", file=_sys2.stderr, flush=True)
-
-            if os.path.exists(audio_path):
-                # Measure video and audio durations for sync
-                video_dur = _get_media_duration(video_path)
-                audio_dur = _get_media_duration(audio_path)
-                print(f"[VIDEO] Duration — video={video_dur:.2f}s audio={audio_dur:.2f}s", file=_sys2.stderr, flush=True)
-
-                video_with_audio_path = os.path.join(save_dir, f"with_audio_{uuid.uuid4().hex[:8]}.mp4")
-
-                if video_dur > 0 and audio_dur > 0 and abs(video_dur - audio_dur) > 0.5:
-                    # Stretch/compress audio to match video duration using atempo filter
-                    tempo_ratio = audio_dur / video_dur
-                    atempo_filters = _build_atempo_chain(tempo_ratio)
-                    print(f"[VIDEO] Adjusting audio tempo: ratio={tempo_ratio:.3f} filters={atempo_filters}", file=_sys2.stderr, flush=True)
-
-                    subprocess.run([
-                        "ffmpeg", "-i", video_path, "-i", audio_path,
-                        "-c:v", "copy", "-filter:a", atempo_filters,
-                        "-c:a", "aac", "-map", "0:v:0", "-map", "1:a:0",
-                        video_with_audio_path, "-y"
-                    ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                else:
-                    # Durations close enough — merge directly
-                    subprocess.run([
-                        "ffmpeg", "-i", video_path, "-i", audio_path,
-                        "-c:v", "copy", "-c:a", "aac", "-map", "0:v:0", "-map", "1:a:0",
-                        "-shortest", video_with_audio_path, "-y"
-                    ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-                if os.path.exists(video_with_audio_path):
-                    try:
-                        os.remove(video_path)
-                    except:
-                        pass
-                    res["video_path"] = video_with_audio_path
-                    res["filename"] = os.path.basename(video_with_audio_path)
-                    res["url"] = f"/generated/{res['filename']}"
-
-                try:
-                    os.remove(audio_path)
-                except:
-                    pass
-        except Exception as e:
-            import traceback
-            print(f"[VIDEO] Failed to generate/merge audio: {e}", file=_sys2.stderr, flush=True)
-            traceback.print_exc(file=_sys2.stderr)
+        logo_output = os.path.join(save_dir, f"logo_{uuid.uuid4().hex[:8]}.mp4")
+        print(f"[VIDEO] Overlaying logo watermark on final video", file=_sys2.stderr, flush=True)
+        if _overlay_logo_on_video(video_path, logo_path, logo_output):
+            try:
+                os.remove(video_path)
+            except Exception:
+                pass
+            res["video_path"] = logo_output
+            res["filename"] = os.path.basename(logo_output)
+            res["url"] = f"/generated/{res['filename']}"
+            print(f"[VIDEO] Logo overlay applied: {res['filename']}", file=_sys2.stderr, flush=True)
 
     return res

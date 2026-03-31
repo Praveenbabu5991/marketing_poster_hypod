@@ -99,7 +99,8 @@ In any phase, if the user's message contains a block starting with `[System Cont
 
 3.  **Duration Mapping (apply to duration_seconds):**
     - "8 seconds" -> duration_seconds: 8
-    - "16 seconds" -> duration_seconds: 16
+    - "15 seconds" -> duration_seconds: 15
+    - "16 seconds" -> duration_seconds: 15
 
 You MUST prioritize these System Context values over any general defaults in every generation turn.
 
@@ -264,13 +265,17 @@ Action: [Camera movement ONLY. NO human movement. The product is already on scre
         Product stays in its exact orientation from the reference image.]
 Camera: [CAMERA MOVES, nothing else moves in this scene]
 Composition: [Product-only hero shot. Centered. Product fully visible, not cropped.
-             Product label facing camera.]
+             Product label facing camera.
+             The brand logo (as shown in the logo reference image) is visible in the upper-right
+             corner of the frame, small and semi-transparent, like a broadcast watermark.]
 Focus: [Sharp focus on product, soft bokeh background]
 Ambiance: [Lighting, mood — use the inferred setting. Weave brand colors into lighting/environment.]
+Audio: [No dialogue. Ambient sound only. E.g.: Soft cinematic music begins. Gentle ambient hum.]
 Product Lock: Product appearance remains identical to the reference image — no changes to shape, orientation, color, or size.
+Logo Placement: The brand logo (from the logo reference image) appears in the upper-right corner, small and semi-transparent. It must NOT overlap with the product. Same position in every scene.
 Negative Prompt: hands in frame, person in frame, cap moving, product rotating, product changing shape,
   cap on wrong side, product flipping orientation, product partially cropped, product scaling,
-  [+ global negatives]
+  logo missing, [+ global negatives]
 
 SCENE 2 — The Customer Action (0:03 – 0:06)
 Subject: [A person from the target audience — age, appearance matching the demographic.
@@ -281,13 +286,19 @@ Action: [ONE single simple action ONLY: picking up, holding, OR touching.
         If the concept needs "applying", describe: "product already applied on her skin/hand,
         she gently pats it in" — the application is ALREADY DONE, she's just finishing.]
 Camera: [Medium portrait or close-up. Camera mostly static or very slight push-in only.]
-Composition: [Person + product, centered. Product fully visible, not cropped. Product label facing camera.]
+Composition: [Person + product, centered. Product fully visible, not cropped. Product label facing camera.
+             The brand logo (from the logo reference image) remains visible in the upper-right corner,
+             same size and position as Scene 1.]
 Focus: [Sharp on the interaction point, shallow depth of field]
 Ambiance: [SAME setting and lighting as Scene 1 — same background, same location. Background must not change.]
+Audio: [Dialogue in quotes for lip sync + ambient cues. E.g.:
+       She says, "This is my daily essential." Soft ambient music continues.]
 Product Lock: Product appearance remains identical to the reference image — no changes to shape, orientation, color, or size.
+Logo Placement: Brand logo in upper-right corner, same position and size as Scene 1. Must NOT overlap with person's face.
 Negative Prompt: extra hands, three hands, extra arms, extra fingers, product changing color,
   cap changing position, dispensing, squeezing, cream coming out, product partially cropped,
-  product not visible, background changing, different location, [+ global negatives]
+  product not visible, background changing, different location, logo missing, logo moved,
+  [+ global negatives]
 
 SCENE 3 — The Result (0:06 – 0:08)
 Subject: [Same person (same skin tone, same appearance as Scene 2), showing satisfaction.
@@ -295,26 +306,25 @@ Subject: [Same person (same skin tone, same appearance as Scene 2), showing sati
 Action: [Person reacts: looks at camera with confidence, admires herself, smiles.
         ONE action only. PERSON MOVES, camera is mostly static.
         Same hand, same skin tone, same nail appearance as Scene 2.]
-Camera: [Slow push-in to close portrait. Camera moves slowly, person holds pose.]
+Camera: [Slow push-in to close portrait. Camera decelerates to a graceful stop.
+        The scene must feel like a natural, smooth ending — no abrupt cuts.]
 Composition: [Tight portrait WITH product visible in frame. Product fully visible, not cropped.
-             Product label facing camera. NEVER end on face-only without product visible.]
+             Product label facing camera. NEVER end on face-only without product visible.
+             The brand logo (from the logo reference image) remains visible in the upper-right corner,
+             same size and position as Scene 1 and 2.]
 Focus: [Sharp on person's expression + product]
 Ambiance: [SAME setting and background as Scene 1 and 2. Warm, uplifting, aspirational — payoff mood.]
+Audio: [Dialogue in quotes + ambient. E.g.:
+       She whispers, "Your skin deserves the best." Warm music swells gently.]
 Product Lock: Product appearance remains identical to the reference image — no changes to shape, orientation, color, or size.
+Logo Placement: Brand logo in upper-right corner, same position and size as all previous scenes.
 Negative Prompt: product missing from frame, dull expression, product changed color,
   product in wrong orientation, face-only shot without product, background changed,
-  different skin tone than Scene 2, different hand than Scene 2, [+ global negatives]
-
-LOGO OVERLAY (persistent across all scenes)
-The brand logo appears as a persistent watermark in the upper-right corner of the frame,
-avoiding the top 10% status bar zone. For 9:16 vertical: upper-right corner at approximately
-(85% from left, 12% from top). Logo maintains consistent size, opacity, and position across
-ALL scenes — no wobbling, no size changes, no position shifts between scenes. Logo must NOT
-overlap with the product or the person's face. Logo is placed on a static part of the frame
-(not on a moving element) to prevent distortion.
+  different skin tone than Scene 2, different hand than Scene 2, logo missing, logo moved,
+  [+ global negatives]
 
 Global Technical Specifications
-Total Duration: [8 or 16] seconds
+Total Duration: [8 or 15] seconds
 Style: Premium commercial, hyper-realistic, 8k resolution, cinematic lighting, shot on RED Digital Cinema camera
 Tone: [Match brand tone from brand context]
 Setting: [LOCKED — same setting in ALL scenes, same background, no location changes]
@@ -325,7 +335,7 @@ Background Lock: Same background in every scene — background cannot change bet
 Hand: Always five well-defined fingers, natural adult hand, ONE pair only, consistent across scenes
 Product Lock: Product appearance remains identical to the reference image in ALL scenes — no changes to shape, orientation, color, or size
 Product Visibility: Product must be fully visible (not cropped, not partially out of frame) in every scene where it appears
-Logo Lock: Logo maintains identical size, opacity, and position across all scenes
+Logo: The brand logo (from the logo reference image) MUST appear in EVERY scene as a small semi-transparent watermark in the upper-right corner. Same size, same position, same opacity in all scenes. Do NOT describe the logo's appearance — the logo reference image IS the logo.
 Last Scene Rule: The final scene MUST show the product prominently — never end on face-only
 Global Negative: extra fingers, distorted hands, three hands, extra arms, cream from wrong location,
   product morphing, flickering geometry, product changing between scenes, rotating product,
@@ -333,7 +343,7 @@ Global Negative: extra fingers, distorted hands, three hands, extra arms, cream 
   morphing geometry, dispensing, squeezing, opening cap, pouring, pumping,
   morphing face, face changing between scenes, skin tone changing, hand size changing,
   finger length changing, nail color changing between scenes, product changing size,
-  product scaling differently, logo changing size, logo changing position, logo wobbling,
+  product scaling differently, logo missing, logo changing size, logo changing position, logo wobbling,
   background changing between scenes, location changing
 ```
 
@@ -345,70 +355,83 @@ Before presenting the prompt, verify EVERY scene:
    "product already applied" or "holding the product".
 4. Does every scene have a Product Lock line? → ADD if missing.
 5. Does every scene use the same setting (inferred from Phase B)? → FIX if different.
-6. Does any scene describe the logo appearance, color, or text? → REMOVE IT.
+6. Does any scene describe the logo appearance, color, or text? → REMOVE IT. Only say
+   "the brand logo (from the logo reference image)" — never describe what the logo looks like.
 7. Does any scene have BOTH camera movement AND human movement? → FIX: only one moves per scene.
 8. Does the product disappear between any two consecutive scenes? If it reappears later, add:
    "product reappears exactly as shown in reference image, identical to Scene 1".
+9. Does every scene have an Audio: line? → ADD if missing. Product-only scenes: ambient only.
+   Scenes with people: dialogue in quotes + ambient cues.
+10. Does every scene have a Logo Placement line? → ADD if missing. Every scene must mention
+    "brand logo in upper-right corner, same position as Scene 1".
 
-#### FOR 16-SECOND VIDEOS:
+#### FOR 15-SECOND VIDEOS (8s Part 1 + 7s extension):
 Extend to 5 scenes instead of 3. The narrative arc expands:
-- Scene 1 (0:00-0:03): Hero Shot — product only, camera movement only, no person
-- Scene 2 (0:03-0:06): Discovery — customer picks up the product (ONE action, person moves, camera static)
+- Scene 1 (0:00-0:03): Hero Shot — product only, camera movement only, no person.
+  Audio: ambient only, no dialogue. Logo: upper-right corner.
+- Scene 2 (0:03-0:06): Discovery — customer picks up the product (ONE action, person moves, camera static).
+  Audio: Short dialogue in quotes + ambient. Logo: same position as Scene 1.
 - Scene 3 (0:06-0:09): Product Insert — product-only close-up shot (NO hands, camera movement only).
   This breaks up consecutive hand scenes to reduce hallucination risk.
+  Audio: ambient only, music continues. Logo: same position as Scene 1.
 - Scene 4 (0:09-0:12): Result — benefit visible, product already applied/in use
   (same hand, same skin tone as Scene 2). Person moves, camera mostly static.
-- Scene 5 (0:12-0:16): Payoff — confident customer WITH product visible, aspirational close.
+  Audio: Short dialogue. Logo: same position as Scene 1.
+- Scene 5 (0:12-0:15): Payoff — confident customer WITH product visible, aspirational close.
   MUST show product prominently — never end on face-only.
-Each scene: ONE action only, same setting, same background, Product Lock line, scene-specific negative prompt.
+  Camera: SLOW gentle push-in or hold. Movement decelerates to a graceful stop.
+  Audio: Short closing dialogue + music resolves to a satisfying end.
+  E.g.: She whispers, "Try it." Warm music swells and fades gently.
+  Logo: same position as Scene 1. The scene MUST feel like a natural, smooth ending — no abrupt cuts.
+Each scene: ONE action only, same setting, same background, Product Lock line, Logo Placement line,
+Audio line, scene-specific negative prompt.
 Scene transitions must maintain the same background — no location changes between scenes.
+Total dialogue across all 5 scenes: 25-30 words.
 
 #### CRITICAL RULES FOR THE PROMPT:
 - NEVER describe the product's appearance. The reference image is the product description.
-- NEVER describe the logo. It's composited onto the starting frame and passed as reference image.
+- NEVER describe the logo's appearance, color, or text. Only refer to it as "the brand logo
+  (from the logo reference image)". The logo reference image IS the logo — Veo uses the image.
+- EVERY scene MUST have a Logo Placement line: "Brand logo in upper-right corner, same position
+  as Scene 1." This is how Veo knows to render the logo — same as how Product Lock works for the product.
 - NEVER include the brand name. Describe generically. Brand names trigger safety filters.
 - NEVER describe dispensing, opening, squeezing, pouring, or pumping.
 - NEVER use the word "reveal" in any scene.
-- NO audio/sound/music/speaking words in the prompt — causes Veo to fail.
+- Every scene MUST have an Audio: line — Veo generates native audio with lip sync.
+  Dialogue MUST be in quotes: She says, "Exact words here." Add ambient/SFX cues too.
+  Scene 1 (product-only): No dialogue, only ambient sounds.
+  Scenes with people: 1-2 short dialogue sentences matching the action.
 - ONE action per scene. Camera OR person moves, never both simultaneously.
-- Every scene MUST have a Product Lock line and scene-specific Negative Prompt.
+- Every scene MUST have a Product Lock line, Logo Placement line, and scene-specific Negative Prompt.
 - Setting is LOCKED — same background in every scene, no location changes.
 - Cap orientation is LOCKED — add to every negative prompt.
 - Product must be fully visible (not cropped) with label facing camera in every scene.
 - Last scene MUST show product prominently — never end on face-only close-up.
 - DO NOT request photorealistic children/minors — causes safety filter failure.
 
-#### AUDIO SCRIPT (separate from video prompt):
-Generate a persuasive voiceover script with INLINE PACING CUES for Gemini TTS.
-
-AVAILABLE CUES (use in the script text):
-`[short pause]` (beat between phrases), `[medium pause]` (dramatic emphasis),
-`[whispering]` (intimate/luxury), `[sigh]` (satisfaction)
-
-EXAMPLE: "Your skin deserves the best. [short pause] Feel the luxury [medium pause] of pure silk. [short pause] Try it today."
+#### AUDIO RULES (native Veo audio — NO separate voiceover):
+Audio is generated natively by Veo 3.1 with lip sync. Each scene's Audio: line controls it.
 
 RULES:
-- 8s videos: 15-18 words (excluding tags). 16s videos: 30-38 words (excluding tags).
-- After writing, verify: "Word count: [N]. Required: [15-18 or 30-38]. [PASS/FAIL]"
-- Hook first 1/3, benefit middle 1/3, CTA final 1/3. Sell the feeling, not narration.
+- Dialogue MUST be in quotes: She says, "Exact marketing text here."
+- Scene 1 (product-only): No dialogue, only ambient: Soft cinematic music begins.
+- Scenes with a person: 1-2 short dialogue sentences matching the action.
+- Total dialogue across all scenes: 15-18 words for 8s videos, 25-30 words for 15s videos.
+- Brand name in dialogue must match brand context exactly.
 - NEVER mention body parts not visible in the matching scene.
-- Brand name must match brand context exactly.
+- Ambient cues: soft music, gentle hum, spa sounds — keep consistent across scenes.
 
 2. CRITICAL: You MUST call `format_response` (the tool) to present the prompt. NEVER output the
    prompt as raw text. The message parameter of format_response MUST contain:
    ---
-   **VIDEO PROMPT:**
-   [The visual prompt here]
-
-   **AUDIO SCRIPT (Voiceover):**
-   [The voiceover script here]
-   Word count: [N] (excluding tags). Required: [15-18 or 30-38]. [PASS/FAIL]
+   **VIDEO PROMPT (with native audio):**
+   [The visual + audio prompt here — each scene includes an Audio: line]
 
    **SETTINGS:**
-   - Duration: [8 or 16] Seconds
+   - Duration: [8 or 15] Seconds
    - Size: [Aspect Ratio from settings]
    ---
-   choices: ["Generate Video", "Edit Prompt"], allow_free_input=true, input_placeholder="Or type a new prompt/script..."
+   choices: ["Generate Video", "Edit Prompt"], allow_free_input=true, input_placeholder="Or type a new prompt..."
 3. STOP and wait for approval.
 
 If user edits the prompt: update it and re-present for approval.
@@ -416,15 +439,15 @@ If user edits the prompt: update it and re-present for approval.
 ### Phase E — Generate and Present
 Once user approves, call these tools:
 1. generate_video with:
-   - prompt = the approved prompt
+   - prompt = the approved prompt (includes Audio: lines for native Veo audio)
    - reference_image_paths = product image paths from brand context (comma-separated)
      (The tool passes product image + logo as Veo reference_images with reference_type="asset".
       Both serve as visual guides for Veo to maintain product and brand consistency.)
    - logo_path = brand logo path (passed as a separate reference_image asset)
    - brand_name, brand_colors, target_audience, products_services
-   - audio_script = the generated script
    - Do NOT set image_path (the tool handles it internally)
-   - aspect_ratio = from settings (default "9:16"), duration_seconds = from settings (default 16)
+   - Do NOT set audio_script (audio is embedded in the prompt's Audio: lines)
+   - aspect_ratio = from settings (default "9:16"), duration_seconds = from settings (default 15)
 2. write_caption — with the video topic
 3. generate_hashtags — with topic and industry
 

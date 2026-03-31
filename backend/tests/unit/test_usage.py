@@ -52,7 +52,7 @@ class TestCalculateCost:
 
     def test_video_model_cost(self):
         cost = calculate_cost(
-            model_name="veo-3.1-generate-preview",
+            model_name="veo-3.1-generate-001",
             action_type="video",
             video_duration_seconds=8,
         )
@@ -61,7 +61,7 @@ class TestCalculateCost:
 
     def test_video_model_fast(self):
         cost = calculate_cost(
-            model_name="veo-3.1-fast-generate-preview",
+            model_name="veo-3.1-fast-generate-001",
             action_type="video",
             video_duration_seconds=8,
         )
@@ -106,7 +106,7 @@ class TestCalculateCost:
 
     def test_video_zero_duration(self):
         cost = calculate_cost(
-            model_name="veo-3.1-generate-preview",
+            model_name="veo-3.1-generate-001",
             action_type="video",
             video_duration_seconds=0,
         )
@@ -149,7 +149,7 @@ class TestUsageLogModel:
         log = UsageLog(
             user_id=uuid.uuid4(),
             action_type="video",
-            model_name="veo-3.1-generate-preview",
+            model_name="veo-3.1-generate-001",
             tool_name="generate_video",
             status="success",
             cost_usd=3.20,
@@ -185,11 +185,11 @@ class TestVertexPricing:
         assert "per_image" in VERTEX_PRICING["gemini-3-pro-image-preview"]
 
     def test_has_video_pricing(self):
-        assert "veo-3.1-generate-preview" in VERTEX_PRICING
-        assert "per_second" in VERTEX_PRICING["veo-3.1-generate-preview"]
+        assert "veo-3.1-generate-001" in VERTEX_PRICING
+        assert "per_second" in VERTEX_PRICING["veo-3.1-generate-001"]
 
     def test_has_fast_video_pricing(self):
-        assert "veo-3.1-fast-generate-preview" in VERTEX_PRICING
+        assert "veo-3.1-fast-generate-001" in VERTEX_PRICING
 
 
 # ── Callbacks tests ───────────────────────────────────────────────────
@@ -287,7 +287,7 @@ class TestUsageMonitoringHandler:
 
         output = json.dumps({
             "status": "success",
-            "model": "veo-3.1-generate-preview",
+            "model": "veo-3.1-generate-001",
             "duration_seconds": 8,
         })
         await handler.on_tool_end(

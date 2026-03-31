@@ -43,9 +43,7 @@ WRITER_MODEL = os.getenv("WRITER_MODEL", "google_genai/gemini-2.5-flash")
 CAPTION_MODEL = os.getenv("CAPTION_MODEL", "gemini-2.5-flash")
 IMAGE_MODEL = os.getenv("IMAGE_MODEL", "gemini-3-pro-image-preview")
 EDIT_MODEL = os.getenv("EDIT_MODEL", "gemini-3-pro-image-preview")
-VIDEO_MODEL = os.getenv("VIDEO_MODEL", "veo-3.1-generate-preview")
-TTS_MODEL = os.getenv("TTS_MODEL", "gemini-2.5-flash-preview-tts")
-TTS_VOICE = os.getenv("TTS_VOICE", "Kore")
+VIDEO_MODEL = os.getenv("VIDEO_MODEL", "veo-3.1-generate-001")
 
 # --- Paths ---
 GENERATED_DIR = Path(os.getenv("GENERATED_DIR", str(_project_root / "generated")))
@@ -74,9 +72,9 @@ VERTEX_PRICING = {
     # Gemini image generation model
     "gemini-3-pro-image-preview": {"per_image": 0.039},
     # Veo 3.1 Standard — $0.40/sec
-    "veo-3.1-generate-preview": {"per_second": 0.40},
+    "veo-3.1-generate-001": {"per_second": 0.40},
     # Veo 3.1 Fast — $0.15/sec
-    "veo-3.1-fast-generate-preview": {"per_second": 0.15},
+    "veo-3.1-fast-generate-001": {"per_second": 0.15},
 }
 
 
