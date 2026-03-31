@@ -33,10 +33,13 @@ A product video prompt has 5 parts in one paragraph:
    The delivery cue after the quote (warmly, with excitement) sets the vocal tone.
 
    CRITICAL — TIMING RULE (most important rule for dialogue):
-   A person speaks ~2.5 words per second. The video also needs setup time (1-2s)
-   and gesture pauses (~1s each). So the MAXIMUM spoken words are:
-   - 8s video: MAX 12-15 words of dialogue total. That's it. Be concise.
-   - 15s video: MAX 25-30 words of dialogue total.
+   A person speaks ~2.5 words per second. The video needs setup time (1-2s at start)
+   and a SMOOTH ENDING (last 2s = smile, gesture, music fade — NO speech).
+   ALL dialogue MUST finish by second 6 of an 8s video. The last 2 seconds are
+   SILENT — just the person smiling/nodding with ambient music fading out.
+   - 8s video: MAX 10 words of dialogue total. All speech ends by second 6.
+     The last 2 seconds are the person smiling warmly at the camera. NO speech.
+   - 15s video: MAX 25 words of dialogue total. Speech ends by second 13.
    If you write more words than the limit, the video WILL cut off mid-sentence.
    COUNT YOUR WORDS before writing. If over the limit, CUT words ruthlessly.
 
@@ -57,11 +60,13 @@ A product video prompt has 5 parts in one paragraph:
    - The LAST dialogue block must feel like a FINISHED thought — a recommendation,
      call to action, or warm sign-off. NOT something that trails off.
 
-   - 8s video: 2 dialogue blocks, MAX 15 words total.
+   - 8s video: 1-2 dialogue blocks, MAX 10 words total. Speech ends by second 6.
      "Key message in one short sentence," she says warmly.
-     She pauses. "Short closing line," she says with a smile.
-     Block 1 (8-10 words): Deliver the key message from audio context.
-     Block 2 (5-7 words): Punchy closing that feels like a natural end.
+     She smiles warmly at the camera.
+     Block 1 (6-8 words): Deliver the key message from audio context.
+     Block 2 (2-4 words): OPTIONAL — only if Block 1 is under 7 words. Short CTA.
+     ENDING: After last dialogue, write "She smiles warmly at the camera" or
+     similar — this fills the last 2 seconds with a natural, silent close.
 
    - 15s video: 4 dialogue blocks, MAX 30 words total.
      For 15s, the video is TWO parts (8s + 7s extension).
@@ -105,17 +110,16 @@ A product video prompt has 5 parts in one paragraph:
 "A medium close-up, eye-level shot of a young Indian woman holding the product in both
 hands in a bright, naturally lit room. A small, semi-transparent brand logo is visible in
 the upper-right corner of the frame. She looks at the camera with an excited expression.
-'This just works, every single time, no hassle,' she says with enthusiasm. She pauses
-and smiles at the product. 'Exactly what I needed,' she says warmly. The brand logo
-remains visible in the corner. Soft ambient room hum, natural indoor lighting, shallow
-depth of field. Cinematic, UGC style."
+'This just works, no hassle at all,' she says with enthusiasm. She smiles warmly at the
+camera and nods. The brand logo remains visible in the corner. Soft ambient room hum,
+natural indoor lighting, shallow depth of field. Cinematic, UGC style."
 
 WHY THIS WORKS:
-- Block 1: "This just works, every single time, no hassle" = 9 words. Key message delivered.
-- Block 2: "Exactly what I needed" = 4 words. Warm, complete closing.
-- Total: 13 words. Fits comfortably in 8 seconds with setup + pause.
+- Block 1: "This just works, no hassle at all" = 7 words. Key message delivered.
+- Total: 7 words. Speech finishes by ~second 5. Last 2-3 seconds = smile + nod.
+- SMOOTH ENDING: "She smiles warmly at the camera and nods" — silent, natural close.
 - Veo dialogue format: "Text," she says warmly. (quote first, then delivery cue)
-- Every sentence is COMPLETE — nothing gets cut off mid-word.
+- Every sentence is COMPLETE — nothing gets cut off.
 
 ## EXAMPLE 15-SECOND PROMPT:
 (Audio context was: "talk about quality, hit at a wedding, recommend it")
@@ -146,7 +150,8 @@ WHY THIS WORKS:
   Never describes logo appearance/color/text — only placement and behavior.
 - DIALOGUE is the main content — person talks ABOUT the product naturally
 - Says "the product" — never the product name, never describes its appearance
-- Small natural gestures between dialogue (pauses, smiles, looks at product)
+- SMOOTH ENDING: After dialogue ends, person smiles/nods silently for 2 seconds.
+  This prevents abrupt cutoff and gives the video a polished, natural finish.
 - Neutral lighting — no color-washing the product
 - Style at the end — one line
 - No scene labels, no timestamps, no bullets, no camera movements mid-prompt

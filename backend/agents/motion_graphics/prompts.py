@@ -38,10 +38,13 @@ A motion graphics video prompt has 5 parts in one paragraph:
    The delivery cue after the quote (warmly, with excitement) sets the vocal tone.
 
    CRITICAL — TIMING RULE (most important rule for dialogue):
-   A person speaks ~2.5 words per second. The video also needs setup time (1-2s)
-   and gesture pauses (~1s each). So the MAXIMUM spoken words are:
-   - 8s video: MAX 12-15 words of dialogue total. That's it. Be concise.
-   - 15s video: MAX 25-30 words of dialogue total.
+   A person speaks ~2.5 words per second. The video needs setup time (1-2s at start)
+   and a SMOOTH ENDING (last 2s = smile, gesture, music fade — NO speech).
+   ALL dialogue MUST finish by second 6 of an 8s video. The last 2 seconds are
+   SILENT — just the person smiling/nodding with ambient music fading out.
+   - 8s video: MAX 10 words of dialogue total. All speech ends by second 6.
+     The last 2 seconds are the person smiling warmly at the camera. NO speech.
+   - 15s video: MAX 25 words of dialogue total. Speech ends by second 13.
    If you write more words than the limit, the video WILL cut off mid-sentence.
    COUNT YOUR WORDS before writing. If over the limit, CUT words ruthlessly.
 
@@ -60,11 +63,13 @@ A motion graphics video prompt has 5 parts in one paragraph:
    - The video must NEVER cut off mid-sentence.
    - The LAST block must feel like a FINISHED thought — a CTA or sign-off.
 
-   - 8s video: 2 dialogue blocks, MAX 15 words total.
+   - 8s video: 1-2 dialogue blocks, MAX 10 words total. Speech ends by second 6.
      "Key announcement in one short sentence," she says with excitement.
-     She pauses. "Short call to action," she says warmly.
-     Block 1 (8-10 words): Deliver the key message from audio context.
-     Block 2 (5-7 words): Punchy CTA or closing.
+     She smiles confidently at the camera.
+     Block 1 (6-8 words): Deliver the key message from audio context.
+     Block 2 (2-4 words): OPTIONAL — only if Block 1 is under 7 words. Short CTA.
+     ENDING: After last dialogue, write "She smiles confidently at the camera" or
+     similar — this fills the last 2 seconds with a natural, silent close.
 
    - 15s video: 4 dialogue blocks, MAX 30 words total.
      For 15s, the video is TWO parts (8s + 7s extension).
@@ -103,16 +108,15 @@ A motion graphics video prompt has 5 parts in one paragraph:
 "A medium close-up, eye-level shot of an energetic young Indian man standing in a modern,
 well-lit studio with bold brand-colored accent walls. A small, semi-transparent brand logo
 is visible in the upper-right corner of the frame. He looks at the camera with excitement.
-'Biggest sale of the year, fifty percent off, starts Friday,' he says with energy. He
-smiles and points at the camera. 'Do not miss this,' he says confidently. The brand logo
-remains visible in the corner. Upbeat energetic music, bright studio lighting, shallow
-depth of field. Premium commercial style."
+'Fifty percent off, starts this Friday,' he says with energy. He smiles confidently at the
+camera and nods. The brand logo remains visible in the corner. Upbeat energetic music,
+bright studio lighting, shallow depth of field. Premium commercial style."
 
 WHY THIS WORKS:
-- Block 1: "Biggest sale of the year, fifty percent off, starts Friday" = 10 words.
-  All 3 key points (biggest sale, 50% off, Friday) crunched into one sentence.
-- Block 2: "Do not miss this" = 4 words. Punchy CTA closing.
-- Total: 14 words. Fits in 8 seconds. Nothing gets cut off.
+- Block 1: "Fifty percent off, starts this Friday" = 7 words.
+  Key points (50% off, Friday) crunched into one short sentence.
+- Total: 7 words. Speech finishes by ~second 5. Last 2-3 seconds = smile + nod.
+- SMOOTH ENDING: "He smiles confidently at the camera and nods" — silent, natural close.
 - Veo format: "Text," he says with energy. (quote first, delivery cue after)
 
 ## EXAMPLE 15-SECOND PROMPT:
@@ -143,9 +147,10 @@ WHY THIS WORKS:
 - LOGO mentioned TWICE — start (placement) and near end (reinforcement)
   Never describes logo appearance — only placement
 - DIALOGUE is the main content — energetic, natural speech about the promo/event
+- SMOOTH ENDING: After dialogue ends, person smiles/nods silently for 2 seconds.
+  This prevents abrupt cutoff and gives the video a polished, natural finish.
 - No product image needed — this is about the brand's message
 - Brand colors in ENVIRONMENT (accent walls, decor) not in lighting
-- Small natural gestures between dialogue
 - Style at the end — one line
 - No scene labels, no timestamps, no bullets
 
