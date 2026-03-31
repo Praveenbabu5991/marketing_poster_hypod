@@ -105,82 +105,68 @@ def _get_media_duration(path: str) -> float:
 
 
 def _split_prompt_for_parts(prompt: str) -> tuple[str, str]:
-    """Split a scene-based prompt into Part 1 and Part 2 for 15s videos.
+    """Split a video prompt into Part 1 and Part 2 for 15s videos (8s + 7s extension).
 
-    If the prompt has scene markers (SCENE 1, SCENE 2, etc.), split the scenes:
-    - Part 1: AD NARRATIVE + first half of scenes + Global specs
-    - Part 2: second half of scenes + Global specs + continuation instructions
+    For dialogue-driven prompts (single paragraph with quotes):
+    - Part 1: Full prompt (Veo generates first 8s from it)
+    - Part 2: Continuation prompt with ONLY the second half of dialogue
+      so the extension doesn't repeat what was already said.
 
-    If no scene markers, returns (full_prompt, full_prompt + continuation).
+    The Veo extension API receives the Part 1 video object, so it already
+    knows the visual context. Part 2 only needs to describe what happens NEXT.
     """
     import re as _re
 
-    # Find all scene markers
-    scene_pattern = r'(SCENE\s+\d+[^\n]*)'
-    scene_matches = list(_re.finditer(scene_pattern, prompt, _re.IGNORECASE))
+    # Extract all dialogue segments (text in single or double quotes after "speaks" / "says")
+    # Match patterns like: speaks clearly: 'dialogue here'  or  says, "dialogue here"
+    dialogue_pattern = r"""(?:speaks\s+\w+\s*:\s*|says\s*[\w\s,]*[,:]?\s*)['\"]([^'\"]+)['\"]"""
+    dialogue_matches = list(_re.finditer(dialogue_pattern, prompt, _re.IGNORECASE))
 
-    if len(scene_matches) < 3:
-        # Not a scene-based prompt — return full prompt for both parts
-        continuation = (
-            " [SMOOTH CONTINUATION from the previous shot within the SAME scene. "
-            "Maintain identical lighting, color grading, subject, and environment. "
-            "The visual flow must feel like one continuous unbroken shot. "
-            "Audio must continue naturally — same ambient music, same tone. "
-            "Only speak dialogue explicitly written in quotes. "
-            "Do NOT add any extra speech, vocalizations, or sounds not described.]"
+    if len(dialogue_matches) >= 2:
+        # Dialogue-driven prompt — split dialogue in half
+        mid = len(dialogue_matches) // 2
+
+        # Part 1: everything up to and including the first half of dialogue
+        # Use the full prompt — Veo will generate the first 8s from it
+        part1_prompt = prompt
+
+        # Part 2: continuation with ONLY the second half of dialogue
+        # Extract the second-half dialogue lines
+        second_half_dialogues = []
+        for m in dialogue_matches[mid:]:
+            second_half_dialogues.append(m.group(1))
+
+        # Find the style/ambient line (usually at the end after last quote)
+        last_dialogue_end = dialogue_matches[-1].end()
+        style_suffix = prompt[last_dialogue_end:].strip().lstrip(".'\"")
+
+        # Build continuation prompt
+        dialogue_text = " ".join(
+            f'"{d}"' for d in second_half_dialogues
         )
-        return prompt, prompt + continuation
+        part2_prompt = (
+            f"[SMOOTH CONTINUATION of the same scene. Same person, same setting, "
+            f"same lighting, same camera angle. The person is still in frame. "
+            f"Audio continues naturally — same ambient background. "
+            f"Do NOT repeat any dialogue from the previous segment. "
+            f"Only speak the NEW dialogue below. Do NOT add extra vocalizations.] "
+            f"The person continues speaking clearly: {dialogue_text}. "
+        )
+        if style_suffix:
+            part2_prompt += style_suffix
 
-    # Extract sections
-    # Everything before first scene = preamble (AD NARRATIVE, etc.)
-    preamble = prompt[:scene_matches[0].start()].strip()
+        return part1_prompt, part2_prompt
 
-    # Split scenes into first half and second half
-    mid = len(scene_matches) // 2
-    # Ensure at least 2 scenes in Part 1
-    if mid < 2:
-        mid = 2
-
-    # Get scene text blocks
-    scenes = []
-    for i, match in enumerate(scene_matches):
-        start = match.start()
-        end = scene_matches[i + 1].start() if i + 1 < len(scene_matches) else len(prompt)
-        scenes.append(prompt[start:end].strip())
-
-    # Find Global Technical Specifications section
-    global_pattern = r'(Global Technical Specifications.*)'
-    global_match = _re.search(global_pattern, prompt, _re.IGNORECASE | _re.DOTALL)
-    global_specs = ""
-    if global_match:
-        global_specs = global_match.group(1).strip()
-        # Remove global specs from the last scene if it was captured there
-        last_scene = scenes[-1]
-        global_idx = _re.search(r'Global Technical Specifications', last_scene, _re.IGNORECASE)
-        if global_idx:
-            scenes[-1] = last_scene[:global_idx.start()].strip()
-
-    # Build Part 1: preamble + first half scenes + global specs
-    part1_scenes = "\n\n".join(scenes[:mid])
-    part1_prompt = f"{preamble}\n\n{part1_scenes}"
-    if global_specs:
-        part1_prompt += f"\n\n{global_specs}"
-
-    # Build Part 2: continuation context + second half scenes + global specs
-    part2_scenes = "\n\n".join(scenes[mid:])
+    # Fallback: no clear dialogue structure — use full prompt with continuation cue
     part2_prompt = (
-        f"[SMOOTH CONTINUATION from the previous shot. Maintain identical lighting, "
-        f"color grading, environment, and subject. The visual flow must feel like one "
-        f"continuous unbroken shot. "
-        f"Audio must continue naturally from the previous segment — same ambient music, "
-        f"same tone. Only speak dialogue explicitly written in quotes below. "
-        f"Do NOT add any extra speech, vocalizations, or sounds not described below.]\n\n"
-        f"{part2_scenes}"
+        "[SMOOTH CONTINUATION of the same scene. Same person, same setting, "
+        "same lighting, same camera angle. Continue the action naturally. "
+        "Audio continues — same ambient background. "
+        "Do NOT repeat any dialogue or actions from the previous segment. "
+        "Do NOT add extra speech or vocalizations not described.] "
+        + prompt
     )
-    if global_specs:
-        part2_prompt += f"\n\n{global_specs}"
-
-    return part1_prompt, part2_prompt
+    return prompt, part2_prompt
 
 
 def _overlay_logo_on_video(video_path: str, logo_path: str, output_path: str) -> bool:

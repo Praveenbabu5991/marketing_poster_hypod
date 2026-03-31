@@ -31,9 +31,15 @@ A motion graphics video prompt has 5 parts in one paragraph:
 2. DIALOGUE: The person speaks directly to camera about the brand's message/announcement/
    promo — based on the audio context provided by the user. This is the BULK of the prompt.
    The person speaks clearly: "[dialogue about the announcement/promo]."
-   Write 2-4 sentences of natural, energetic speech.
-   - 8s video: 30-40 words of dialogue
-   - 15s video: 60-80 words of dialogue
+   Write natural, energetic speech.
+   - 8s video: 2 dialogue blocks, 30-40 words total
+   - 15s video: 3-4 dialogue blocks, 60-80 words total.
+     For 15s, the video is generated in TWO parts (8s + 7s extension).
+     Structure dialogue so the FIRST 2 blocks cover the announcement (what's happening,
+     the exciting news) and the LAST 1-2 blocks cover the call-to-action/payoff (why it
+     matters, what to do next). Separate each block with a gesture/pause between them.
+     The extension will pick up from the second half — so the dialogue must NOT repeat
+     the same points. Each block should say something NEW.
 
 3. AMBIENT + PHYSICAL ACTIONS: Brief ambient sound and small natural gestures.
    "Upbeat background music." Small actions like pausing, smiling, gesturing with hands,
