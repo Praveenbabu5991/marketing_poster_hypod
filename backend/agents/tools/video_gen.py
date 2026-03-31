@@ -299,29 +299,15 @@ def _enhance_prompt(
     brand_colors: str,
     target_audience: str,
 ) -> str:
-    """Apply brand enhancement and negative prompt suffix to a video prompt."""
+    """Strip brand name and append target audience + negative cues to a video prompt.
+
+    NOTE: Brand colors are NOT injected — they override the product's actual colors
+    from the reference image. The reference image provides visual identity.
+    """
     import re as _re
 
-    colors_list = [c.strip() for c in brand_colors.split(",") if c.strip()] if brand_colors else []
-    primary = colors_list[0] if colors_list else ""
-    secondary = colors_list[1] if len(colors_list) > 1 else ""
-
-    brand_narrative = []
-    if colors_list:
-        color_str = ", ".join(colors_list[:3])
-        brand_narrative.append(
-            f"Scene color palette: brand colors {color_str}. "
-            f"Use {primary} as dominant tone."
-            + (f" {secondary} as accent." if secondary else "")
-        )
-    if target_audience:
-        brand_narrative.append(f"Human subject matches target audience: {target_audience}.")
-
-    brand_narrative.append(
-        "One pair of hands, one simple action per shot. Stable background, consistent lighting."
-    )
-
     enhanced = prompt.rstrip()
+
     # Strip brand name — known brand names trigger Veo's RAI filter
     if brand_name:
         enhanced = _re.sub(
@@ -330,15 +316,15 @@ def _enhance_prompt(
             enhanced,
             flags=_re.IGNORECASE,
         )
-    if brand_narrative:
-        enhanced += " " + " ".join(brand_narrative)
+
+    if target_audience:
+        enhanced += f" Human subject matches target audience: {target_audience}."
 
     # Append short "Avoid:" (negative_prompt not supported with reference_images)
-    safe_negatives = (
-        "text, titles, words, extra hands, extra fingers, floating objects, "
-        "cartoon, morphing, flickering, shifting background"
+    enhanced += (
+        " Avoid: text, titles, words, extra hands, extra fingers, floating objects,"
+        " cartoon, morphing, flickering, shifting background."
     )
-    enhanced += f" Avoid: {safe_negatives}."
 
     return enhanced
 
@@ -807,22 +793,5 @@ def generate_video(
             "mode": "extended",
             "branded": bool(logo_path or brand_name),
         }
-
-    # Post-processing: overlay logo watermark via ffmpeg (reliable, Veo ignores logo refs)
-    if res.get("status") == "success" and logo_path:
-        _, _, GENERATED_DIR = _get_config()
-        save_dir = output_dir or str(GENERATED_DIR)
-        video_path = res["video_path"]
-        logo_output = os.path.join(save_dir, f"logo_{uuid.uuid4().hex[:8]}.mp4")
-        print(f"[VIDEO] Overlaying logo watermark on final video", file=_sys2.stderr, flush=True)
-        if _overlay_logo_on_video(video_path, logo_path, logo_output):
-            try:
-                os.remove(video_path)
-            except Exception:
-                pass
-            res["video_path"] = logo_output
-            res["filename"] = os.path.basename(logo_output)
-            res["url"] = f"/generated/{res['filename']}"
-            print(f"[VIDEO] Logo overlay applied: {res['filename']}", file=_sys2.stderr, flush=True)
 
     return res
