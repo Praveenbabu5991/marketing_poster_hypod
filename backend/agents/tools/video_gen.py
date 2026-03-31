@@ -141,24 +141,30 @@ def _split_prompt_for_parts(prompt: str) -> tuple[str, str]:
         last_quote_end = all_quotes[-1].end()
         style = prompt[last_quote_end:].strip().lstrip(".'\"").strip()
 
-        # Build Part 1: setup + first-half dialogue + smooth ending + style
-        p1_dialogue = " ".join(f"'{d}'" for d in first_half)
+        # Build Part 1: setup + first-half dialogue + smooth pause + style
+        p1_lines = []
+        for d in first_half:
+            p1_lines.append(f'"{d.rstrip(",.")}" she says clearly.')
+        p1_dialogue = " ".join(p1_lines)
         part1_prompt = (
-            f"{setup} speaks clearly: {p1_dialogue}. "
+            f"{setup}. {p1_dialogue} "
             f"The person pauses with a natural expression. "
         )
         if style:
             part1_prompt += style
 
-        # Build Part 2: continuation + second-half dialogue + smooth ending + style
-        p2_dialogue = " ".join(f"'{d}'" for d in second_half)
+        # Build Part 2: continuation + second-half dialogue + smooth close + style
+        p2_lines = []
+        for d in second_half:
+            p2_lines.append(f'"{d.rstrip(",.")}" she says warmly.')
+        p2_dialogue = " ".join(p2_lines)
         part2_prompt = (
             f"[SMOOTH CONTINUATION of the same scene. Same person, same setting, "
             f"same lighting, same camera angle. The person is still in frame. "
             f"Audio continues naturally — same ambient background. "
             f"Do NOT repeat any previous dialogue. "
             f"Only speak the NEW dialogue below. No extra vocalizations.] "
-            f"The person continues speaking clearly: {p2_dialogue}. "
+            f"{p2_dialogue} "
             f"The person smiles gently as the scene comes to a natural, smooth close. "
         )
         if style:
