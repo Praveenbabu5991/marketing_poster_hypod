@@ -50,7 +50,7 @@ def format_response(
         campaign_post_hashtags: (Calendar-mode campaigns only) Hashtags string.
             Automatically merged into media.
         campaign_post_type: (Calendar-mode campaigns only) Content type for this post,
-            e.g. "single_post", "carousel", "motion_graphics". Merged into media.
+            e.g. "single_post", "carousel", "ugc". Merged into media.
     """
     result = {
         "type": "interactive_response",

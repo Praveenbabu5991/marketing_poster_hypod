@@ -26,8 +26,8 @@ const POST_TYPES = [
   { value: 'carousel', label: 'Carousel' },
   { value: 'campaign', label: 'Campaign' },
   { value: 'sales_poster', label: 'Sales Poster' },
-  { value: 'motion_graphics', label: 'Motion Graphics' },
-  { value: 'product_video', label: 'Product Video' },
+  { value: 'ugc', label: 'UGC' },
+  { value: 'product_ugc', label: 'Product UGC' },
 ];
 
 export function AddSlotPopover({ date, onSubmit, onClose }: AddSlotPopoverProps) {

@@ -17,8 +17,8 @@ const AGENT_LABELS: Record<string, string> = {
   carousel: 'Carousel',
   campaign: 'Campaign',
   sales_poster: 'Sales Poster',
-  motion_graphics: 'Motion Graphics',
-  product_video: 'Product Video',
+  ugc: 'UGC',
+  product_ugc: 'Product UGC',
 };
 
 export function CalendarSidebar({

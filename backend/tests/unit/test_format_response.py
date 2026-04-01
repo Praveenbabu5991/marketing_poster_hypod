@@ -75,15 +75,15 @@ class TestFormatResponse:
         assert result["media"]["campaign_post_hashtags"] == "#test"
         assert result["media"]["campaign_post_type"] == "single_post"
 
-    def test_campaign_post_type_motion_graphics(self):
+    def test_campaign_post_type_ugc(self):
         result = format_response.invoke({
             "message": "Video post",
             "media": {"video_path": "/generated/video.mp4"},
             "campaign_post_date": "2026-04-04",
-            "campaign_post_type": "motion_graphics",
+            "campaign_post_type": "ugc",
         })
         assert result["media"]["video_path"] == "/generated/video.mp4"
-        assert result["media"]["campaign_post_type"] == "motion_graphics"
+        assert result["media"]["campaign_post_type"] == "ugc"
 
     def test_campaign_post_type_without_date_not_merged(self):
         """campaign_post_type requires campaign_post_date to trigger merge."""

@@ -66,8 +66,8 @@ If detected:
 - Parse any [System Context: ...] block for size/font configuration.
 - Go DIRECTLY to Phase D (Present Plan):
   - Create a mixed-content plan with exactly N posts spread across the date range.
-  - Each post specifies its content type: "single_post" (image) or "motion_graphics" (video).
-  - Alternate types for variety: e.g., Day 1 single_post, Day 2 motion_graphics, Day 3 single_post...
+  - Each post specifies its content type: "single_post" (image) or "ugc" (video).
+  - Alternate types for variety: e.g., Day 1 single_post, Day 2 ugc, Day 3 single_post...
   - Distribute the N posts evenly across the date range.
 - Present the plan via format_response with choices "Start Generating" and "Tweak the Plan".
   CRITICAL: You MUST include a "campaign_plan" array in the media parameter with structured data
@@ -76,13 +76,13 @@ If detected:
       message="Here is your campaign plan...",
       media={"campaign_plan": [
         {"date": "2026-02-07", "post_type": "single_post", "post_idea": "The Love for Travel", "event_name": "Valentine Week"},
-        {"date": "2026-02-09", "post_type": "motion_graphics", "post_idea": "Romantic Getaways", "event_name": "Valentine Week"},
+        {"date": "2026-02-09", "post_type": "ugc", "post_idea": "Romantic Getaways", "event_name": "Valentine Week"},
         {"date": "2026-02-11", "post_type": "single_post", "post_idea": "Share the Love", "event_name": "Valentine Week"}
       ]},
       choices=[{"id": "1", "label": "Start Generating"}, {"id": "2", "label": "Tweak the Plan"}],
       allow_free_input=true
     )
-  Each item MUST have: date (ISO), post_type ("single_post" or "motion_graphics"), post_idea (topic), event_name (campaign theme).
+  Each item MUST have: date (ISO), post_type ("single_post" or "ugc"), post_idea (topic), event_name (campaign theme).
 - STOP and wait for approval.
 - Then continue: Phase E (Post-by-Post) → Phase F (Summary).
 
@@ -227,7 +227,7 @@ E2. GENERATE: After user approves, generate based on the post's content type:
        - headline_text: the headline text for this post (max 8 words)
        - subtext: the supporting tagline text for this post
        - Pass an empty string `""` for `cta_text`.
-    **For motion_graphics (video) posts:**
+    **For ugc (video) posts:**
     a. generate_video with:
        - prompt: the approved visual concept prompt (50-175 words narrative)
        - logo_path: from brand context
@@ -248,7 +248,7 @@ E3. PRESENT RESULT: Call format_response with:
         campaign_post_date: the ISO date for this post (e.g. "2026-04-03")
         campaign_post_caption: the full caption text for this post
         campaign_post_hashtags: the hashtags string for this post
-        campaign_post_type: the content type ("single_post" or "motion_graphics")
+        campaign_post_type: the content type ("single_post" or "ugc")
       These are TOP-LEVEL parameters of format_response, NOT inside media.
       The tool merges them into media automatically.
       Example format_response call for calendar-mode image post:
@@ -269,7 +269,7 @@ E3. PRESENT RESULT: Call format_response with:
           campaign_post_date="2026-04-04",
           campaign_post_caption="Your full caption here",
           campaign_post_hashtags="#hashtag1 #hashtag2",
-          campaign_post_type="motion_graphics",
+          campaign_post_type="ugc",
           choices=[{"id": "1", "label": "Next Post"}, ...],
           allow_free_input=true
         )

@@ -33,15 +33,15 @@ AGENT_CONFIGS = {
         "icon": "tag",
         "requires_product_images": True,
     },
-    "motion_graphics": {
-        "name": "Motion Graphics",
-        "description": "Create short branded motion graphics videos",
+    "ugc": {
+        "name": "UGC",
+        "description": "Create short branded UGC-style videos",
         "icon": "film",
         "requires_product_images": False,
     },
-    "product_video": {
-        "name": "Product Video",
-        "description": "Create product showcase videos from product images",
+    "product_ugc": {
+        "name": "Product UGC",
+        "description": "Create product showcase UGC videos from product images",
         "icon": "video",
         "requires_product_images": True,
     },
@@ -105,12 +105,12 @@ def get_agent_graph(agent_type: str) -> StateGraph:
     elif agent_type == "sales_poster":
         from agents.sales_poster.graph import build_sales_poster_graph
         return build_sales_poster_graph(llm)
-    elif agent_type == "motion_graphics":
-        from agents.motion_graphics.graph import build_motion_graphics_graph
-        return build_motion_graphics_graph(llm)
-    elif agent_type == "product_video":
-        from agents.product_video.graph import build_product_video_graph
-        return build_product_video_graph(llm)
+    elif agent_type == "ugc":
+        from agents.ugc.graph import build_ugc_graph
+        return build_ugc_graph(llm)
+    elif agent_type == "product_ugc":
+        from agents.product_ugc.graph import build_product_ugc_graph
+        return build_product_ugc_graph(llm)
     elif agent_type == "quick_image":
         from agents.quick_image.graph import build_quick_image_graph
         return build_quick_image_graph(llm)

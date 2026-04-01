@@ -33,8 +33,8 @@ const AGENT_LABELS: Record<string, string> = {
   carousel: 'Carousel',
   campaign: 'Campaign',
   sales_poster: 'Sales Poster',
-  motion_graphics: 'Motion Graphics',
-  product_video: 'Product Video',
+  ugc: 'UGC',
+  product_ugc: 'Product UGC',
 };
 
 const TYPE_BADGES: Record<string, { label: string; cls: string }> = {
@@ -80,7 +80,7 @@ const DURATIONS = [
 ];
 
 const POSTER_TYPES = new Set(['single_post', 'carousel', 'sales_poster', 'campaign']);
-const VIDEO_TYPES = new Set(['motion_graphics', 'product_video']);
+const VIDEO_TYPES = new Set(['ugc', 'product_ugc']);
 
 export function CalendarPopover({
   slot,
@@ -111,7 +111,7 @@ export function CalendarPopover({
 
   const isPoster = POSTER_TYPES.has(slot.post_type);
   const isVideo = VIDEO_TYPES.has(slot.post_type);
-  const needsProductImage = slot.post_type === 'sales_poster' || slot.post_type === 'product_video';
+  const needsProductImage = slot.post_type === 'sales_poster' || slot.post_type === 'product_ugc';
 
   async function handleApproveAndGenerate() {
     setLoading(true);

@@ -1,9 +1,9 @@
-"""Motion Graphics Agent — LangGraph StateGraph definition."""
+"""UGC Agent — LangGraph StateGraph definition."""
 
 from langchain_core.language_models import BaseChatModel
 
 from agents.base import build_agent_graph
-from agents.motion_graphics.prompts import MOTION_GRAPHICS_PROMPT
+from agents.ugc.prompts import UGC_PROMPT
 from agents.tools.video_gen import generate_video
 from agents.tools.caption import write_caption
 from agents.tools.hashtag import generate_hashtags
@@ -12,7 +12,7 @@ from agents.tools.web_search import search_web, get_trending_topics
 from agents.tools.calendar import get_upcoming_events
 
 
-MOTION_GRAPHICS_TOOLS = [
+UGC_TOOLS = [
     generate_video,
     write_caption,
     generate_hashtags,
@@ -23,11 +23,11 @@ MOTION_GRAPHICS_TOOLS = [
 ]
 
 
-def build_motion_graphics_graph(llm: BaseChatModel):
-    """Build the Motion Graphics agent graph."""
+def build_ugc_graph(llm: BaseChatModel):
+    """Build the UGC agent graph."""
     return build_agent_graph(
         llm=llm,
-        tools=MOTION_GRAPHICS_TOOLS,
-        system_prompt=MOTION_GRAPHICS_PROMPT,
-        graph_name="motion_graphics",
+        tools=UGC_TOOLS,
+        system_prompt=UGC_PROMPT,
+        graph_name="ugc",
     )

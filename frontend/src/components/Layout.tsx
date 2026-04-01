@@ -46,8 +46,8 @@ export function Layout() {
     carousel: 'Carousel',
     campaign: 'Campaign',
     sales_poster: 'Sales Poster',
-    motion_graphics: 'Motion Graphics',
-    product_video: 'Product Video',
+    ugc: 'UGC',
+    product_ugc: 'Product UGC',
     content_calendar: 'Calendar Planner',
   };
 
@@ -56,8 +56,8 @@ export function Layout() {
     carousel: '\uD83C\uDFA0',
     campaign: '\uD83D\uDCE3',
     sales_poster: '\uD83D\uDED2',
-    motion_graphics: '\uD83C\uDFAC',
-    product_video: '\uD83D\uDCF9',
+    ugc: '\uD83C\uDFAC',
+    product_ugc: '\uD83D\uDCF9',
     content_calendar: '\uD83D\uDCC5',
   };
 

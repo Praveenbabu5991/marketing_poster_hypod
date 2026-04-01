@@ -430,8 +430,10 @@ export function Calendar() {
       // Sales poster: tell it to skip interactive phases and use product images from brand context
       if (result.agent_type === 'sales_poster') {
         pendingMessageRef.current = `Create a sales poster${eventContext}: ${idea}. Use the product images from the brand context. Skip the welcome and product info phases — go directly to choosing a headline, then show the image prompt for approval.${systemContext}`;
-      } else if (result.agent_type === 'product_video') {
-        pendingMessageRef.current = `Create a product video${eventContext}: ${idea}. Use the product images from the brand context. Skip the suggestion phase — go straight to creating the video.${systemContext}`;
+      } else if (result.agent_type === 'product_ugc') {
+        pendingMessageRef.current = `Create a product UGC video${eventContext}: ${idea}. Use the product images from the brand context. Skip the suggestion phase — go straight to creating the video.${systemContext}`;
+      } else if (result.agent_type === 'ugc') {
+        pendingMessageRef.current = `Create a UGC video${eventContext}: ${idea}. Skip the suggestion phase — go straight to creating the video.${systemContext}`;
       } else if (result.agent_type === 'campaign') {
         pendingMessageRef.current = `Plan a campaign${eventContext}: ${idea}. Ask me about campaign duration, posting frequency, and content mix before generating any content.${systemContext}`;
       } else {

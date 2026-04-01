@@ -10,8 +10,8 @@ AI-powered social media content creation platform with 6 specialized agents for 
 | **Carousel** | Multi-slide Instagram carousel with consistent branding |
 | **Campaign** | Plan and generate a multi-week social media campaign |
 | **Sales Poster** | Product sales posters with pricing, discounts, and CTAs |
-| **Motion Graphics** | Short branded motion graphics videos |
-| **Product Video** | Product showcase videos from product images |
+| **UGC** | Short branded UGC-style videos |
+| **Product UGC** | Product showcase UGC videos from product images |
 
 ## Tech Stack
 

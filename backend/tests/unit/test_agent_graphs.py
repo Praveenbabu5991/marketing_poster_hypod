@@ -43,16 +43,16 @@ class TestAgentGraphs:
         compiled = graph.compile()
         assert compiled is not None
 
-    def test_motion_graphics_graph_builds(self):
-        from agents.motion_graphics.graph import build_motion_graphics_graph
-        graph = build_motion_graphics_graph(_make_mock_llm())
+    def test_ugc_graph_builds(self):
+        from agents.ugc.graph import build_ugc_graph
+        graph = build_ugc_graph(_make_mock_llm())
         assert graph is not None
         compiled = graph.compile()
         assert compiled is not None
 
-    def test_product_video_graph_builds(self):
-        from agents.product_video.graph import build_product_video_graph
-        graph = build_product_video_graph(_make_mock_llm())
+    def test_product_ugc_graph_builds(self):
+        from agents.product_ugc.graph import build_product_ugc_graph
+        graph = build_product_ugc_graph(_make_mock_llm())
         assert graph is not None
         compiled = graph.compile()
         assert compiled is not None
@@ -74,13 +74,13 @@ class TestAgentRegistry:
         assert "carousel" in AGENT_CONFIGS
         assert "campaign" in AGENT_CONFIGS
         assert "sales_poster" in AGENT_CONFIGS
-        assert "motion_graphics" in AGENT_CONFIGS
-        assert "product_video" in AGENT_CONFIGS
+        assert "ugc" in AGENT_CONFIGS
+        assert "product_ugc" in AGENT_CONFIGS
         assert "quick_image" in AGENT_CONFIGS
         assert "content_calendar" in AGENT_CONFIGS
 
     def test_product_agents_require_product_images(self):
         from agents.registry import AGENT_CONFIGS
         assert AGENT_CONFIGS["sales_poster"]["requires_product_images"] is True
-        assert AGENT_CONFIGS["product_video"]["requires_product_images"] is True
+        assert AGENT_CONFIGS["product_ugc"]["requires_product_images"] is True
         assert AGENT_CONFIGS["single_post"]["requires_product_images"] is False
