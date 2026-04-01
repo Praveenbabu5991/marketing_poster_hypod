@@ -107,75 +107,83 @@ def _get_media_duration(path: str) -> float:
 def _split_prompt_for_parts(prompt: str) -> tuple[str, str]:
     """Split a video prompt into Part 1 and Part 2 for 15s videos (8s + 7s extension).
 
-    Finds all quoted dialogue blocks in the prompt, splits them in half:
-    - Part 1: setup + FIRST HALF of dialogue + style (fits in 8s)
-    - Part 2: continuation + SECOND HALF of dialogue + style (fits in 7s)
-
-    This prevents repetition — each part gets DIFFERENT dialogue.
-    Key: each part ends with explicit silence instructions to prevent gibberish.
+    Preserves the ORIGINAL natural language by splitting the prompt text at a sentence
+    boundary between dialogue halves. Part 1 gets blocks 1-2 with all surrounding
+    natural text (gestures, expressions). Part 2 gets blocks 3-4 the same way.
+    Both parts end with explicit silence instructions to prevent gibberish.
     """
     import re as _re
 
+    # Extract style line(s) from end of prompt — lighting, depth of field, cinematic, etc.
+    style = ""
+    style_match = _re.search(
+        r'([^.]*(?:lighting|depth of field|cinematic|commercial|style|aesthetic)[^.]*\.)\s*$',
+        prompt, _re.IGNORECASE,
+    )
+    if style_match:
+        style = style_match.group(0).strip()
+
     # Find ALL quoted strings (single or double) that are likely dialogue (10+ chars)
-    quote_pattern = r"""['\"]([^'\"]{10,})['\"]"""
+    quote_pattern = r"""['"][^'"]{10,}['"]"""
     all_quotes = list(_re.finditer(quote_pattern, prompt))
 
     if len(all_quotes) >= 2:
         mid = len(all_quotes) // 2
 
-        # Extract first-half and second-half dialogue
-        first_half = [m.group(1) for m in all_quotes[:mid]]
-        second_half = [m.group(1) for m in all_quotes[mid:]]
+        # Find the natural split point between end of quote[mid-1] and start of quote[mid]
+        prev_quote_end = all_quotes[mid - 1].end()
+        next_quote_start = all_quotes[mid].start()
+        between_text = prompt[prev_quote_end:next_quote_start]
 
-        # Extract setup: everything before the first quote
-        first_quote_start = all_quotes[0].start()
-        # Walk back to find "speaks" or "says" before the quote
-        setup_end = first_quote_start
-        pre_quote = prompt[:first_quote_start].rstrip()
-        # Find the last "speaks" or "says" keyword to include in setup
-        speaks_match = list(_re.finditer(r'(?:speaks|says)\s', pre_quote, _re.IGNORECASE))
-        if speaks_match:
-            setup_end = speaks_match[-1].start()
-        setup = prompt[:setup_end].rstrip().rstrip(",:")
+        # Find the best sentence boundary (". ") in the text between the two halves
+        sentence_breaks = list(_re.finditer(r'\.\s+', between_text))
+        if sentence_breaks:
+            # Split after the last sentence break between the two dialogue halves
+            split_pos = prev_quote_end + sentence_breaks[-1].end()
+        else:
+            # No clean sentence boundary — split right after prev quote's trailing punctuation
+            split_pos = prev_quote_end
+            while split_pos < len(prompt) and prompt[split_pos] in ' .,;':
+                split_pos += 1
 
-        # Extract style: everything after the last quote
-        last_quote_end = all_quotes[-1].end()
-        style = prompt[last_quote_end:].strip().lstrip(".'\"").strip()
+        # Remove style from the split portions (we re-append it to both)
+        style_start = style_match.start() if style_match else len(prompt)
 
-        # Build Part 1: setup + first-half dialogue (raw quotes only) + silence + style
-        p1_dialogue = " ".join(f'"{d.rstrip(",.")}"' for d in first_half)
+        # Part 1: original prompt text up to split point + silence + style
+        part1_text = prompt[:split_pos].rstrip().rstrip('.,;')
         part1_prompt = (
-            f"{setup}. {p1_dialogue} "
-            f"The person pauses with a natural expression. "
-            f"After the dialogue, the person is completely silent. "
+            f"{part1_text}. "
+            f"The person pauses with a natural expression and is silent. "
             f"No more speech, no mumbling, no vocalizations. Only ambient music. "
         )
         if style:
             part1_prompt += style
 
-        # Build Part 2: natural continuation + second-half dialogue + strong silence
-        p2_dialogue = " ".join(f'"{d.rstrip(",.")}"' for d in second_half)
+        # Part 2: continuation context + remaining original text (dialogue 3-4 with all
+        # natural language gestures/expressions) + silence + style
+        remaining_text = prompt[split_pos:style_start].rstrip().rstrip('.,;')
         part2_prompt = (
             f"Smooth continuation of the same scene. Same person, same setting, "
-            f"same lighting, same camera angle. The person is still in frame. "
-            f"{p2_dialogue} "
-            f"After the dialogue, the person smiles gently and is completely silent. "
-            f"No more speech, no mumbling, no vocalizations for the rest of the video. "
-            f"Only ambient music plays as the scene comes to a natural close. "
+            f"same lighting, same camera angle. "
+            f"{remaining_text}. "
+            f"After finishing speaking, the person smiles warmly and is completely silent. "
+            f"No more speech, no mumbling, no vocalizations. Only ambient music. "
         )
         if style:
             part2_prompt += style
 
         return part1_prompt, part2_prompt
 
-    # Fallback: cannot split dialogue — use full prompt for Part 1,
-    # continuation-only for Part 2 with strong no-speech directive
+    # No dialogue (music-only) or single dialogue block — no split needed
+    # Part 1: full original prompt, Part 2: silent graceful close
     part2_prompt = (
         "Smooth continuation of the same scene. Same person, same setting, "
-        "same lighting, same camera angle. The person smiles gently and is "
-        "completely silent. No dialogue, no speech, no mumbling, no vocalizations. "
-        "Only ambient music plays as the scene comes to a natural, smooth close. "
+        "same lighting, same camera angle. The person smiles gently at the camera. "
+        "No dialogue, no speech, no mumbling, no vocalizations. "
+        "Only ambient music plays as the scene comes to a natural, graceful close. "
     )
+    if style:
+        part2_prompt += style
     return prompt, part2_prompt
 
 
@@ -715,6 +723,7 @@ def _extend_video(
     veo_video,
     continuation_prompt: str,
     output_dir: str = "",
+    person_generation: str = "allow_all",
 ) -> dict:
     """Extend a Veo video by 7 seconds using the extension API.
 
@@ -729,18 +738,25 @@ def _extend_video(
         from google.genai import types
 
         import sys as _sys
+
+        # Sanitize the continuation prompt for RAI safety
+        sanitized_prompt = _sanitize_prompt(continuation_prompt)
+        if sanitized_prompt != continuation_prompt:
+            print(f"[VIDEO] Extension prompt sanitized", file=_sys.stderr, flush=True)
+
         print(f"[VIDEO] Starting video extension (7s) with continuation prompt", file=_sys.stderr, flush=True)
-        print(f"[VIDEO] Extension prompt: {continuation_prompt[:300]}", file=_sys.stderr, flush=True)
+        print(f"[VIDEO] Extension prompt: {sanitized_prompt[:300]}", file=_sys.stderr, flush=True)
 
         # Extension source: prompt + video from Part 1
         source = types.GenerateVideosSource(
-            prompt=continuation_prompt,
+            prompt=sanitized_prompt,
             video=veo_video,
         )
         config = types.GenerateVideosConfig(
             number_of_videos=1,
             resolution="720p",
             generate_audio=True,
+            person_generation=person_generation,
         )
 
         operation = client.models.generate_videos(
@@ -896,6 +912,7 @@ def generate_video(
             veo_video=veo_video,
             continuation_prompt=part2_prompt,
             output_dir=output_dir,
+            person_generation=person_generation,
         )
 
         if ext_res.get("status") != "success":
