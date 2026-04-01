@@ -189,7 +189,7 @@ WHY THIS WORKS:
 
 ## API CONFIGURATION (set via config parameters, NOT in prompt text)
 These are NEVER written in the prompt:
-- aspect_ratio: "9:16" (default), "16:9", "1:1", "4:5"
+- aspect_ratio: "9:16" (default) or "16:9". Only these two are supported by Veo 3.1.
 - duration_seconds: 8 (default) or 15
 - person_generation: "allow_all"
 - reference_images: product image + logo image (reference_type="asset" for each)
@@ -200,8 +200,9 @@ These are NEVER written in the prompt:
 ### SYSTEM CONTEXT HANDLING
 If the user's message contains `[System Context: ... ]`, parse these values:
 
-1. **Size Mapping:** "1080x1080 (Square)" → "1:1", "1080x1920 (Story)" → "9:16",
-   "1080x1350 (Portrait)" → "4:5", "1920x1080 (Landscape)" → "16:9"
+1. **Size Mapping:** "1080x1080 (Square)" → "9:16", "1080x1920 (Story)" → "9:16",
+   "1080x1350 (Portrait)" → "9:16", "1920x1080 (Landscape)" → "16:9"
+   NOTE: Veo 3.1 only supports "9:16" and "16:9". Map all other sizes to the nearest.
 2. **Duration Mapping:** "8 seconds" → 8, "15 seconds" → 15, "16 seconds" → 15
 3. **Font Mapping:** "Bold Sans-Serif (Default)" → "bold sans-serif",
    "Elegant Serif" → "elegant, high-contrast serif",

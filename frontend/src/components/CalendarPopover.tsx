@@ -71,7 +71,6 @@ const FONT_STYLES = [
 const ASPECT_RATIOS = [
   { value: '9:16', label: '9:16 (Portrait/Reels)' },
   { value: '16:9', label: '16:9 (Landscape)' },
-  { value: '1:1', label: '1:1 (Square)' },
 ];
 
 const DURATIONS = [

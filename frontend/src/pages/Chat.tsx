@@ -191,7 +191,6 @@ export function Chat() {
                 className="rounded-md border border-border bg-bg-page px-2 py-1 text-text-primary outline-none focus:border-accent"
               >
                 <option value="1080x1920 (Reels / Shorts)">9:16 (Reels / Shorts)</option>
-                <option value="1080x1080 (Instagram Post)">1:1 (Instagram Post)</option>
                 <option value="1920x1080 (Landscape)">16:9 (Landscape)</option>
               </select>
             </div>

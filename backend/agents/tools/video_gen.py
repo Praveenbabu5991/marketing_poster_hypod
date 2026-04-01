@@ -470,12 +470,13 @@ def _generate_single_video(
     cta_text: str = "",
     negative_prompt: str = "",
     output_dir: str = "",
+    person_generation: str = "allow_all",
 ) -> dict:
     """Generate a single video using Veo 3.1 with native audio.
 
     Uses source/config pattern with:
     - generate_audio=True for native dialogue, SFX, and ambient audio
-    - person_generation="allow_all" for scenes with people
+    - person_generation configurable ("allow_all" or "dont_allow")
     - reference_images for product/logo consistency
 
     Returns dict with video_path AND veo_video object (for extension API).
@@ -488,6 +489,12 @@ def _generate_single_video(
         from google.genai import types
 
         clamped_duration = max(5, min(8, duration_seconds))
+
+        # Veo 3.1 only supports 16:9 and 9:16
+        if aspect_ratio not in ("16:9", "9:16"):
+            import sys as _sys_ar
+            print(f"[VIDEO] Unsupported aspect_ratio '{aspect_ratio}' — falling back to 9:16", file=_sys_ar.stderr, flush=True)
+            aspect_ratio = "9:16"
 
         # Sanitize prompt (strip RAI trigger words) then enhance with brand context
         sanitized_prompt = _sanitize_prompt(prompt)
@@ -511,7 +518,7 @@ def _generate_single_video(
             "number_of_videos": 1,
             "duration_seconds": clamped_duration,
             "generate_audio": True,
-            "person_generation": "allow_all",
+            "person_generation": person_generation,
             "resolution": "720p",
         }
 
@@ -605,7 +612,7 @@ def _generate_single_video(
                 "number_of_videos": 1,
                 "duration_seconds": clamped_duration,
                 "generate_audio": True,
-                "person_generation": "allow_all",
+                "person_generation": person_generation,
                 "resolution": "720p",
             }
             if ref_images:
@@ -802,6 +809,7 @@ def generate_video(
     cta_text: str = "",
     negative_prompt: str = "",
     output_dir: str = "",
+    person_generation: str = "allow_all",
 ) -> dict:
     """Generate a video using Veo 3.1 with native audio and reference images.
 
@@ -817,7 +825,7 @@ def generate_video(
         image_path: Product image path (used as reference_image asset).
         reference_image_paths: Comma-separated paths to product images (used as reference_image assets).
         duration_seconds: Video length 5-15 seconds.
-        aspect_ratio: "9:16" (Reels), "16:9" (YouTube), "1:1" (Feed).
+        aspect_ratio: "9:16" (Reels/vertical) or "16:9" (YouTube/landscape). Only these two are supported by Veo 3.1.
         logo_path: Brand logo path (used as reference_image asset).
         brand_name: Company name for prompt enhancement.
         brand_colors: Comma-separated hex colors.
@@ -827,6 +835,7 @@ def generate_video(
         cta_text: Call-to-action text.
         negative_prompt: Elements to exclude.
         output_dir: Directory to save video.
+        person_generation: "allow_all" for videos with people, "dont_allow" for motion graphics without people.
     """
 
     import sys as _sys2
@@ -847,7 +856,8 @@ def generate_video(
         res = _generate_single_video(
             prompt, effective_image_path, "", clamped_duration, aspect_ratio,
             logo_path, brand_name, brand_colors, company_overview, target_audience,
-            products_services, cta_text, negative_prompt, output_dir
+            products_services, cta_text, negative_prompt, output_dir,
+            person_generation=person_generation,
         )
         res.pop("veo_video", None)
     else:
@@ -862,7 +872,8 @@ def generate_video(
         part1_res = _generate_single_video(
             part1_prompt, effective_image_path, "", part1_duration, aspect_ratio,
             logo_path, brand_name, brand_colors, company_overview, target_audience,
-            products_services, cta_text, negative_prompt, output_dir
+            products_services, cta_text, negative_prompt, output_dir,
+            person_generation=person_generation,
         )
 
         if part1_res.get("status") != "success":
