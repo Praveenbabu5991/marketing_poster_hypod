@@ -112,6 +112,7 @@ def _split_prompt_for_parts(prompt: str) -> tuple[str, str]:
     - Part 2: continuation + SECOND HALF of dialogue + style (fits in 7s)
 
     This prevents repetition — each part gets DIFFERENT dialogue.
+    Key: each part ends with explicit silence instructions to prevent gibberish.
     """
     import re as _re
 
@@ -141,31 +142,26 @@ def _split_prompt_for_parts(prompt: str) -> tuple[str, str]:
         last_quote_end = all_quotes[-1].end()
         style = prompt[last_quote_end:].strip().lstrip(".'\"").strip()
 
-        # Build Part 1: setup + first-half dialogue + smooth pause + style
-        p1_lines = []
-        for d in first_half:
-            p1_lines.append(f'"{d.rstrip(",.")}" she says clearly.')
-        p1_dialogue = " ".join(p1_lines)
+        # Build Part 1: setup + first-half dialogue (raw quotes only) + silence + style
+        p1_dialogue = " ".join(f'"{d.rstrip(",.")}"' for d in first_half)
         part1_prompt = (
             f"{setup}. {p1_dialogue} "
             f"The person pauses with a natural expression. "
+            f"After the dialogue, the person is completely silent. "
+            f"No more speech, no mumbling, no vocalizations. Only ambient music. "
         )
         if style:
             part1_prompt += style
 
-        # Build Part 2: continuation + second-half dialogue + smooth close + style
-        p2_lines = []
-        for d in second_half:
-            p2_lines.append(f'"{d.rstrip(",.")}" she says warmly.')
-        p2_dialogue = " ".join(p2_lines)
+        # Build Part 2: natural continuation + second-half dialogue + strong silence
+        p2_dialogue = " ".join(f'"{d.rstrip(",.")}"' for d in second_half)
         part2_prompt = (
-            f"[SMOOTH CONTINUATION of the same scene. Same person, same setting, "
+            f"Smooth continuation of the same scene. Same person, same setting, "
             f"same lighting, same camera angle. The person is still in frame. "
-            f"Audio continues naturally — same ambient background. "
-            f"Do NOT repeat any previous dialogue. "
-            f"Only speak the NEW dialogue below. No extra vocalizations.] "
             f"{p2_dialogue} "
-            f"The person smiles gently as the scene comes to a natural, smooth close. "
+            f"After the dialogue, the person smiles gently and is completely silent. "
+            f"No more speech, no mumbling, no vocalizations for the rest of the video. "
+            f"Only ambient music plays as the scene comes to a natural close. "
         )
         if style:
             part2_prompt += style
@@ -173,13 +169,12 @@ def _split_prompt_for_parts(prompt: str) -> tuple[str, str]:
         return part1_prompt, part2_prompt
 
     # Fallback: cannot split dialogue — use full prompt for Part 1,
-    # continuation-only for Part 2
+    # continuation-only for Part 2 with strong no-speech directive
     part2_prompt = (
-        "[SMOOTH CONTINUATION of the same scene. Same person, same setting, "
-        "same lighting, same camera angle. Continue naturally. "
-        "Audio continues — same ambient background. "
-        "Do NOT repeat any dialogue or actions. No extra vocalizations.] "
-        "The person smiles gently as the scene comes to a natural, smooth close. "
+        "Smooth continuation of the same scene. Same person, same setting, "
+        "same lighting, same camera angle. The person smiles gently and is "
+        "completely silent. No dialogue, no speech, no mumbling, no vocalizations. "
+        "Only ambient music plays as the scene comes to a natural, smooth close. "
     )
     return prompt, part2_prompt
 
