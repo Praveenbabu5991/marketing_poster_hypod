@@ -268,6 +268,8 @@ STOP.
 
 LOCK both values. All dialogue will use the chosen language.
 If "No Dialogue" — prompt will have only ambient music and visuals, no speech.
+The prompt MUST contain "No dialogue, no speech, no voiceover — instrumental music and ambient sounds only."
+Without this line, Veo may randomly generate speech even when there is no quoted dialogue.
 
 ### Phase D — Show Prompt for Approval
 CRITICAL: In this phase you MUST call the `format_response` tool. Do NOT output the prompt
@@ -280,7 +282,8 @@ CRITICAL RULES FOR DIALOGUE:
 - Dialogue must be based on the AUDIO CONTEXT from Phase C Step 2.
 - Must sound natural and energetic, NOT like a scripted ad read.
 - If "No Dialogue" was chosen — describe only visuals, ambient music, and camera.
-  No person speaking.
+  No person speaking. You MUST include this exact line in the prompt:
+  "No dialogue, no speech, no voiceover — instrumental music and ambient sounds only."
 
 CRITICAL RULES FOR LOGO:
 - The prompt MUST mention the logo TWICE:

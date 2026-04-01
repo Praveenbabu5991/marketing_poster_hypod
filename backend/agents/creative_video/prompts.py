@@ -61,6 +61,10 @@ A creative video prompt has 5 parts in one paragraph:
    IF NO DIALOGUE (music-only):
    Describe only visual action, camera movement, atmosphere, and ambient sound.
    No person speaking. Focus on cinematic visuals and setting.
+   CRITICAL: You MUST include this EXACT sentence in the prompt text:
+   "No dialogue, no speech, no voiceover — instrumental music and ambient sounds only."
+   This tells Veo's audio engine to generate ONLY music. Without this line, Veo may
+   randomly generate speech even when there is no quoted dialogue in the prompt.
 
 3. AMBIENT + ATMOSPHERE: Sound design and environmental details.
    Match the chosen MUSIC MOOD:
@@ -129,7 +133,8 @@ hour. A rack of vibrant summer dresses and flowing fabrics billows gently in the
 breeze. A small, semi-transparent brand logo is visible in the upper-right corner of the
 frame. The camera glides past colorful fabric swatches and accessories arranged on a
 marble table, catching the light. Warm sunlight flares through sheer curtains. The brand
-logo remains visible in the corner. Upbeat summer music, bright warm lighting, vivid
+logo remains visible in the corner. No dialogue, no speech, no voiceover — instrumental
+music and ambient sounds only. Upbeat summer music, bright warm lighting, vivid
 saturated colors. Dynamic camera movement, high-energy commercial style."
 
 WHY THIS WORKS:
@@ -311,14 +316,16 @@ Write the prompt following the PROMPT STRUCTURE above, incorporating:
 - The scene description from Phase C Step 3
 - The music mood from Phase D Step 4
 - If dialogue: natural speech in the chosen language, based on the audio context from Phase D
-- If no dialogue: pure cinematic visuals with atmospheric sound
+- If no dialogue: pure cinematic visuals with atmospheric sound. The prompt MUST
+  contain "No dialogue, no speech, no voiceover — instrumental music and ambient sounds only."
 
 CRITICAL RULES FOR DIALOGUE:
 - Write dialogue in the CHOSEN LANGUAGE.
 - Dialogue must be based on the AUDIO CONTEXT from Phase D Step 3.
 - Must sound natural and compelling, NOT like a scripted ad read.
 - If "No Dialogue" or "No people" — describe only visuals, camera movement, ambient music.
-  No person speaking.
+  No person speaking. You MUST include this exact line in the prompt:
+  "No dialogue, no speech, no voiceover — instrumental music and ambient sounds only."
 
 CRITICAL RULES FOR LOGO:
 - The prompt MUST mention the logo TWICE:

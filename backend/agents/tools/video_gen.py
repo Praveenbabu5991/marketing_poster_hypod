@@ -392,6 +392,14 @@ def _enhance_prompt(
     if target_audience:
         enhanced += f" Human subject matches target audience: {target_audience}."
 
+    # If prompt has no quoted dialogue, enforce no-speech directive for Veo's audio engine
+    import re as _re_dialog
+    has_dialogue = bool(_re_dialog.search(r"""['"][^'"]{10,}['"]""", enhanced))
+    if not has_dialogue:
+        enhanced += (
+            " No dialogue, no speech, no voiceover — instrumental music and ambient sounds only."
+        )
+
     # Append short "Avoid:" (negative_prompt not supported with reference_images)
     enhanced += (
         " Avoid: text, titles, words, extra hands, extra fingers, floating objects,"
