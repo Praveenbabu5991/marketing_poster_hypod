@@ -513,7 +513,6 @@ def _generate_single_video(
             "generate_audio": True,
             "person_generation": "allow_all",
             "resolution": "720p",
-            "include_rai_reason": True,
         }
 
         if ref_images:
@@ -608,7 +607,6 @@ def _generate_single_video(
                 "generate_audio": True,
                 "person_generation": "allow_all",
                 "resolution": "720p",
-                "include_rai_reason": True,
             }
             if ref_images:
                 retry_config_kwargs["reference_images"] = ref_images
