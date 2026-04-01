@@ -107,76 +107,35 @@ def _get_media_duration(path: str) -> float:
 def _split_prompt_for_parts(prompt: str) -> tuple[str, str]:
     """Split a video prompt into Part 1 and Part 2 for 15s videos (8s + 7s extension).
 
-    Finds all quoted dialogue blocks in the prompt, splits them in half:
-    - Part 1: setup + FIRST HALF of dialogue + style (fits in 8s)
-    - Part 2: continuation + SECOND HALF of dialogue + style (fits in 7s)
-
-    This prevents repetition — each part gets DIFFERENT dialogue.
-    Key: each part ends with explicit silence instructions to prevent gibberish.
+    ALL dialogue stays in Part 1 (8s). Part 2 (7s extension) is purely silent —
+    just a graceful visual close with ambient music. This prevents Veo from
+    generating gibberish speech in the extension.
     """
     import re as _re
 
-    # Find ALL quoted strings (single or double) that are likely dialogue (10+ chars)
-    quote_pattern = r"""['\"]([^'\"]{10,})['\"]"""
-    all_quotes = list(_re.finditer(quote_pattern, prompt))
+    # Extract style line at the end of the prompt (after last period-terminated sentence
+    # that contains style keywords like "lighting", "depth of field", "cinematic", etc.)
+    style_match = _re.search(
+        r'([^.]*(?:lighting|depth of field|cinematic|commercial|style|aesthetic)[^.]*\.)\s*$',
+        prompt, _re.IGNORECASE,
+    )
+    style = style_match.group(1).strip() if style_match else ""
 
-    if len(all_quotes) >= 2:
-        mid = len(all_quotes) // 2
+    # Part 1: the FULL original prompt with ALL dialogue — nothing removed
+    part1_prompt = prompt
 
-        # Extract first-half and second-half dialogue
-        first_half = [m.group(1) for m in all_quotes[:mid]]
-        second_half = [m.group(1) for m in all_quotes[mid:]]
-
-        # Extract setup: everything before the first quote
-        first_quote_start = all_quotes[0].start()
-        # Walk back to find "speaks" or "says" before the quote
-        setup_end = first_quote_start
-        pre_quote = prompt[:first_quote_start].rstrip()
-        # Find the last "speaks" or "says" keyword to include in setup
-        speaks_match = list(_re.finditer(r'(?:speaks|says)\s', pre_quote, _re.IGNORECASE))
-        if speaks_match:
-            setup_end = speaks_match[-1].start()
-        setup = prompt[:setup_end].rstrip().rstrip(",:")
-
-        # Extract style: everything after the last quote
-        last_quote_end = all_quotes[-1].end()
-        style = prompt[last_quote_end:].strip().lstrip(".'\"").strip()
-
-        # Build Part 1: setup + first-half dialogue (raw quotes only) + silence + style
-        p1_dialogue = " ".join(f'"{d.rstrip(",.")}"' for d in first_half)
-        part1_prompt = (
-            f"{setup}. {p1_dialogue} "
-            f"The person pauses with a natural expression. "
-            f"After the dialogue, the person is completely silent. "
-            f"No more speech, no mumbling, no vocalizations. Only ambient music. "
-        )
-        if style:
-            part1_prompt += style
-
-        # Build Part 2: natural continuation + second-half dialogue + strong silence
-        p2_dialogue = " ".join(f'"{d.rstrip(",.")}"' for d in second_half)
-        part2_prompt = (
-            f"Smooth continuation of the same scene. Same person, same setting, "
-            f"same lighting, same camera angle. The person is still in frame. "
-            f"{p2_dialogue} "
-            f"After the dialogue, the person smiles gently and is completely silent. "
-            f"No more speech, no mumbling, no vocalizations for the rest of the video. "
-            f"Only ambient music plays as the scene comes to a natural close. "
-        )
-        if style:
-            part2_prompt += style
-
-        return part1_prompt, part2_prompt
-
-    # Fallback: cannot split dialogue — use full prompt for Part 1,
-    # continuation-only for Part 2 with strong no-speech directive
+    # Part 2: silent graceful close — NO dialogue, only visuals + music
     part2_prompt = (
         "Smooth continuation of the same scene. Same person, same setting, "
-        "same lighting, same camera angle. The person smiles gently and is "
-        "completely silent. No dialogue, no speech, no mumbling, no vocalizations. "
-        "Only ambient music plays as the scene comes to a natural, smooth close. "
+        "same lighting, same camera angle. The person smiles gently at the camera. "
+        "No dialogue, no speech, no voiceover, no mumbling, no vocalizations. "
+        "The person is completely silent for the entire duration. "
+        "Only ambient music plays as the scene comes to a natural, graceful close. "
     )
-    return prompt, part2_prompt
+    if style:
+        part2_prompt += style
+
+    return part1_prompt, part2_prompt
 
 
 def _overlay_logo_on_video(video_path: str, logo_path: str, output_path: str) -> bool:
