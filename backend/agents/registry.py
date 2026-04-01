@@ -51,6 +51,12 @@ AGENT_CONFIGS = {
         "icon": "zap",
         "requires_product_images": False,
     },
+    "motion_graphics": {
+        "name": "Motion Graphics",
+        "description": "Create cinematic product showcase videos with animated logo and music",
+        "icon": "sparkles",
+        "requires_product_images": True,
+    },
     "content_calendar": {
         "name": "Content Calendar",
         "description": "AI-powered monthly content planning with festivals, trends, and brand content",
@@ -114,6 +120,9 @@ def get_agent_graph(agent_type: str) -> StateGraph:
     elif agent_type == "quick_image":
         from agents.quick_image.graph import build_quick_image_graph
         return build_quick_image_graph(llm)
+    elif agent_type == "motion_graphics":
+        from agents.motion_graphics.graph import build_motion_graphics_graph
+        return build_motion_graphics_graph(llm)
     elif agent_type == "content_calendar":
         from agents.content_calendar.graph import build_content_calendar_graph
         return build_content_calendar_graph(llm)

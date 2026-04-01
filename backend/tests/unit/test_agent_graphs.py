@@ -64,12 +64,19 @@ class TestAgentGraphs:
         compiled = graph.compile()
         assert compiled is not None
 
+    def test_motion_graphics_graph_builds(self):
+        from agents.motion_graphics.graph import build_motion_graphics_graph
+        graph = build_motion_graphics_graph(_make_mock_llm())
+        assert graph is not None
+        compiled = graph.compile()
+        assert compiled is not None
+
 
 class TestAgentRegistry:
 
     def test_agent_configs_has_expected_agents(self):
         from agents.registry import AGENT_CONFIGS
-        assert len(AGENT_CONFIGS) == 8
+        assert len(AGENT_CONFIGS) == 9
         assert "single_post" in AGENT_CONFIGS
         assert "carousel" in AGENT_CONFIGS
         assert "campaign" in AGENT_CONFIGS
@@ -77,10 +84,12 @@ class TestAgentRegistry:
         assert "ugc" in AGENT_CONFIGS
         assert "product_ugc" in AGENT_CONFIGS
         assert "quick_image" in AGENT_CONFIGS
+        assert "motion_graphics" in AGENT_CONFIGS
         assert "content_calendar" in AGENT_CONFIGS
 
     def test_product_agents_require_product_images(self):
         from agents.registry import AGENT_CONFIGS
         assert AGENT_CONFIGS["sales_poster"]["requires_product_images"] is True
         assert AGENT_CONFIGS["product_ugc"]["requires_product_images"] is True
+        assert AGENT_CONFIGS["motion_graphics"]["requires_product_images"] is True
         assert AGENT_CONFIGS["single_post"]["requires_product_images"] is False

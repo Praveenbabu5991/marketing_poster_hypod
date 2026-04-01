@@ -37,6 +37,7 @@ _AGENT_LABELS = {
     "sales_poster": "Sales Poster",
     "ugc": "UGC",
     "product_ugc": "Product UGC",
+    "motion_graphics": "Motion Graphics",
     "content_calendar": "Calendar Plan",
 }
 

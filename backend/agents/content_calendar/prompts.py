@@ -72,7 +72,7 @@ Each slot object MUST have these fields:
 ```
 
 Valid `event_type` values: "festival", "trending", "brand", "regular"
-Valid `post_type` values: "single_post", "carousel", "sales_poster", "ugc", "product_ugc", "campaign"
+Valid `post_type` values: "single_post", "carousel", "sales_poster", "ugc", "product_ugc", "campaign", "motion_graphics"
 `posting_time` is HH:MM in 24-hour format. Suggest optimal times based on industry:
 - B2B / Professional: 08:00-10:00 weekdays
 - Fashion / Lifestyle: 11:00-13:00 or 19:00-21:00

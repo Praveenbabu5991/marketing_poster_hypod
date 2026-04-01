@@ -137,7 +137,7 @@ def build_agent_graph(
     tool_node = ToolNode(tools)
 
     # Only these agents should have product images auto-injected
-    _PRODUCT_IMAGE_AGENTS = {"sales_poster", "product_ugc"}
+    _PRODUCT_IMAGE_AGENTS = {"sales_poster", "product_ugc", "motion_graphics"}
 
     def tools_with_injection(state: AgentState) -> dict:
         """Wrap ToolNode to inject product images from brand context.

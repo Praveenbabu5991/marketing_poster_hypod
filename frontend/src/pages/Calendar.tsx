@@ -432,6 +432,8 @@ export function Calendar() {
         pendingMessageRef.current = `Create a sales poster${eventContext}: ${idea}. Use the product images from the brand context. Skip the welcome and product info phases — go directly to choosing a headline, then show the image prompt for approval.${systemContext}`;
       } else if (result.agent_type === 'product_ugc') {
         pendingMessageRef.current = `Create a product UGC video${eventContext}: ${idea}. Use the product images from the brand context. Skip the suggestion phase — go straight to creating the video.${systemContext}`;
+      } else if (result.agent_type === 'motion_graphics') {
+        pendingMessageRef.current = `Create motion graphics${eventContext}: ${idea}. Use the product images from the brand context. Skip the welcome phase — go straight to creating the video.${systemContext}`;
       } else if (result.agent_type === 'ugc') {
         pendingMessageRef.current = `Create a UGC video${eventContext}: ${idea}. Skip the suggestion phase — go straight to creating the video.${systemContext}`;
       } else if (result.agent_type === 'campaign') {

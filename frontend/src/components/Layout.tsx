@@ -48,6 +48,7 @@ export function Layout() {
     sales_poster: 'Sales Poster',
     ugc: 'UGC',
     product_ugc: 'Product UGC',
+    motion_graphics: 'Motion Graphics',
     content_calendar: 'Calendar Planner',
   };
 
@@ -58,6 +59,7 @@ export function Layout() {
     sales_poster: '\uD83D\uDED2',
     ugc: '\uD83C\uDFAC',
     product_ugc: '\uD83D\uDCF9',
+    motion_graphics: '\u2728',
     content_calendar: '\uD83D\uDCC5',
   };
 
