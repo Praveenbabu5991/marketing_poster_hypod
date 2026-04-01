@@ -29,6 +29,7 @@ const POST_TYPES = [
   { value: 'ugc', label: 'UGC' },
   { value: 'product_ugc', label: 'Product UGC' },
   { value: 'motion_graphics', label: 'Motion Graphics' },
+  { value: 'creative_video', label: 'Creative Video' },
 ];
 
 export function AddSlotPopover({ date, onSubmit, onClose }: AddSlotPopoverProps) {

@@ -436,6 +436,8 @@ export function Calendar() {
         pendingMessageRef.current = `Create motion graphics${eventContext}: ${idea}. Use the product images from the brand context. Skip the welcome phase — go straight to creating the video.${systemContext}`;
       } else if (result.agent_type === 'ugc') {
         pendingMessageRef.current = `Create a UGC video${eventContext}: ${idea}. Skip the suggestion phase — go straight to creating the video.${systemContext}`;
+      } else if (result.agent_type === 'creative_video') {
+        pendingMessageRef.current = `Create a creative video${eventContext}: ${idea}. Skip the suggestion phase — go straight to creating the video.${systemContext}`;
       } else if (result.agent_type === 'campaign') {
         pendingMessageRef.current = `Plan a campaign${eventContext}: ${idea}. Ask me about campaign duration, posting frequency, and content mix before generating any content.${systemContext}`;
       } else {

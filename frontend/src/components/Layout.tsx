@@ -49,6 +49,7 @@ export function Layout() {
     ugc: 'UGC',
     product_ugc: 'Product UGC',
     motion_graphics: 'Motion Graphics',
+    creative_video: 'Creative Video',
     content_calendar: 'Calendar Planner',
   };
 
@@ -60,6 +61,7 @@ export function Layout() {
     ugc: '\uD83C\uDFAC',
     product_ugc: '\uD83D\uDCF9',
     motion_graphics: '\u2728',
+    creative_video: '\uD83C\uDFAC',
     content_calendar: '\uD83D\uDCC5',
   };
 

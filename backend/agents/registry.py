@@ -57,6 +57,12 @@ AGENT_CONFIGS = {
         "icon": "sparkles",
         "requires_product_images": True,
     },
+    "creative_video": {
+        "name": "Creative Video",
+        "description": "Create cinematic concept-driven videos from any idea — no product image required",
+        "icon": "clapperboard",
+        "requires_product_images": False,
+    },
     "content_calendar": {
         "name": "Content Calendar",
         "description": "AI-powered monthly content planning with festivals, trends, and brand content",
@@ -123,6 +129,9 @@ def get_agent_graph(agent_type: str) -> StateGraph:
     elif agent_type == "motion_graphics":
         from agents.motion_graphics.graph import build_motion_graphics_graph
         return build_motion_graphics_graph(llm)
+    elif agent_type == "creative_video":
+        from agents.creative_video.graph import build_creative_video_graph
+        return build_creative_video_graph(llm)
     elif agent_type == "content_calendar":
         from agents.content_calendar.graph import build_content_calendar_graph
         return build_content_calendar_graph(llm)
