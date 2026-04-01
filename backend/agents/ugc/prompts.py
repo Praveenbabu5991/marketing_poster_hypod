@@ -102,6 +102,37 @@ A UGC video prompt has 5 parts in one paragraph:
 - Brand colors can be in the ENVIRONMENT (decor, walls, clothing accents) but NOT as
   lighting color that washes the entire scene.
 
+## WORDS TO AVOID (Veo Safety Filter)
+These words/phrases trigger Veo's safety filter and MUST NOT appear in prompts:
+
+VIOLENCE-ADJACENT (use alternatives):
+- "shot" → use "take" or "angle" (e.g. "medium take" not "medium shot")
+- "fire" → use "flames" or "glow" (unless "fireplace"/"campfire")
+- "shoot" → use "film" or "capture"
+- "strike" → use "pose" or remove
+- "execution" → use "performance" or "delivery"
+- "explode"/"blast" → use "burst of energy" or "dynamic motion"
+- "killer" / "slay" → use "stunning" or "remarkable"
+
+INTIMATE/SUGGESTIVE (use alternatives):
+- "whispers" → use "speaks softly" or "says gently"
+- "seductive"/"sensual"/"sultry" → use "confident" or "elegant"
+- "tight" (clothing) → use "fitted" or "form-fitting"
+- "intimate" → use "personal" or "heartfelt"
+- "caress" → use "touch gently" or "hold"
+- "provocative" → use "bold" or "eye-catching"
+
+CHILD SAFETY:
+- "child" / "kid" / "toddler" / "baby" → use "young person" or avoid minors entirely
+
+OTHER:
+- "reveal" → use "comes into view" or "becomes visible"
+- "alley" → use "narrow street" or "lane"
+- Never use real celebrity names
+- Never use brand names (already handled)
+
+When writing prompts, ALWAYS self-check against this list before presenting.
+
 ## EXAMPLE 8-SECOND PROMPT (GOLD STANDARD):
 (Audio context was: "announce biggest sale, 50% off, starts Friday")
 

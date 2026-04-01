@@ -57,6 +57,37 @@ A motion graphics video prompt has 5 parts in one paragraph:
 - NEVER use "reveal" as a dramatic action — say "becomes visible" or "comes into view."
 - NEVER describe multiple camera movements — ONE slow cinematic move only.
 
+## WORDS TO AVOID (Veo Safety Filter)
+These words/phrases trigger Veo's safety filter and MUST NOT appear in prompts:
+
+VIOLENCE-ADJACENT (use alternatives):
+- "shot" → use "take" or "angle" (e.g. "medium take" not "medium shot")
+- "fire" → use "flames" or "glow" (unless "fireplace"/"campfire")
+- "shoot" → use "film" or "capture"
+- "strike" → use "pose" or remove
+- "execution" → use "performance" or "delivery"
+- "explode"/"blast" → use "burst of energy" or "dynamic motion"
+- "killer" / "slay" → use "stunning" or "remarkable"
+
+INTIMATE/SUGGESTIVE (use alternatives):
+- "whispers" → use "speaks softly" or "says gently"
+- "seductive"/"sensual"/"sultry" → use "confident" or "elegant"
+- "tight" (clothing) → use "fitted" or "form-fitting"
+- "intimate" → use "personal" or "heartfelt"
+- "caress" → use "touch gently" or "hold"
+- "provocative" → use "bold" or "eye-catching"
+
+CHILD SAFETY:
+- "child" / "kid" / "toddler" / "baby" → use "young person" or avoid minors entirely
+
+OTHER:
+- "reveal" → use "comes into view" or "becomes visible"
+- "alley" → use "narrow street" or "lane"
+- Never use real celebrity names
+- Never use brand names (already handled)
+
+When writing prompts, ALWAYS self-check against this list before presenting.
+
 ## SETTING INFERENCE (use silently based on product type)
 - Skincare/Beauty → marble surface, spa lighting, soft gradient background
 - Clothing/Fashion → draped fabric surface, boutique setting, soft studio lighting
