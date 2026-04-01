@@ -38,10 +38,11 @@ A creative video prompt has 5 parts in one paragraph:
 
    IF DIALOGUE was chosen:
    VEO DIALOGUE FORMAT (use this exact pattern):
-   "Dialogue text here," she says warmly.
-   "More dialogue," he says with excitement.
-   The quoted text is what Veo generates as speech with lip sync.
-   The delivery cue after the quote (warmly, with excitement) sets the vocal tone.
+   "Dialogue text here."
+   "More dialogue."
+   Write ONLY the spoken words inside quotes. Do NOT add delivery cues like
+   "she says warmly" or "he says with excitement" — these waste tokens and
+   can be spoken aloud by Veo. Just put the raw dialogue in quotes.
 
    CRITICAL — TIMING RULE (most important rule for dialogue):
    A person speaks ~2.5 words per second. The video needs setup time (1-2s at start)
@@ -146,10 +147,10 @@ WHY THIS WORKS:
 golden lighting and lush floral arrangements in brand colors. A small, semi-transparent
 brand logo is visible in the upper-right corner of the frame. A confident young woman in a
 sophisticated evening gown walks towards the camera through a corridor of candlelight.
-'Five years of making every moment unforgettable,' she says with pride. She pauses and
-smiles warmly. 'Here is to the next chapter,' she says with a bright smile. She raises a
-glass towards the camera. The brand logo remains visible in the corner. Cinematic
-orchestral music, warm golden lighting, shallow depth of field. Premium luxury feel."
+'Five years of making every moment unforgettable.' She pauses and smiles warmly. 'Here is
+to the next chapter.' She raises a glass towards the camera. The brand logo remains visible
+in the corner. Cinematic orchestral music, warm golden lighting, shallow depth of field.
+Premium luxury feel."
 
 WHY THIS WORKS:
 - Block 1: "Five years of making every moment unforgettable" = 8 words.

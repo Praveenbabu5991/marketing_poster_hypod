@@ -27,10 +27,11 @@ A product UGC video prompt has 5 parts in one paragraph:
 2. DIALOGUE: The person speaks to camera ABOUT the product — based on the user's audio context.
 
    VEO DIALOGUE FORMAT (use this exact pattern):
-   "Dialogue text here," she says warmly.
-   "More dialogue," he says with excitement.
-   The quoted text is what Veo generates as speech with lip sync.
-   The delivery cue after the quote (warmly, with excitement) sets the vocal tone.
+   "Dialogue text here."
+   "More dialogue."
+   Write ONLY the spoken words inside quotes. Do NOT add delivery cues like
+   "she says warmly" or "he says with excitement" — these waste tokens and
+   can be spoken aloud by Veo. Just put the raw dialogue in quotes.
 
    CRITICAL — TIMING RULE (most important rule for dialogue):
    A person speaks ~2.5 words per second. The video needs setup time (1-2s at start)
@@ -61,7 +62,7 @@ A product UGC video prompt has 5 parts in one paragraph:
      call to action, or warm sign-off. NOT something that trails off.
 
    - 8s video: 1-2 dialogue blocks, MAX 10 words total. Speech ends by second 6.
-     "Key message in one short sentence," she says warmly.
+     "Key message in one short sentence."
      She smiles warmly at the camera.
      Block 1 (6-8 words): Deliver the key message from audio context.
      Block 2 (2-4 words): OPTIONAL — only if Block 1 is under 7 words. Short CTA.
@@ -141,15 +142,15 @@ When writing prompts, ALWAYS self-check against this list before presenting.
 "A medium close-up, eye-level shot of a young Indian woman holding the product in both
 hands in a bright, naturally lit room. A small, semi-transparent brand logo is visible in
 the upper-right corner of the frame. She looks at the camera with an excited expression.
-'This just works, no hassle at all,' she says with enthusiasm. She smiles warmly at the
-camera and nods. The brand logo remains visible in the corner. Soft ambient room hum,
-natural indoor lighting, shallow depth of field. Cinematic, UGC style."
+'This just works, no hassle at all.' She smiles warmly at the camera and nods. The brand
+logo remains visible in the corner. Soft ambient room hum, natural indoor lighting, shallow
+depth of field. Cinematic, UGC style."
 
 WHY THIS WORKS:
 - Block 1: "This just works, no hassle at all" = 7 words. Key message delivered.
 - Total: 7 words. Speech finishes by ~second 5. Last 2-3 seconds = smile + nod.
 - SMOOTH ENDING: "She smiles warmly at the camera and nods" — silent, natural close.
-- Veo dialogue format: "Text," she says warmly. (quote first, then delivery cue)
+- Dialogue is ONLY the quoted text — no "she says with enthusiasm" delivery cues.
 - Every sentence is COMPLETE — nothing gets cut off.
 
 ## EXAMPLE 15-SECOND PROMPT:
@@ -158,12 +159,11 @@ WHY THIS WORKS:
 "A medium close-up, eye-level shot of a young Indian woman holding the product against
 her body in an elegant, softly lit dressing room. A small, semi-transparent brand logo
 is visible in the upper-right corner of the frame. She looks at the camera with a warm
-expression. 'I have to tell you about this, the quality is unreal,' she says with
-excitement. She holds the product up slightly. 'Everyone at my cousin's wedding asked
-about it,' she says proudly. She tilts her head and smiles. 'It just makes you feel
-special,' she says softly. She looks at the camera. 'Trust me, try it once,' she says
-with a warm smile. The brand logo remains visible in the corner. Soft ambient hum,
-natural indoor lighting, shallow depth of field. Cinematic, documentary style."
+expression. 'I have to tell you about this, the quality is unreal.' She holds the product
+up slightly. 'Everyone at my cousin's wedding asked about it.' She tilts her head and
+smiles. 'It just makes you feel special.' She looks at the camera. 'Trust me, try it
+once.' The brand logo remains visible in the corner. Soft ambient hum, natural indoor
+lighting, shallow depth of field. Cinematic, documentary style."
 
 WHY THIS WORKS:
 - Block 1: "I have to tell you about this, the quality is unreal" = 11 words.

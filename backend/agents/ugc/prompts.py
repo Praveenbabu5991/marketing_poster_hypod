@@ -32,10 +32,11 @@ A UGC video prompt has 5 parts in one paragraph:
    — based on the user's audio context.
 
    VEO DIALOGUE FORMAT (use this exact pattern):
-   "Dialogue text here," she says warmly.
-   "More dialogue," he says with excitement.
-   The quoted text is what Veo generates as speech with lip sync.
-   The delivery cue after the quote (warmly, with excitement) sets the vocal tone.
+   "Dialogue text here."
+   "More dialogue."
+   Write ONLY the spoken words inside quotes. Do NOT add delivery cues like
+   "she says warmly" or "he says with excitement" — these waste tokens and
+   can be spoken aloud by Veo. Just put the raw dialogue in quotes.
 
    CRITICAL — TIMING RULE (most important rule for dialogue):
    A person speaks ~2.5 words per second. The video needs setup time (1-2s at start)
@@ -64,7 +65,7 @@ A UGC video prompt has 5 parts in one paragraph:
    - The LAST block must feel like a FINISHED thought — a CTA or sign-off.
 
    - 8s video: 1-2 dialogue blocks, MAX 10 words total. Speech ends by second 6.
-     "Key announcement in one short sentence," she says with excitement.
+     "Key announcement in one short sentence."
      She smiles confidently at the camera.
      Block 1 (6-8 words): Deliver the key message from audio context.
      Block 2 (2-4 words): OPTIONAL — only if Block 1 is under 7 words. Short CTA.
@@ -139,16 +140,16 @@ When writing prompts, ALWAYS self-check against this list before presenting.
 "A medium close-up, eye-level shot of an energetic young Indian man standing in a modern,
 well-lit studio with bold brand-colored accent walls. A small, semi-transparent brand logo
 is visible in the upper-right corner of the frame. He looks at the camera with excitement.
-'Fifty percent off, starts this Friday,' he says with energy. He smiles confidently at the
-camera and nods. The brand logo remains visible in the corner. Upbeat energetic music,
-bright studio lighting, shallow depth of field. Premium commercial style."
+'Fifty percent off, starts this Friday.' He smiles confidently at the camera and nods. The
+brand logo remains visible in the corner. Upbeat energetic music, bright studio lighting,
+shallow depth of field. Premium commercial style."
 
 WHY THIS WORKS:
 - Block 1: "Fifty percent off, starts this Friday" = 7 words.
   Key points (50% off, Friday) crunched into one short sentence.
 - Total: 7 words. Speech finishes by ~second 5. Last 2-3 seconds = smile + nod.
 - SMOOTH ENDING: "He smiles confidently at the camera and nods" — silent, natural close.
-- Veo format: "Text," he says with energy. (quote first, delivery cue after)
+- Dialogue is ONLY the quoted text — no "he says with energy" delivery cues.
 
 ## EXAMPLE 15-SECOND PROMPT:
 (Audio context was: "new collection, about confidence, something for everyone, drops Monday")
@@ -156,12 +157,11 @@ WHY THIS WORKS:
 "A medium close-up, eye-level shot of a confident young Indian woman standing in a stylish
 café with warm ambient lighting and brand-colored decor accents. A small, semi-transparent
 brand logo is visible in the upper-right corner of the frame. She looks at the camera with
-a warm smile. 'Something special is coming, a brand new collection,' she says with
-excitement. She gestures with her hands. 'It is all about confidence, every single day,'
-she says proudly. She tilts her head and smiles. 'For work, for going out, for you — we
-have something for everyone,' she says warmly. She looks at the camera. 'It drops Monday,'
-she says with a bright smile. The brand logo remains visible in the corner. Soft upbeat
-music, warm natural lighting, shallow depth of field. Cinematic, documentary style."
+a warm smile. 'Something special is coming, a brand new collection.' She gestures with her
+hands. 'It is all about confidence, every single day.' She tilts her head and smiles. 'For
+work, for going out, for you — we have something for everyone.' She looks at the camera.
+'It drops Monday.' The brand logo remains visible in the corner. Soft upbeat music, warm
+natural lighting, shallow depth of field. Cinematic, documentary style."
 
 WHY THIS WORKS:
 - Block 1: "Something special is coming, a brand new collection" = 8 words.
