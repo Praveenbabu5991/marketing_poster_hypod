@@ -110,7 +110,10 @@ def _split_prompt_for_parts(prompt: str, person_generation: str = "allow_all") -
     Preserves the ORIGINAL natural language by splitting the prompt text at a sentence
     boundary between dialogue halves. Part 1 gets blocks 1-2 with all surrounding
     natural text (gestures, expressions). Part 2 gets blocks 3-4 the same way.
-    Both parts end with explicit silence instructions to prevent gibberish.
+
+    IMPORTANT: No silence/pause instructions between parts — dialogue must flow
+    continuously across Part 1 → Part 2 for seamless speech. Only the LAST part
+    (Part 2) gets silence instructions after all dialogue is done.
 
     When person_generation="dont_allow" (motion graphics), continuation prompts
     avoid all references to people/persons to prevent RAI safety filter blocks.
@@ -154,22 +157,17 @@ def _split_prompt_for_parts(prompt: str, person_generation: str = "allow_all") -
         # Remove style from the split portions (we re-append it to both)
         style_start = style_match.start() if style_match else len(prompt)
 
-        # Part 1: original prompt text up to split point + silence + style
+        # Part 1: original prompt text up to split point — NO silence, person keeps talking
         part1_text = prompt[:split_pos].rstrip().rstrip('.,;')
-        part1_prompt = (
-            f"{part1_text}. "
-            f"The person pauses with a natural expression and is silent. "
-            f"No more speech, no mumbling, no vocalizations. Only ambient music. "
-        )
+        part1_prompt = f"{part1_text}. "
         if style:
             part1_prompt += style
 
-        # Part 2: continuation context + remaining original text (dialogue 3-4 with all
-        # natural language gestures/expressions) + silence + style
+        # Part 2: continuation — person keeps speaking seamlessly, silence ONLY at the very end
         remaining_text = prompt[split_pos:style_start].rstrip().rstrip('.,;')
         part2_prompt = (
             f"Smooth continuation of the same scene. Same person, same setting, "
-            f"same lighting, same camera angle. "
+            f"same lighting, same camera angle. The person continues speaking naturally. "
             f"{remaining_text}. "
             f"After finishing speaking, the person smiles warmly and is completely silent. "
             f"No more speech, no mumbling, no vocalizations. Only ambient music. "
