@@ -741,11 +741,18 @@ def _generate_single_video(
                 "generate_audio": True,
                 "person_generation": person_generation,
                 "resolution": "720p",
-                }
-            # Celebrity filter: the brand logo reference image is likely the trigger.
-            # Retry WITHOUT reference images to avoid brand recognition.
+            }
+            # Celebrity filter: the brand logo is likely the trigger.
+            # Retry 1: keep product images but drop the LOGO only.
             if safety_category == "celebrity":
-                print(f"[VIDEO] Celebrity filter — retrying WITHOUT reference images (logo triggers brand detection)", file=_sys_rai.stderr, flush=True)
+                ref_images_no_logo, paths_no_logo = _build_reference_images(
+                    image_path, reference_image_paths, "",  # empty logo_path
+                )
+                if ref_images_no_logo:
+                    retry_config_kwargs["reference_images"] = ref_images_no_logo
+                    print(f"[VIDEO] Celebrity filter — retrying with product images only (dropped logo). refs={paths_no_logo}", file=_sys_rai.stderr, flush=True)
+                else:
+                    print(f"[VIDEO] Celebrity filter — retrying WITHOUT reference images (no product images available)", file=_sys_rai.stderr, flush=True)
             elif ref_images:
                 retry_config_kwargs["reference_images"] = ref_images
 
@@ -932,30 +939,39 @@ def _extend_video(
             print(f"[VIDEO] Extension retry prompt: {retry_prompt[:300]}", file=_sys.stderr, flush=True)
             time.sleep(5)
 
-            try:
-                retry_source = types.GenerateVideosSource(
-                    prompt=retry_prompt,
-                    video=veo_video,
-                )
-                retry_config = types.GenerateVideosConfig(
-                    number_of_videos=1,
-                    resolution="720p",
-                    generate_audio=True,
-                    person_generation=person_generation,
-                )
-                operation2 = client.models.generate_videos(
-                    model=VIDEO_MODEL, source=retry_source, config=retry_config,
-                )
-                operation2, _ = _poll_operation(client, operation2)
-                result = operation2.result
-                if result and result.generated_videos:
-                    print(f"[VIDEO] Extension retry succeeded!", file=_sys.stderr, flush=True)
-                else:
-                    hint = _get_safety_hint(category)
-                    print(f"[VIDEO] Extension retry also failed", file=_sys.stderr, flush=True)
-                    return {"status": "error", "message": f"Video extension blocked by safety filter ({category}). {hint}", "model": VIDEO_MODEL}
-            except Exception as retry_err:
-                print(f"[VIDEO] Extension retry error: {retry_err}", file=_sys.stderr, flush=True)
+            retry_succeeded = False
+            for attempt, rp in enumerate([
+                retry_prompt,
+                "Smooth continuation of the same scene, same lighting, same camera angle. The scene continues naturally. Cinematic, professional commercial.",
+            ], 1):
+                print(f"[VIDEO] Extension retry {attempt} prompt: {rp[:200]}", file=_sys.stderr, flush=True)
+                try:
+                    retry_source = types.GenerateVideosSource(
+                        prompt=rp,
+                        video=veo_video,
+                    )
+                    retry_config = types.GenerateVideosConfig(
+                        number_of_videos=1,
+                        resolution="720p",
+                        generate_audio=True,
+                        person_generation=person_generation,
+                    )
+                    operation2 = client.models.generate_videos(
+                        model=VIDEO_MODEL, source=retry_source, config=retry_config,
+                    )
+                    operation2, _ = _poll_operation(client, operation2)
+                    result = operation2.result
+                    if result and result.generated_videos:
+                        print(f"[VIDEO] Extension retry {attempt} succeeded!", file=_sys.stderr, flush=True)
+                        retry_succeeded = True
+                        break
+                    else:
+                        print(f"[VIDEO] Extension retry {attempt} failed", file=_sys.stderr, flush=True)
+                except Exception as retry_err:
+                    print(f"[VIDEO] Extension retry {attempt} error: {retry_err}", file=_sys.stderr, flush=True)
+                time.sleep(5)
+
+            if not retry_succeeded:
                 hint = _get_safety_hint(category)
                 return {"status": "error", "message": f"Video extension blocked by safety filter ({category}). {hint}", "model": VIDEO_MODEL}
 

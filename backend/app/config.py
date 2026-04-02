@@ -39,8 +39,8 @@ GCLOUD_LOCATION = os.getenv("GCLOUD_LOCATION", "us-central1")
 # --- Model Configuration (model-agnostic: provider/model-name) ---
 ORCHESTRATOR_MODEL = os.getenv("ORCHESTRATOR_MODEL", "google_genai/gemini-3.1-pro-preview")
 IDEA_MODEL = os.getenv("IDEA_MODEL", "google_genai/gemini-3-flash-preview")
-WRITER_MODEL = os.getenv("WRITER_MODEL", "google_genai/gemini-3.1-flash-lite-preview")
-CAPTION_MODEL = os.getenv("CAPTION_MODEL", "gemini-3.1-flash-lite-preview")
+WRITER_MODEL = os.getenv("WRITER_MODEL", "google_genai/gemini-3-flash-preview")
+CAPTION_MODEL = os.getenv("CAPTION_MODEL", "gemini-3-flash-preview")
 IMAGE_MODEL = os.getenv("IMAGE_MODEL", "gemini-3.1-flash-image-preview")
 EDIT_MODEL = os.getenv("EDIT_MODEL", "gemini-3-pro-image-preview")
 VIDEO_MODEL = os.getenv("VIDEO_MODEL", "veo-3.1-generate-001")
@@ -69,10 +69,8 @@ VERTEX_PRICING = {
     # --- Text / Orchestration models (per 1M tokens, ≤200K context) ---
     # Gemini 3.1 Pro Preview — orchestrator
     "gemini-3.1-pro-preview": {"input_per_million": 2.00, "output_per_million": 12.00},
-    # Gemini 3 Flash Preview — idea generation
+    # Gemini 3 Flash Preview — idea / writer / captions / search
     "gemini-3-flash-preview": {"input_per_million": 0.50, "output_per_million": 3.00},
-    # Gemini 3.1 Flash-Lite Preview — writer / captions
-    "gemini-3.1-flash-lite-preview": {"input_per_million": 0.25, "output_per_million": 1.50},
 
     # --- Legacy models (keep for historical cost records) ---
     "gemini-2.5-flash": {"input_per_million": 0.30, "output_per_million": 2.50},

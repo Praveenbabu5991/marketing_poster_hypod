@@ -125,13 +125,13 @@ class TestCalculateCost:
 
     def test_writer_model_cost(self):
         cost = calculate_cost(
-            model_name="gemini-3.1-flash-lite-preview",
+            model_name="gemini-3-flash-preview",
             action_type="text",
             prompt_tokens=1_000_000,
             completion_tokens=1_000_000,
         )
-        # 1M input * 0.25 + 1M output * 1.50 = 1.75
-        assert cost == pytest.approx(1.75, abs=0.001)
+        # 1M input * 0.50 + 1M output * 3.00 = 3.50 (same as idea model)
+        assert cost == pytest.approx(3.50, abs=0.001)
 
     def test_provider_prefix_stripped(self):
         """Model names with provider prefix should still match pricing."""
@@ -225,10 +225,11 @@ class TestVertexPricing:
         assert p["output_per_million"] == 3.00
 
     def test_has_writer_pricing(self):
-        assert "gemini-3.1-flash-lite-preview" in VERTEX_PRICING
-        p = VERTEX_PRICING["gemini-3.1-flash-lite-preview"]
-        assert p["input_per_million"] == 0.25
-        assert p["output_per_million"] == 1.50
+        # Writer now uses same model as idea (gemini-3-flash-preview)
+        assert "gemini-3-flash-preview" in VERTEX_PRICING
+        p = VERTEX_PRICING["gemini-3-flash-preview"]
+        assert p["input_per_million"] == 0.50
+        assert p["output_per_million"] == 3.00
 
     def test_has_legacy_flash_pricing(self):
         assert "gemini-2.5-flash" in VERTEX_PRICING
