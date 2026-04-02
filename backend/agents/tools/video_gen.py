@@ -892,20 +892,59 @@ def _extend_video(
         result = operation.result
         op_error = getattr(operation, 'error', None)
 
-        if not result or not result.generated_videos:
-            rai_filtered = (
-                result
-                and getattr(result, 'rai_media_filtered_count', 0) > 0
-            )
-            if rai_filtered:
-                rai_reasons_list = getattr(result, 'rai_media_filtered_reasons', []) or []
-                rai_reason = getattr(result, 'rai_media_filtered_reason', None)
-                category = _parse_safety_category(rai_reasons_list, rai_reason)
-                hint = _get_safety_hint(category)
-                print(f"[VIDEO] Extension RAI filtered — category={category}", file=_sys.stderr, flush=True)
-                return {"status": "error", "message": f"Video extension blocked by safety filter ({category}). {hint}", "model": VIDEO_MODEL}
+        rai_filtered = (
+            result
+            and not result.generated_videos
+            and getattr(result, 'rai_media_filtered_count', 0) > 0
+        )
+
+        if not result or (not result.generated_videos and not rai_filtered):
             error_detail = f" Error: {op_error}" if op_error else ""
             return {"status": "error", "message": f"No video from extension.{error_detail}", "model": VIDEO_MODEL}
+
+        if rai_filtered:
+            rai_reasons_list = getattr(result, 'rai_media_filtered_reasons', []) or []
+            rai_reason = getattr(result, 'rai_media_filtered_reason', None)
+            category = _parse_safety_category(rai_reasons_list, rai_reason)
+            print(f"[VIDEO] Extension RAI filtered — category={category}. Retrying with simplified prompt...", file=_sys.stderr, flush=True)
+
+            # Retry: simplify prompt, strip brand references, wait before retry
+            import re as _re_ext
+            retry_prompt = _sanitize_prompt(continuation_prompt)
+            # Keep only first 3 sentences for a cleaner prompt
+            sentences = _re_ext.split(r'(?<=[.!])\s+', retry_prompt.strip())
+            retry_prompt = " ".join(sentences[:3]) if sentences else retry_prompt[:200]
+            retry_prompt += " Cinematic, professional commercial."
+
+            print(f"[VIDEO] Extension retry prompt: {retry_prompt[:300]}", file=_sys.stderr, flush=True)
+            time.sleep(5)
+
+            try:
+                retry_source = types.GenerateVideosSource(
+                    prompt=retry_prompt,
+                    video=veo_video,
+                )
+                retry_config = types.GenerateVideosConfig(
+                    number_of_videos=1,
+                    resolution="720p",
+                    generate_audio=True,
+                    person_generation=person_generation,
+                )
+                operation2 = client.models.generate_videos(
+                    model=VIDEO_MODEL, source=retry_source, config=retry_config,
+                )
+                operation2, _ = _poll_operation(client, operation2)
+                result = operation2.result
+                if result and result.generated_videos:
+                    print(f"[VIDEO] Extension retry succeeded!", file=_sys.stderr, flush=True)
+                else:
+                    hint = _get_safety_hint(category)
+                    print(f"[VIDEO] Extension retry also failed", file=_sys.stderr, flush=True)
+                    return {"status": "error", "message": f"Video extension blocked by safety filter ({category}). {hint}", "model": VIDEO_MODEL}
+            except Exception as retry_err:
+                print(f"[VIDEO] Extension retry error: {retry_err}", file=_sys.stderr, flush=True)
+                hint = _get_safety_hint(category)
+                return {"status": "error", "message": f"Video extension blocked by safety filter ({category}). {hint}", "model": VIDEO_MODEL}
 
         video = result.generated_videos[0]
         output_path = Path(save_dir)

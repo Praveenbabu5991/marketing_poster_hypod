@@ -37,7 +37,7 @@ export function Chat() {
 
   // Video Settings State
   const [videoSize, setVideoSize] = useState('1080x1920 (Reels / Shorts)');
-  const [videoDuration, setVideoDuration] = useState('16');
+  const [videoDuration, setVideoDuration] = useState('8');
 
   // Helper to get settings context
   const getSettingsContext = () => {
