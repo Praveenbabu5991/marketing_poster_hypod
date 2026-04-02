@@ -58,8 +58,8 @@ AGENT_CONFIGS = {
         "requires_product_images": True,
     },
     "creative_video": {
-        "name": "Creative Video",
-        "description": "Create cinematic concept-driven videos from any idea — no product image required",
+        "name": "Advertisement",
+        "description": "Create branded advertisement videos — 1 to 3 persons, creative concepts, no product image required",
         "icon": "clapperboard",
         "requires_product_images": False,
     },

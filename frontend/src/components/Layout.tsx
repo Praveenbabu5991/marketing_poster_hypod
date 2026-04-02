@@ -49,7 +49,7 @@ export function Layout() {
     ugc: 'UGC',
     product_ugc: 'Product UGC',
     motion_graphics: 'Motion Graphics',
-    creative_video: 'Creative Video',
+    creative_video: 'Advertisement',
     content_calendar: 'Calendar Planner',
   };
 

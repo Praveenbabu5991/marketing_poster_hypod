@@ -20,7 +20,7 @@ const AGENT_LABELS: Record<string, string> = {
   ugc: 'UGC',
   product_ugc: 'Product UGC',
   motion_graphics: 'Motion Graphics',
-  creative_video: 'Creative Video',
+  creative_video: 'Advertisement',
 };
 
 export function CalendarSidebar({

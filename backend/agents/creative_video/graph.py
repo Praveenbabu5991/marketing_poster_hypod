@@ -1,4 +1,4 @@
-"""Creative Video Agent — LangGraph StateGraph definition."""
+"""Advertisement Agent — LangGraph StateGraph definition."""
 
 from langchain_core.language_models import BaseChatModel
 
@@ -24,7 +24,7 @@ CREATIVE_VIDEO_TOOLS = [
 
 
 def build_creative_video_graph(llm: BaseChatModel):
-    """Build the Creative Video agent graph."""
+    """Build the Advertisement agent graph."""
     return build_agent_graph(
         llm=llm,
         tools=CREATIVE_VIDEO_TOOLS,
