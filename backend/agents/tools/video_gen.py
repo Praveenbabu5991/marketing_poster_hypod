@@ -630,6 +630,7 @@ def _generate_single_video(
             "generate_audio": True,
             "person_generation": person_generation,
             "resolution": "720p",
+            "include_rai_reason": True,
         }
 
         if ref_images:
@@ -730,6 +731,7 @@ def _generate_single_video(
                 "generate_audio": True,
                 "person_generation": person_generation,
                 "resolution": "720p",
+                "include_rai_reason": True,
             }
             # Celebrity filter: the brand logo reference image is likely the trigger.
             # Retry WITHOUT reference images to avoid brand recognition.
