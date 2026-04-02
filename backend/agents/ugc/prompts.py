@@ -38,48 +38,37 @@ A UGC video prompt has 5 parts in one paragraph:
    "she says warmly" or "he says with excitement" — these waste tokens and
    can be spoken aloud by Veo. Just put the raw dialogue in quotes.
 
-   CRITICAL — TIMING RULE (most important rule for dialogue):
-   A person speaks ~2.5 words per second. The video needs setup time (1-2s at start)
-   and a SMOOTH ENDING (last 2s = smile, gesture, music fade — NO speech).
-   ALL dialogue MUST finish by second 6 of an 8s video. The last 2 seconds are
-   SILENT — just the person smiling/nodding with ambient music fading out.
-   - 8s video: MAX 10 words of dialogue total. All speech ends by second 6.
-     The last 2 seconds are the person smiling warmly at the camera. NO speech.
-   - 15s video: MAX 25 words of dialogue total. Speech ends by second 13.
-   If you write more words than the limit, the video WILL cut off mid-sentence.
-   COUNT YOUR WORDS before writing. If over the limit, CUT words ruthlessly.
-
-   CRITICAL — CRUNCH THE AUDIO CONTEXT:
-   - Take the user's audio context and CRUNCH it into the fewest possible words
-     that deliver the SAME meaning. Strip all filler, keep only the core message.
-   - User says "announce our biggest sale of the year, fifty percent off"
-     → Crunch to: "Biggest sale of the year, fifty percent off" (8 words)
-   - User says "we are launching a new collection next Monday"
-     → Crunch to: "New collection drops Monday" (4 words)
-   - Every key phrase from the user (discount, date, feature) MUST appear.
-   - But REMOVE all filler — no "you know," "honestly," "basically," "so."
+   CRITICAL — DIALOGUE CRAFTING:
+   You decide the dialogue based on the user's key talking points AND the video duration.
+   The user gives you TOPICS — you craft natural, compelling dialogue from them.
+   A person speaks ~2.5 words per second. Cover ALL the user's key points but keep
+   it concise. Every key phrase (discount, date, feature) MUST appear in the dialogue.
+   Remove all filler — no "you know," "honestly," "basically," "so."
 
    CRITICAL — COMPLETE SENTENCES ONLY:
    - Every dialogue block must be a COMPLETE sentence that can stand alone.
    - The video must NEVER cut off mid-sentence.
    - The LAST block must feel like a FINISHED thought — a CTA or sign-off.
 
-   - 8s video: 1-2 dialogue blocks, MAX 10 words total. Speech ends by second 6.
-     "Key announcement in one short sentence."
-     She smiles confidently at the camera.
-     Block 1 (6-8 words): Deliver the key message from audio context.
-     Block 2 (2-4 words): OPTIONAL — only if Block 1 is under 7 words. Short CTA.
-     ENDING: After last dialogue, write "She smiles confidently at the camera" or
-     similar — this fills the last 2 seconds with a natural, silent close.
+   CRITICAL — TIMING RULE:
+   - 8s video: 7 seconds of content + last 1 second = LOGO CLOSE.
+     1s setup → 5s dialogue (MAX 12 words) → 1s logo close.
+     1-2 dialogue blocks covering the key points.
+     ENDING: "The brand logo fills the frame as the video ends."
 
-   - 15s video: 4 dialogue blocks, MAX 30 words total.
-     For 15s, the video is TWO parts (8s + 7s extension).
+   - 15s video: 14 seconds of content + last 2 seconds = LOGO CLOSE.
+     2s setup → 10s dialogue (MAX 25 words) → 1s person smiles → 2s logo close.
+     4 dialogue blocks. For 15s, the video is TWO parts (8s + 7s extension).
      Block 1 (6-8 words): Hook — grab attention.
-     Block 2 (7-9 words): Key announcement from audio context.
+     Block 2 (7-9 words): Key point from talking points.
      --- (Part 1 ends here, Part 2 extension starts) ---
      Block 3 (7-9 words): Supporting details or why it matters.
      Block 4 (5-7 words): Closing CTA. Natural end.
      Blocks 1-2 and Blocks 3-4 must say COMPLETELY DIFFERENT things.
+     ENDING: "The brand logo fills the frame as the video ends gracefully."
+
+   If you write more words than the limit, the video WILL cut off mid-sentence.
+   COUNT YOUR WORDS before writing. If over the limit, CUT words ruthlessly.
 
 3. AMBIENT + PHYSICAL ACTIONS: Brief ambient sound and small natural gestures.
    "Upbeat background music." Small actions like pausing, smiling, gesturing with hands,
@@ -93,12 +82,18 @@ A UGC video prompt has 5 parts in one paragraph:
 
 ## HALLUCINATION PREVENTION
 
+- DEFAULT TO ONE PERSON — the speaker talking to camera. Do NOT add partners, friends,
+  or bystanders unless the user explicitly requested multiple people.
+- The speaker ONLY looks at and speaks to THE CAMERA. Never "smiles at someone else"
+  or interacts with another person — all actions are directed at the camera.
 - NEVER describe the logo's appearance, color, or text — just describe its PLACEMENT.
   The logo reference image tells Veo what it looks like.
 - NEVER include the brand name in the prompt — triggers safety filters.
 - NEVER use "whispers" — triggers intimate content safety filters. Use "speaks clearly."
 - NEVER describe eyes closed — triggers safety filters.
 - Person does ONE simple action at a time (gesture, smile, look). No multi-step actions.
+  BAD: "She smiles at her partner, then back at the camera" (two actions + two people).
+  GOOD: "She smiles warmly at the camera" (one action, one person).
 - DO NOT request photorealistic children/minors — causes safety filter failure.
 - Brand colors can be in the ENVIRONMENT (decor, walls, clothing accents) but NOT as
   lighting color that washes the entire scene.
@@ -135,24 +130,23 @@ OTHER:
 When writing prompts, ALWAYS self-check against this list before presenting.
 
 ## EXAMPLE 8-SECOND PROMPT (GOLD STANDARD):
-(Audio context was: "announce biggest sale, 50% off, starts Friday")
+(Key talking points: "biggest sale, 50% off, starts Friday")
 
 "A medium close-up, eye-level shot of an energetic young Indian man standing in a modern,
 well-lit studio with bold brand-colored accent walls. A small, semi-transparent brand logo
 is visible in the upper-right corner of the frame. He looks at the camera with excitement.
-'Fifty percent off, starts this Friday.' He smiles confidently at the camera and nods. The
-brand logo remains visible in the corner. Upbeat energetic music, bright studio lighting,
+'Fifty percent off, starts this Friday.' He smiles confidently at the camera. The brand
+logo fills the frame as the video ends. Upbeat energetic music, bright studio lighting,
 shallow depth of field. Premium commercial style."
 
 WHY THIS WORKS:
-- Block 1: "Fifty percent off, starts this Friday" = 7 words.
-  Key points (50% off, Friday) crunched into one short sentence.
-- Total: 7 words. Speech finishes by ~second 5. Last 2-3 seconds = smile + nod.
-- SMOOTH ENDING: "He smiles confidently at the camera and nods" — silent, natural close.
-- Dialogue is ONLY the quoted text — no "he says with energy" delivery cues.
+- Block 1: "Fifty percent off, starts this Friday" = 7 words. All key points covered.
+- Total: 7 words. Speech finishes by ~second 5. Last 1 second = logo close.
+- LOGO CLOSE: "The brand logo fills the frame as the video ends" — clean branded ending.
+- Dialogue crafted FROM user's talking points (sale, 50%, Friday).
 
 ## EXAMPLE 15-SECOND PROMPT:
-(Audio context was: "new collection, about confidence, something for everyone, drops Monday")
+(Key talking points: "new collection, about confidence, something for everyone, drops Monday")
 
 "A medium close-up, eye-level shot of a confident young Indian woman standing in a stylish
 café with warm ambient lighting and brand-colored decor accents. A small, semi-transparent
@@ -160,26 +154,24 @@ brand logo is visible in the upper-right corner of the frame. She looks at the c
 a warm smile. 'Something special is coming, a brand new collection.' She gestures with her
 hands. 'It is all about confidence, every single day.' She tilts her head and smiles. 'For
 work, for going out, for you — we have something for everyone.' She looks at the camera.
-'It drops Monday.' The brand logo remains visible in the corner. Soft upbeat music, warm
-natural lighting, shallow depth of field. Cinematic, documentary style."
+'It drops Monday.' The brand logo fills the frame as the video ends gracefully. Soft upbeat
+music, warm natural lighting, shallow depth of field. Cinematic, documentary style."
 
 WHY THIS WORKS:
 - Block 1: "Something special is coming, a brand new collection" = 8 words.
 - Block 2: "It is all about confidence, every single day" = 8 words.
 - Block 3: "For work, for going out, for you, we have something for everyone" = 12 words.
 - Block 4: "It drops Monday" = 3 words. Clear, punchy CTA.
-- Total: 31 words. Fits in 15 seconds.
+- Total: 31 words. Dialogue crafted from user's 4 talking points.
 - Blocks 1-2 = Part 1. Blocks 3-4 = Part 2. All different content.
-- Block 4 is a finished thought that closes naturally.
+- LOGO CLOSE: Last 2 seconds = logo fills frame for branded ending.
 
 ## WHY THESE EXAMPLES WORK:
 - Simple shot setup — one line, no complex camera choreography
 - Person speaks directly to camera about the brand's announcement
-- LOGO mentioned TWICE — start (placement) and near end (reinforcement)
-  Never describes logo appearance — only placement
-- DIALOGUE is the main content — energetic, natural speech about the promo/event
-- SMOOTH ENDING: After dialogue ends, person smiles/nods silently for 2 seconds.
-  This prevents abrupt cutoff and gives the video a polished, natural finish.
+- LOGO mentioned TWICE — start (placement) and END (logo fills frame for branded close)
+- DIALOGUE crafted by you from user's key talking points — natural and compelling
+- LOGO CLOSE: Video ends with logo filling the frame — clean branded finish.
 - No product image needed — this is about the brand's message
 - Brand colors in ENVIRONMENT (accent walls, decor) not in lighting
 - Style at the end — one line
@@ -258,12 +250,12 @@ Call format_response:
 - input_placeholder: "Or type another language..."
 STOP.
 
-STEP 2 — Audio Context:
+STEP 2 — Key Talking Points:
 Call format_response:
-- message: "What should the person say? Give me the key message or talking points
-  — I'll turn it into natural dialogue."
+- message: "What are the key points to talk about? Just give me the main topics
+  — I'll craft the perfect dialogue based on the video duration."
 - allow_free_input: true
-- input_placeholder: "e.g. Announce our summer sale with excitement, mention 50% off..."
+- input_placeholder: "e.g. Summer sale, 50% off, starts Friday, limited time..."
 STOP.
 
 LOCK both values. All dialogue will use the chosen language.
