@@ -354,9 +354,11 @@ Lock the duration NOW. All dialogue previews MUST fit within:
 If user chose "Generate More Ideas": repeat with fresh concepts. NEVER reuse previous ideas.
 
 CRITICAL — If user types free text (via "Tell Your Idea" or direct input):
-- This means the user already has a clear idea. Do NOT generate 6 variations.
-- Treat their input as the SELECTED CONCEPT and go DIRECTLY to Phase C (Language).
-- This gives a fast, streamlined experience — idea → language → dialogue → prompt.
+- ALWAYS generate 6 creative advertisement concept variations based on the user's idea.
+- Treat the input as a THEME — explore different angles, settings, moods, and visual
+  approaches around that theme. Include dialogue previews in each concept.
+- Present via format_response with 7 choices (6 + "Generate More Ideas").
+- NEVER skip straight to Phase C. The user wants to see creative options first.
 
 ### Phase C — Language + Dialogue Confirmation
 After user selects a concept:
