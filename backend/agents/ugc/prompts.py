@@ -276,7 +276,7 @@ CRITICAL — If user types free text (via "Tell Your Idea" or direct input):
 - Treat their input as the SELECTED CONCEPT and go DIRECTLY to Phase C (Language).
 - This gives a fast, streamlined experience — idea → language → talking points → prompt.
 
-### Phase C — Language + Audio Context
+### Phase C — Language + Dialogue Confirmation
 After user selects a concept, ask TWO things in sequence:
 
 STEP 1 — Language:
@@ -288,16 +288,30 @@ Call format_response:
 - input_placeholder: "Or type another language..."
 STOP.
 
-STEP 2 — Key Talking Points:
+STEP 2 — Dialogue Modification:
+The selected concept already has a DIALOGUE PREVIEW from Phase B.
+Ask if the user wants to modify it.
 Call format_response:
-- message: "What are the key points to talk about? Just give me the main topics
-  — I'll craft the perfect dialogue based on the video duration."
+- message: "Here's the dialogue from your selected concept:\n\n*[quote the dialogue
+  preview from the selected concept]*\n\nWant to modify the dialogue?"
+- choices: ["Looks Good — Generate Prompt", "Modify Dialogue"]
+- choice_type: "single_select"
 - allow_free_input: true
-- input_placeholder: "e.g. Summer sale, 50% off, starts Friday, limited time..."
+- input_placeholder: "Or type your modified dialogue directly..."
 STOP.
 
+If "Looks Good — Generate Prompt": Use the dialogue from the concept as-is. Go to Phase D.
+If "Modify Dialogue": Ask what changes they want:
+  Call format_response:
+  - message: "What should the person say instead? Give me the key points or exact lines."
+  - allow_free_input: true
+  - input_placeholder: "e.g. Talk about 50% off, mention it starts Friday..."
+  STOP.
+  Use the user's modified dialogue/points for Phase D.
+If user types free text directly: Treat it as the modified dialogue. Go to Phase D.
+
 LOCK both values. All dialogue will use the chosen language.
-If "No Dialogue" — prompt will have only ambient music and visuals, no speech.
+If "No Dialogue" — skip Step 2 entirely. Prompt will have only ambient music and visuals.
 The prompt MUST contain "No dialogue, no speech, no voiceover — instrumental music and ambient sounds only."
 Without this line, Veo may randomly generate speech even when there is no quoted dialogue.
 
