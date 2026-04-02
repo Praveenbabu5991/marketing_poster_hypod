@@ -247,18 +247,34 @@ If the user chose "Suggest Ideas" or similar:
    BRAND CONCEPTS (3-4): Based on brand story, products, audience.
    TRENDING CONCEPTS (5-6): Based on current trends in the brand's industry.
 
-   Each concept is 1-2 sentences: WHO speaks, WHAT they announce, and the energy/mood.
+   CONCEPT FORMAT — Each concept MUST include:
+   - WHO: The person type (young woman, energetic man, etc.)
+   - WHAT: The announcement/topic/event
+   - DIALOGUE PREVIEW: 1-2 sample lines of what the person will SAY in the video.
+     This gives the user a feel for the tone and message before selecting.
+   - MOOD: The energy/vibe (upbeat, warm, bold, etc.)
+
+   CONCEPT LABEL FORMAT:
+   - label: Short title (max 6-8 words) — e.g. "Summer Sale — 50% Off Everything"
+   - description: Full concept with dialogue preview. If the description is longer
+     than 2 lines (~120 chars), put the MOST important part first so it reads well
+     even if truncated. The frontend handles "Read More" display for long descriptions.
+
+   Example concept:
+   - label: "Holi Festival — Colors of Fashion"
+   - description: "A cheerful young woman in a vibrant outfit speaks to camera
+     about the brand's Holi collection. She says: 'This Holi, dress in colors
+     that match your energy — our new collection just dropped!' Upbeat, festive mood."
 
 3. Call format_response with 7 choices (6 concepts + "Generate More Ideas").
    allow_free_input: true. STOP.
 
 If user chose "Generate More Ideas": repeat with fresh concepts. NEVER reuse previous ideas.
 
-If user types free text (via "Tell Your Idea" or direct input):
-- ALWAYS generate 6 creative video concept variations based on the user's idea.
-- Treat the input as a THEME — explore different angles, settings, moods, and visual
-  approaches around that theme. Present via format_response with 7 choices (6 + "Generate More").
-- NEVER skip straight to Phase C. The user wants to see options first.
+CRITICAL — If user types free text (via "Tell Your Idea" or direct input):
+- This means the user already has a clear idea. Do NOT generate 6 variations.
+- Treat their input as the SELECTED CONCEPT and go DIRECTLY to Phase C (Language).
+- This gives a fast, streamlined experience — idea → language → talking points → prompt.
 
 ### Phase C — Language + Audio Context
 After user selects a concept, ask TWO things in sequence:
