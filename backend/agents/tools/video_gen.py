@@ -198,7 +198,6 @@ def _split_prompt_for_parts(prompt: str, person_generation: str = "allow_all") -
             "same lighting, same camera angle. The person smiles gently at the camera. "
             "No dialogue, no speech, no mumbling, no vocalizations. "
             "Only ambient music plays as the scene comes to a natural, graceful close. "
-            "The brand logo fills the frame as the video ends gracefully."
         )
     else:
         # No person (motion graphics, product showcase) — product/scene-based continuation
@@ -207,10 +206,10 @@ def _split_prompt_for_parts(prompt: str, person_generation: str = "allow_all") -
             "same setting, same lighting. The product continues its slow movement, "
             "showcasing its full form. The music builds to a satisfying close. "
             "No dialogue, no speech, no voiceover. "
-            "The brand logo fills the frame as the video ends gracefully."
         )
     if style:
-        part2_prompt += style
+        part2_prompt += style + " "
+    part2_prompt += "The brand logo fills the frame as the video ends gracefully."
     return prompt, part2_prompt
 
 
