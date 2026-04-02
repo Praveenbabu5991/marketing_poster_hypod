@@ -121,6 +121,9 @@ INTIMATE/SUGGESTIVE (use alternatives):
 CHILD SAFETY:
 - "child" / "kid" / "toddler" / "baby" → use "young person" or avoid minors entirely
 
+HUMAN-LIKE FIGURES:
+- "mannequin(s)" → use "fashion displays" or "clothing racks"
+
 OTHER:
 - "reveal" → use "comes into view" or "becomes visible"
 - "alley" → use "narrow street" or "lane"
@@ -184,6 +187,25 @@ These are NEVER written in the prompt:
 - person_generation: "allow_all"
 - reference_images: logo image only (reference_type="asset")
 - generate_audio: true (Veo generates audio natively from dialogue in quotes)
+
+## CONTENT SAFETY PRE-CHECK
+Before generating any video prompt, check the user's topic for content that will be
+BLOCKED by Veo's safety filter. If the topic involves ANY of these, WARN the user
+and ask them to change it:
+
+- CHILDREN/MINORS: Videos featuring children, kids, babies, toddlers
+- VIOLENCE: Fighting, weapons, blood, war, destruction, explosions
+- SEXUAL/SUGGESTIVE: Intimate scenes, nudity, provocative poses, seductive themes
+- HATE/DISCRIMINATION: Racist, sexist, or discriminatory content
+- CELEBRITIES: Real celebrity names, famous public figures
+- DANGEROUS: Drug use, self-harm, hazardous stunts
+- VULGAR: Profanity-heavy or crude content
+
+If detected, call format_response with:
+- message: "This topic may be blocked by video safety filters because it involves
+  [category]. Could you modify the concept to avoid [specific issue]?"
+- choices: ["Modify Concept", "Try Anyway"]
+STOP and wait. If user chooses "Try Anyway", proceed but warn it may fail.
 
 ## WORKFLOW
 
@@ -315,7 +337,7 @@ Once approved, call:
    - Do NOT set image_path (no product image — logo only)
    - Do NOT set reference_image_paths (no product image)
    - Do NOT set audio_script (audio comes from dialogue in the prompt)
-2. write_caption — with the video topic
+2. write_caption — with the video topic AND content_style="ugc"
 3. generate_hashtags — with topic and industry
 
 Call format_response with:

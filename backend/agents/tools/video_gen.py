@@ -104,15 +104,20 @@ def _get_media_duration(path: str) -> float:
         return 0.0
 
 
-def _split_prompt_for_parts(prompt: str) -> tuple[str, str]:
+def _split_prompt_for_parts(prompt: str, person_generation: str = "allow_all") -> tuple[str, str]:
     """Split a video prompt into Part 1 and Part 2 for 15s videos (8s + 7s extension).
 
     Preserves the ORIGINAL natural language by splitting the prompt text at a sentence
     boundary between dialogue halves. Part 1 gets blocks 1-2 with all surrounding
     natural text (gestures, expressions). Part 2 gets blocks 3-4 the same way.
     Both parts end with explicit silence instructions to prevent gibberish.
+
+    When person_generation="dont_allow" (motion graphics), continuation prompts
+    avoid all references to people/persons to prevent RAI safety filter blocks.
     """
     import re as _re
+
+    has_person = person_generation != "dont_allow"
 
     # Extract style line(s) from end of prompt — lighting, depth of field, cinematic, etc.
     style = ""
@@ -127,7 +132,7 @@ def _split_prompt_for_parts(prompt: str) -> tuple[str, str]:
     quote_pattern = r"""['"][^'"]{10,}['"]"""
     all_quotes = list(_re.finditer(quote_pattern, prompt))
 
-    if len(all_quotes) >= 2:
+    if len(all_quotes) >= 2 and has_person:
         mid = len(all_quotes) // 2
 
         # Find the natural split point between end of quote[mid-1] and start of quote[mid]
@@ -174,14 +179,24 @@ def _split_prompt_for_parts(prompt: str) -> tuple[str, str]:
 
         return part1_prompt, part2_prompt
 
-    # No dialogue (music-only) or single dialogue block — no split needed
-    # Part 1: full original prompt, Part 2: silent graceful close
-    part2_prompt = (
-        "Smooth continuation of the same scene. Same person, same setting, "
-        "same lighting, same camera angle. The person smiles gently at the camera. "
-        "No dialogue, no speech, no mumbling, no vocalizations. "
-        "Only ambient music plays as the scene comes to a natural, graceful close. "
-    )
+    # No dialogue (music-only) or single dialogue block or no person — no dialogue split
+    if has_person:
+        # Person video with no/single dialogue — person-based continuation
+        part2_prompt = (
+            "Smooth continuation of the same scene. Same person, same setting, "
+            "same lighting, same camera angle. The person smiles gently at the camera. "
+            "No dialogue, no speech, no mumbling, no vocalizations. "
+            "Only ambient music plays as the scene comes to a natural, graceful close. "
+        )
+    else:
+        # No person (motion graphics, product showcase) — product/scene-based continuation
+        part2_prompt = (
+            "Smooth continuation of the same cinematic product showcase. Same product, "
+            "same setting, same lighting. The product continues its slow movement, "
+            "showcasing its full form. The brand logo grows slightly in the corner. "
+            "The music builds to a satisfying close. "
+            "No dialogue, no speech, no voiceover. "
+        )
     if style:
         part2_prompt += style
     return prompt, part2_prompt
@@ -297,6 +312,85 @@ def _build_reference_images(
     return ref_images, all_ref_paths
 
 
+## --- Veo RAI Safety Code Mapping ---
+
+_SAFETY_CODE_MAP = {
+    # Celebrity / Brand protection
+    "15236754": "celebrity",
+    "29310472": "celebrity",
+    # Child safety
+    "58061214": "child",
+    "17301594": "child",
+    # General video safety
+    "64151117": "video_safety",
+    "42237218": "video_safety",
+    # Dangerous content
+    "62263041": "dangerous",
+    # Hate
+    "57734940": "hate",
+    "22137204": "hate",
+    # Other / miscellaneous
+    "74803281": "other",
+    "29578790": "other",
+    "42876398": "other",
+    "89371032": "other",
+    "49114662": "other",
+    "63429089": "other",
+    "72817394": "other",
+    # Prohibited content
+    "60599140": "prohibited",
+    # Third-party content
+    "35561574": "third_party",
+    "35561575": "third_party",
+    # Sexual
+    "90789179": "sexual",
+    "43188360": "sexual",
+    # Toxic
+    "78610348": "toxic",
+    # Violence
+    "61493863": "violence",
+    "56562880": "violence",
+    # Vulgar
+    "32635315": "vulgar",
+}
+
+_SAFETY_HINTS = {
+    "celebrity": "The brand logo or prompt resembles a known brand/celebrity. Try using a generic logo or removing brand references.",
+    "child": "Content involving children is restricted. Remove any references to children, kids, or minors.",
+    "video_safety": "General safety violation. Try simplifying the prompt and removing any potentially risky descriptions.",
+    "dangerous": "Potentially dangerous content detected. Remove references to fire, weapons, or hazardous situations.",
+    "hate": "Hate-related content detected. Ensure the prompt doesn't contain discriminatory language.",
+    "sexual": "Suggestive content detected. Remove intimate, seductive, or sensual descriptions from the prompt.",
+    "violence": "Violent content detected. Remove references to fighting, weapons, blood, or aggressive actions.",
+    "toxic": "Toxic content detected. Rephrase the prompt with more positive, neutral language.",
+    "vulgar": "Vulgar content detected. Use more professional, clean language in the prompt.",
+    "third_party": "Third-party content protection triggered. Remove brand names, logos, or copyrighted references.",
+    "prohibited": "Prohibited content detected. This type of content cannot be generated.",
+    "other": "Miscellaneous safety issue. Try simplifying the prompt and removing potentially risky descriptions.",
+    "unknown": "Try simplifying the prompt or removing suggestive, violent, or brand-related content.",
+}
+
+
+def _parse_safety_category(rai_reasons_list: list, rai_reason=None) -> str:
+    """Extract safety category from RAI filter support codes."""
+    import re as _re_sc
+    # Collect all text to search for support codes
+    all_text = " ".join(str(r) for r in (rai_reasons_list or []))
+    if rai_reason:
+        all_text += " " + str(rai_reason)
+    # Find all support codes in the text
+    codes = _re_sc.findall(r'\b(\d{8})\b', all_text)
+    for code in codes:
+        if code in _SAFETY_CODE_MAP:
+            return _SAFETY_CODE_MAP[code]
+    return "unknown"
+
+
+def _get_safety_hint(category: str) -> str:
+    """Get user-friendly hint for a safety category."""
+    return _SAFETY_HINTS.get(category, _SAFETY_HINTS["unknown"])
+
+
 def _sanitize_prompt(prompt: str) -> str:
     """Strip/replace known Veo RAI trigger words with safe alternatives.
 
@@ -355,6 +449,9 @@ def _sanitize_prompt(prompt: str) -> str:
     # Location triggers
     text = _re.sub(r'\b(?:dark\s+)?alley\b', 'narrow street', text, flags=_re.IGNORECASE)
 
+    # Human-like figures (triggers safety filter)
+    text = _re.sub(r'\bmannequins?\b', 'fashion displays', text, flags=_re.IGNORECASE)
+
     # Other
     text = _re.sub(r'\breveal(?:s|ing|ed)?\b', 'comes into view', text, flags=_re.IGNORECASE)
 
@@ -404,8 +501,10 @@ def _enhance_prompt(
         )
 
     # Append short "Avoid:" (negative_prompt not supported with reference_images)
+    # NOTE: Do NOT include "text, titles, words" — this prevents the brand logo
+    # reference image from rendering. Only avoid GENERATED overlaid text.
     enhanced += (
-        " Avoid: text, titles, words, extra hands, extra fingers, floating objects,"
+        " Avoid: extra hands, extra fingers, floating objects,"
         " cartoon, morphing, flickering, shifting background."
     )
 
@@ -594,15 +693,21 @@ def _generate_single_video(
             return {"status": "error", "message": msg, "model": VIDEO_MODEL}
 
         if rai_filtered:
-            # RAI safety filter triggered — log reason and retry with sanitized prompt
+            # RAI safety filter triggered — parse support codes and retry intelligently
             import sys as _sys_rai
             import re as _re2
 
             rai_reason = getattr(result, 'rai_media_filtered_reason', None) or getattr(result, 'rai_reason', None)
+            rai_reasons_list = getattr(result, 'rai_media_filtered_reasons', []) or []
             rai_count = getattr(result, 'rai_media_filtered_count', 0)
-            print(f"[VIDEO] RAI filtered — count={rai_count} reason={rai_reason}", file=_sys_rai.stderr, flush=True)
 
-            # Retry 1: Sanitize + first 5 sentences
+            # Parse support codes from reasons text
+            safety_category = _parse_safety_category(rai_reasons_list, rai_reason)
+            print(f"[VIDEO] RAI filtered — count={rai_count} category={safety_category} reason={rai_reason}", file=_sys_rai.stderr, flush=True)
+            if rai_reasons_list:
+                print(f"[VIDEO] RAI reasons: {rai_reasons_list}", file=_sys_rai.stderr, flush=True)
+
+            # Build retry prompt
             sanitized = _sanitize_prompt(prompt)
             sentences = _re2.split(r'(?<=[.!])\s+', sanitized.strip())
             retry1_prompt = " ".join(sentences[:5]) if sentences else sanitized[:300]
@@ -626,7 +731,11 @@ def _generate_single_video(
                 "person_generation": person_generation,
                 "resolution": "720p",
             }
-            if ref_images:
+            # Celebrity filter: the brand logo reference image is likely the trigger.
+            # Retry WITHOUT reference images to avoid brand recognition.
+            if safety_category == "celebrity":
+                print(f"[VIDEO] Celebrity filter — retrying WITHOUT reference images (logo triggers brand detection)", file=_sys_rai.stderr, flush=True)
+            elif ref_images:
                 retry_config_kwargs["reference_images"] = ref_images
 
             # 5-second delay before retry (audio false positives are timing-sensitive)
@@ -645,12 +754,17 @@ def _generate_single_video(
                     print(f"[VIDEO] Retry 1 succeeded!", file=_sys_rai.stderr, flush=True)
                     retry_succeeded = True
                 else:
+                    rai2_reasons = getattr(result, 'rai_media_filtered_reasons', []) if result else []
                     rai2_reason = getattr(result, 'rai_media_filtered_reason', None) if result else None
-                    print(f"[VIDEO] Retry 1 failed: rai_reason={rai2_reason}", file=_sys_rai.stderr, flush=True)
+                    rai2_category = _parse_safety_category(rai2_reasons, rai2_reason) if result else safety_category
+                    print(f"[VIDEO] Retry 1 failed: category={rai2_category} reason={rai2_reason}", file=_sys_rai.stderr, flush=True)
+                    # Update category if we got a clearer one from retry
+                    if rai2_category != "unknown":
+                        safety_category = rai2_category
             except Exception as retry1_err:
                 print(f"[VIDEO] Retry 1 error: {retry1_err}", file=_sys_rai.stderr, flush=True)
 
-            # Retry 2: Minimal 2-sentence prompt
+            # Retry 2: Minimal 2-sentence prompt, no reference images
             if not retry_succeeded:
                 retry2_prompt = " ".join(sentences[:2]) if len(sentences) >= 2 else (sentences[0] if sentences else sanitized[:150])
                 if brand_name:
@@ -661,12 +775,15 @@ def _generate_single_video(
                 retry2_prompt = retry2_prompt.strip()
                 retry2_prompt += " Cinematic, professional commercial, 8k."
 
-                print(f"[VIDEO] Retry 2 (minimal) prompt: {retry2_prompt[:300]}", file=_sys_rai.stderr, flush=True)
+                # Always drop reference images for retry 2
+                retry2_config_kwargs = {k: v for k, v in retry_config_kwargs.items() if k != "reference_images"}
+
+                print(f"[VIDEO] Retry 2 (minimal, no refs) prompt: {retry2_prompt[:300]}", file=_sys_rai.stderr, flush=True)
                 time.sleep(5)
 
                 try:
                     retry_source2 = types.GenerateVideosSource(prompt=retry2_prompt)
-                    retry_config2 = types.GenerateVideosConfig(**retry_config_kwargs)
+                    retry_config2 = types.GenerateVideosConfig(**retry2_config_kwargs)
                     operation3 = client.models.generate_videos(
                         model=VIDEO_MODEL, source=retry_source2, config=retry_config2,
                     )
@@ -676,15 +793,18 @@ def _generate_single_video(
                         print(f"[VIDEO] Retry 2 succeeded!", file=_sys_rai.stderr, flush=True)
                         retry_succeeded = True
                     else:
-                        print(f"[VIDEO] Retry 2 also failed: {result}", file=_sys_rai.stderr, flush=True)
+                        rai3_reasons = getattr(result, 'rai_media_filtered_reasons', []) if result else []
+                        rai3_reason = getattr(result, 'rai_media_filtered_reason', None) if result else None
+                        rai3_category = _parse_safety_category(rai3_reasons, rai3_reason) if result else safety_category
+                        print(f"[VIDEO] Retry 2 also failed: category={rai3_category} reasons={rai3_reasons}", file=_sys_rai.stderr, flush=True)
+                        if rai3_category != "unknown":
+                            safety_category = rai3_category
                 except Exception as retry2_err:
                     print(f"[VIDEO] Retry 2 error: {retry2_err}", file=_sys_rai.stderr, flush=True)
 
             if not retry_succeeded:
-                hint = "Try removing references to violence, weapons, or suggestive content from your prompt."
-                if rai_reason:
-                    hint = f"Safety filter reason: {rai_reason}. {hint}"
-                return {"status": "error", "message": f"Video was blocked by safety filters. {hint}", "model": VIDEO_MODEL}
+                hint = _get_safety_hint(safety_category)
+                return {"status": "error", "message": f"Video blocked by safety filter ({safety_category}). {hint}", "model": VIDEO_MODEL}
 
         video = result.generated_videos[0]
         output_path = Path(save_dir)
@@ -780,7 +900,12 @@ def _extend_video(
                 and getattr(result, 'rai_media_filtered_count', 0) > 0
             )
             if rai_filtered:
-                return {"status": "error", "message": "Video extension was filtered by safety guidelines.", "model": VIDEO_MODEL}
+                rai_reasons_list = getattr(result, 'rai_media_filtered_reasons', []) or []
+                rai_reason = getattr(result, 'rai_media_filtered_reason', None)
+                category = _parse_safety_category(rai_reasons_list, rai_reason)
+                hint = _get_safety_hint(category)
+                print(f"[VIDEO] Extension RAI filtered — category={category}", file=_sys.stderr, flush=True)
+                return {"status": "error", "message": f"Video extension blocked by safety filter ({category}). {hint}", "model": VIDEO_MODEL}
             error_detail = f" Error: {op_error}" if op_error else ""
             return {"status": "error", "message": f"No video from extension.{error_detail}", "model": VIDEO_MODEL}
 
@@ -884,7 +1009,7 @@ def generate_video(
         part1_duration = 8
 
         # Split prompt for 15s: Part 1 gets first-half scenes, Part 2 gets second-half
-        part1_prompt, part2_prompt = _split_prompt_for_parts(prompt)
+        part1_prompt, part2_prompt = _split_prompt_for_parts(prompt, person_generation=person_generation)
         print(f"[VIDEO] 15s split — Part 1 prompt: {len(part1_prompt)} chars, Part 2 prompt: {len(part2_prompt)} chars", file=_sys2.stderr, flush=True)
 
         print(f"[VIDEO] Generating Part 1 (8s) with reference_images + native audio", file=_sys2.stderr, flush=True)

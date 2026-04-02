@@ -57,6 +57,7 @@ def write_caption(
     target_audience: str = "",
     include_cta: bool = True,
     emoji_level: str = "moderate",
+    content_style: str = "default",
 ) -> dict:
     """Generate an engaging social media caption.
 
@@ -68,11 +69,37 @@ def write_caption(
         target_audience: Description of target audience.
         include_cta: Whether to include a call-to-action.
         emoji_level: How many emojis (none, minimal, moderate, heavy).
+        content_style: Caption style per agent type. Options:
+            "ugc" — Personal, testimonial-style. First 2 lines are the hook, then "Read more..." to encourage tap. Conversational, relatable.
+            "creative_ad" — Creative ad copy. Punchy, brand-focused, cinematic feel. Aspirational and bold.
+            "motion_graphics" — Premium product showcase. Professional, clean, highlight product features and craftsmanship.
+            "default" — General engaging caption.
     """
     try:
         client = _get_client()
         _, CAPTION_MODEL = _get_config()
         from google.genai import types
+
+        # Agent-specific style instructions
+        style_instructions = ""
+        if content_style == "ugc":
+            style_instructions = """- Write as if a REAL PERSON is sharing their experience (testimonial style)
+- First 2 lines: strong hook that stops the scroll
+- After the hook, add a line break then "...Read more" or "..." to encourage tap-to-expand
+- Body: personal, conversational, relatable — like talking to a friend
+- Use first person ("I", "my") naturally"""
+        elif content_style == "creative_ad":
+            style_instructions = """- Write like a CREATIVE AD — punchy, cinematic, aspirational
+- Bold opening statement that captures the brand's vision
+- Short, impactful sentences — like ad copy, not a blog post
+- Build desire and emotion, not just information
+- End with a powerful brand statement or CTA"""
+        elif content_style == "motion_graphics":
+            style_instructions = """- Write for a PREMIUM PRODUCT SHOWCASE — professional and clean
+- Highlight product features, craftsmanship, and quality
+- Sophisticated tone — like a luxury brand's social media
+- Focus on what makes the product special
+- Minimal emojis, maximum elegance"""
 
         prompt = f"""Write a {brand_tone} {platform} caption about: {topic}
 
@@ -84,6 +111,7 @@ Requirements:
 - Emoji usage: {emoji_level}
 {f"- Brand voice: {brand_name}" if brand_name else ""}
 {f"- Speak to: {target_audience}" if target_audience else ""}
+{style_instructions}
 
 Output ONLY the caption text. No labels, no quotes, no explanation."""
 
