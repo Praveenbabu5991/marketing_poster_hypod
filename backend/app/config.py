@@ -37,11 +37,11 @@ GCLOUD_PROJECT = os.getenv("GCLOUD_PROJECT", "")
 GCLOUD_LOCATION = os.getenv("GCLOUD_LOCATION", "us-central1")
 
 # --- Model Configuration (model-agnostic: provider/model-name) ---
-ORCHESTRATOR_MODEL = os.getenv("ORCHESTRATOR_MODEL", "google_genai/gemini-2.5-flash")
-IDEA_MODEL = os.getenv("IDEA_MODEL", "google_genai/gemini-2.5-flash")
-WRITER_MODEL = os.getenv("WRITER_MODEL", "google_genai/gemini-2.5-flash")
-CAPTION_MODEL = os.getenv("CAPTION_MODEL", "gemini-2.5-flash")
-IMAGE_MODEL = os.getenv("IMAGE_MODEL", "gemini-3-pro-image-preview")
+ORCHESTRATOR_MODEL = os.getenv("ORCHESTRATOR_MODEL", "google_genai/gemini-3.1-pro-preview")
+IDEA_MODEL = os.getenv("IDEA_MODEL", "google_genai/gemini-3-flash-preview")
+WRITER_MODEL = os.getenv("WRITER_MODEL", "google_genai/gemini-3.1-flash-lite-preview")
+CAPTION_MODEL = os.getenv("CAPTION_MODEL", "gemini-3.1-flash-lite-preview")
+IMAGE_MODEL = os.getenv("IMAGE_MODEL", "gemini-3.1-flash-image-preview")
 EDIT_MODEL = os.getenv("EDIT_MODEL", "gemini-3-pro-image-preview")
 VIDEO_MODEL = os.getenv("VIDEO_MODEL", "veo-3.1-generate-001")
 
@@ -63,14 +63,29 @@ LANGSMITH_API_KEY = os.getenv("LANGSMITH_API_KEY", "")
 LANGSMITH_PROJECT = os.getenv("LANGSMITH_PROJECT", "agent-factory-v4")
 
 
-# --- Vertex AI / Gemini Pricing (USD) ---
+# --- Vertex AI / Gemini Pricing (USD, March 2026) ---
+# Source: https://cloud.google.com/vertex-ai/generative-ai/pricing
 VERTEX_PRICING = {
-    # Gemini 2.5 Flash text (doubles above 128K context)
+    # --- Text / Orchestration models (per 1M tokens, ≤200K context) ---
+    # Gemini 3.1 Pro Preview — orchestrator
+    "gemini-3.1-pro-preview": {"input_per_million": 2.00, "output_per_million": 12.00},
+    # Gemini 3 Flash Preview — idea generation
+    "gemini-3-flash-preview": {"input_per_million": 0.50, "output_per_million": 3.00},
+    # Gemini 3.1 Flash-Lite Preview — writer / captions
+    "gemini-3.1-flash-lite-preview": {"input_per_million": 0.25, "output_per_million": 1.50},
+
+    # --- Legacy models (keep for historical cost records) ---
     "gemini-2.5-flash": {"input_per_million": 0.30, "output_per_million": 2.50},
-    # Gemini 2.5 Flash Image — $0.039/image at 1K resolution
     "gemini-2.5-flash-image": {"per_image": 0.039},
-    # Gemini image generation model
-    "gemini-3-pro-image-preview": {"per_image": 0.039},
+    "gemini-2.5-pro": {"input_per_million": 1.25, "output_per_million": 10.00},
+
+    # --- Image generation models (per image) ---
+    # Gemini 3.1 Flash Image — $0.067/image at 1K resolution
+    "gemini-3.1-flash-image-preview": {"per_image": 0.067},
+    # Gemini 3 Pro Image — $0.134/image at 1K-2K resolution
+    "gemini-3-pro-image-preview": {"per_image": 0.134},
+
+    # --- Video generation models (per second) ---
     # Veo 3.1 Standard — $0.40/sec
     "veo-3.1-generate-001": {"per_second": 0.40},
     # Veo 3.1 Fast — $0.15/sec

@@ -40,7 +40,7 @@ class TestCalculateCost:
             action_type="image",
             unit_count=1,
         )
-        assert cost == pytest.approx(0.039, abs=0.001)
+        assert cost == pytest.approx(0.134, abs=0.001)
 
     def test_image_model_multiple_units(self):
         cost = calculate_cost(
@@ -48,7 +48,15 @@ class TestCalculateCost:
             action_type="image",
             unit_count=3,
         )
-        assert cost == pytest.approx(0.117, abs=0.001)
+        assert cost == pytest.approx(0.402, abs=0.001)
+
+    def test_flash_image_model_cost(self):
+        cost = calculate_cost(
+            model_name="gemini-3.1-flash-image-preview",
+            action_type="image",
+            unit_count=1,
+        )
+        assert cost == pytest.approx(0.067, abs=0.001)
 
     def test_video_model_cost(self):
         cost = calculate_cost(
@@ -95,10 +103,40 @@ class TestCalculateCost:
         )
         assert cost == 0.0
 
+    def test_orchestrator_model_cost(self):
+        cost = calculate_cost(
+            model_name="google_genai/gemini-3.1-pro-preview",
+            action_type="text",
+            prompt_tokens=1_000_000,
+            completion_tokens=1_000_000,
+        )
+        # 1M input * 2.00 + 1M output * 12.00 = 14.00
+        assert cost == pytest.approx(14.00, abs=0.001)
+
+    def test_idea_model_cost(self):
+        cost = calculate_cost(
+            model_name="gemini-3-flash-preview",
+            action_type="text",
+            prompt_tokens=1_000_000,
+            completion_tokens=1_000_000,
+        )
+        # 1M input * 0.50 + 1M output * 3.00 = 3.50
+        assert cost == pytest.approx(3.50, abs=0.001)
+
+    def test_writer_model_cost(self):
+        cost = calculate_cost(
+            model_name="gemini-3.1-flash-lite-preview",
+            action_type="text",
+            prompt_tokens=1_000_000,
+            completion_tokens=1_000_000,
+        )
+        # 1M input * 0.25 + 1M output * 1.50 = 1.75
+        assert cost == pytest.approx(1.75, abs=0.001)
+
     def test_provider_prefix_stripped(self):
         """Model names with provider prefix should still match pricing."""
         cost = calculate_cost(
-            model_name="google_genai/gemini-2.5-flash",
+            model_name="google_genai/gemini-3.1-pro-preview",
             action_type="text",
             prompt_tokens=1000,
         )
@@ -174,22 +212,42 @@ class TestUsageLogModel:
 # ── VERTEX_PRICING config tests ──────────────────────────────────────
 
 class TestVertexPricing:
-    def test_has_flash_pricing(self):
-        assert "gemini-2.5-flash" in VERTEX_PRICING
-        p = VERTEX_PRICING["gemini-2.5-flash"]
-        assert "input_per_million" in p
-        assert "output_per_million" in p
+    def test_has_orchestrator_pricing(self):
+        assert "gemini-3.1-pro-preview" in VERTEX_PRICING
+        p = VERTEX_PRICING["gemini-3.1-pro-preview"]
+        assert p["input_per_million"] == 2.00
+        assert p["output_per_million"] == 12.00
 
-    def test_has_image_pricing(self):
+    def test_has_idea_pricing(self):
+        assert "gemini-3-flash-preview" in VERTEX_PRICING
+        p = VERTEX_PRICING["gemini-3-flash-preview"]
+        assert p["input_per_million"] == 0.50
+        assert p["output_per_million"] == 3.00
+
+    def test_has_writer_pricing(self):
+        assert "gemini-3.1-flash-lite-preview" in VERTEX_PRICING
+        p = VERTEX_PRICING["gemini-3.1-flash-lite-preview"]
+        assert p["input_per_million"] == 0.25
+        assert p["output_per_million"] == 1.50
+
+    def test_has_legacy_flash_pricing(self):
+        assert "gemini-2.5-flash" in VERTEX_PRICING
+
+    def test_has_flash_image_pricing(self):
+        assert "gemini-3.1-flash-image-preview" in VERTEX_PRICING
+        assert VERTEX_PRICING["gemini-3.1-flash-image-preview"]["per_image"] == 0.067
+
+    def test_has_pro_image_pricing(self):
         assert "gemini-3-pro-image-preview" in VERTEX_PRICING
-        assert "per_image" in VERTEX_PRICING["gemini-3-pro-image-preview"]
+        assert VERTEX_PRICING["gemini-3-pro-image-preview"]["per_image"] == 0.134
 
     def test_has_video_pricing(self):
         assert "veo-3.1-generate-001" in VERTEX_PRICING
-        assert "per_second" in VERTEX_PRICING["veo-3.1-generate-001"]
+        assert VERTEX_PRICING["veo-3.1-generate-001"]["per_second"] == 0.40
 
     def test_has_fast_video_pricing(self):
         assert "veo-3.1-fast-generate-001" in VERTEX_PRICING
+        assert VERTEX_PRICING["veo-3.1-fast-generate-001"]["per_second"] == 0.15
 
 
 # ── Callbacks tests ───────────────────────────────────────────────────
