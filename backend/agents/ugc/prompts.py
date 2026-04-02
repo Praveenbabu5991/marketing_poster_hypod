@@ -55,14 +55,18 @@ A UGC video prompt has 5 parts in one paragraph:
    - 8s video: Dialogue MUST be under 6 seconds. Last 2s = setup + LOGO CLOSE.
      1s setup → under 6s dialogue (MAX 15 words) → 1s logo close.
      1-2 dialogue blocks covering the key points.
-     ENDING: "The brand logo fills the frame as the video ends."
 
    - 15s video: Dialogue MUST be under 12 seconds. Last 3s = setup + LOGO CLOSE.
      1s setup → under 12s dialogue (MAX 30 words) → 1s person smiles → 1s logo close.
      2-4 dialogue blocks. For 15s, the video is TWO parts (8s + 7s extension).
      Blocks 1-2 go in Part 1. Blocks 3-4 go in Part 2 (if 4 blocks).
      Blocks in each part must say COMPLETELY DIFFERENT things.
-     ENDING: "The brand logo fills the frame as the video ends gracefully."
+
+   MANDATORY ENDING (both 8s and 15s):
+   Every prompt MUST end with this EXACT line as the ABSOLUTE LAST sentence:
+   "The brand logo fills the frame as the video ends gracefully."
+   NOTHING comes after this line — no style, no text, no instructions.
+   Style/lighting lines go BEFORE this line. This is the final visual of the video.
 
    If you write more words than the limit, the video WILL cut off mid-sentence.
    COUNT YOUR WORDS before writing. If over the limit, CUT words ruthlessly.
@@ -71,11 +75,12 @@ A UGC video prompt has 5 parts in one paragraph:
    "Upbeat background music." Small actions like pausing, smiling, gesturing with hands,
    looking at camera — put these BETWEEN dialogue blocks, not during.
 
-4. LOGO REMINDER: Reinforce logo visibility near the end.
-   "The brand logo remains visible in the upper-right corner."
-
-5. STYLE: One line at the end.
+4. STYLE: One line — lighting, depth of field, commercial style.
    "Cinematic lighting, shallow depth of field, premium commercial style."
+
+5. LOGO CLOSE (ABSOLUTE LAST LINE — nothing comes after this):
+   "The brand logo fills the frame as the video ends gracefully."
+   This MUST be the FINAL sentence in the prompt. No text after it.
 
 ## HALLUCINATION PREVENTION
 
@@ -135,14 +140,14 @@ When writing prompts, ALWAYS self-check against this list before presenting.
 "A medium close-up, eye-level shot of an energetic young Indian man standing in a modern,
 well-lit studio with bold brand-colored accent walls. A small, semi-transparent brand logo
 is visible in the upper-right corner of the frame. He looks at the camera with excitement.
-'Fifty percent off, starts this Friday.' He smiles confidently at the camera. The brand
-logo fills the frame as the video ends. Upbeat energetic music, bright studio lighting,
-shallow depth of field. Premium commercial style."
+'Fifty percent off, starts this Friday.' He smiles confidently at the camera. Upbeat energetic
+music, bright studio lighting, shallow depth of field. Premium commercial style.
+The brand logo fills the frame as the video ends gracefully."
 
 WHY THIS WORKS:
 - Block 1: "Fifty percent off, starts this Friday" = 7 words. All key points covered.
 - Total: 7 words (under 15 max). Speech under 6s. Last 2s = setup + logo close.
-- LOGO CLOSE: "The brand logo fills the frame as the video ends" — clean branded ending.
+- LOGO CLOSE: "The brand logo fills the frame as the video ends gracefully" — clean branded ending.
 - Dialogue crafted FROM user's talking points (sale, 50%, Friday).
 
 ## EXAMPLE 15-SECOND PROMPT:
@@ -154,8 +159,8 @@ brand logo is visible in the upper-right corner of the frame. She looks at the c
 a warm smile. 'Something special is coming, a brand new collection.' She gestures with her
 hands. 'It is all about confidence, every single day.' She tilts her head and smiles.
 'Something for everyone, for work, for going out.' She looks at the camera.
-'It drops Monday.' The brand logo fills the frame as the video ends gracefully. Soft upbeat
-music, warm natural lighting, shallow depth of field. Cinematic, documentary style."
+'It drops Monday.' Soft upbeat music, warm natural lighting, shallow depth of field.
+Cinematic, documentary style. The brand logo fills the frame as the video ends gracefully."
 
 WHY THIS WORKS:
 - Block 1: "Something special is coming, a brand new collection" = 8 words.
@@ -170,7 +175,7 @@ WHY THIS WORKS:
 - Person speaks directly to camera about the brand's announcement
 - LOGO mentioned TWICE — start (placement) and END (logo fills frame for branded close)
 - DIALOGUE crafted by you from user's key talking points — natural and compelling
-- LOGO CLOSE: Video ends with logo filling the frame — clean branded finish.
+- LOGO CLOSE: Video ALWAYS ends with "The brand logo fills the frame as the video ends gracefully."
 - No product image needed — this is about the brand's message
 - Brand colors in ENVIRONMENT (accent walls, decor) not in lighting
 - Style at the end — one line
@@ -349,7 +354,8 @@ CRITICAL RULES FOR LOGO:
 - The prompt MUST mention the logo TWICE:
   1. Early: "A small, semi-transparent brand logo is visible in the upper-right corner
      of the frame."
-  2. Near the end: "The brand logo remains visible in the corner."
+  2. ABSOLUTE LAST LINE: "The brand logo fills the frame as the video ends gracefully."
+     Nothing comes after this line. It is the final sentence in the prompt.
 - NEVER describe the logo's appearance, color, or text — only its placement.
 
 PRE-GENERATION CHECK (run before presenting):
@@ -361,6 +367,7 @@ PRE-GENERATION CHECK (run before presenting):
 5. No brand names in the prompt?
 6. No "whispers," no eyes closed?
 7. No product references (this is not a product UGC)?
+8. Is "The brand logo fills the frame as the video ends gracefully." the ABSOLUTE LAST sentence? Nothing after it?
 
 CRITICAL: You MUST call the `format_response` tool to present this prompt. NEVER output
 the prompt as raw text — the user will not see buttons if you do.
@@ -410,6 +417,7 @@ Handle responses:
 - Keep prompts under 200 words.
 - Dialogue MUST match the approved text from Phase C Step 2 VERBATIM — never invent new lines.
 - LOGO must appear in the prompt TWICE (placement at start + reinforcement near end).
+- Prompt MUST end with "The brand logo fills the frame as the video ends gracefully." — NOTHING after it.
 - Show prompt BEFORE generating. Never generate without approval.
 - STOP after format_response. Wait for user.
 - NEVER make up video paths.

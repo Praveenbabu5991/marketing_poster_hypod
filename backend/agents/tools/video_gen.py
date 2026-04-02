@@ -163,8 +163,17 @@ def _split_prompt_for_parts(prompt: str, person_generation: str = "allow_all") -
         if style:
             part1_prompt += style
 
-        # Part 2: continuation — person keeps speaking seamlessly, silence ONLY at the very end
+        # Part 2: continuation — person keeps speaking seamlessly, logo close is the LAST thing
         remaining_text = prompt[split_pos:style_start].rstrip().rstrip('.,;')
+
+        # Extract logo close line if present — it must stay at the absolute end
+        logo_close = ""
+        logo_pattern = _re.compile(r'[^.]*brand logo fills the frame[^.]*\.', _re.IGNORECASE)
+        logo_match = logo_pattern.search(remaining_text)
+        if logo_match:
+            logo_close = logo_match.group(0).strip()
+            remaining_text = (remaining_text[:logo_match.start()] + remaining_text[logo_match.end():]).strip().rstrip('.,;')
+
         part2_prompt = (
             f"Smooth continuation of the same scene. Same person, same setting, "
             f"same lighting, same camera angle. The person continues speaking naturally. "
@@ -173,7 +182,11 @@ def _split_prompt_for_parts(prompt: str, person_generation: str = "allow_all") -
             f"No more speech, no mumbling, no vocalizations. Only ambient music. "
         )
         if style:
-            part2_prompt += style
+            part2_prompt += style + " "
+        if logo_close:
+            part2_prompt += logo_close
+        else:
+            part2_prompt += "The brand logo fills the frame as the video ends gracefully."
 
         return part1_prompt, part2_prompt
 
@@ -185,15 +198,16 @@ def _split_prompt_for_parts(prompt: str, person_generation: str = "allow_all") -
             "same lighting, same camera angle. The person smiles gently at the camera. "
             "No dialogue, no speech, no mumbling, no vocalizations. "
             "Only ambient music plays as the scene comes to a natural, graceful close. "
+            "The brand logo fills the frame as the video ends gracefully."
         )
     else:
         # No person (motion graphics, product showcase) — product/scene-based continuation
         part2_prompt = (
             "Smooth continuation of the same cinematic product showcase. Same product, "
             "same setting, same lighting. The product continues its slow movement, "
-            "showcasing its full form. The brand logo grows slightly in the corner. "
-            "The music builds to a satisfying close. "
+            "showcasing its full form. The music builds to a satisfying close. "
             "No dialogue, no speech, no voiceover. "
+            "The brand logo fills the frame as the video ends gracefully."
         )
     if style:
         part2_prompt += style
