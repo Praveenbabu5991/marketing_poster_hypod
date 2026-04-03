@@ -57,7 +57,13 @@ An advertisement video prompt has 5 parts in one paragraph:
      on a sunlit rooftop garden with city views."
    - Each person must be clearly identifiable so their dialogue can be attributed.
 
-2. DIALOGUE: Persons speak to camera about the brand's message/topic.
+2. DIALOGUE: Persons speak — either to camera OR to each other, depending on concept.
+
+   TWO DIALOGUE MODES (choose based on concept):
+   - TO CAMERA: Person(s) speak directly to the viewer — announcements, CTAs, pitches.
+   - CONVERSATIONAL: Persons talk to each other naturally — friends sharing, couples
+     discussing, colleagues reacting. This feels more authentic and story-driven.
+   Mix both in one video if it fits (e.g., two friends chat, then one turns to camera).
 
    VEO DIALOGUE FORMAT (use this exact pattern):
    "Dialogue text here."
@@ -75,9 +81,16 @@ An advertisement video prompt has 5 parts in one paragraph:
    When multiple persons speak, attribute dialogue clearly using brief descriptors
    BEFORE each quoted line. CRITICAL — include VOICE GENDER cue so Veo matches the
    correct voice to the correct person:
+
+   TO-CAMERA example:
    - "The first woman looks at the camera and speaks in a clear feminine voice. 'Dialogue here.'"
    - "The man turns to the camera and speaks in a deep masculine voice. 'His dialogue here.'"
-   - "The second woman smiles and speaks in a warm feminine voice. 'Her dialogue here.'"
+
+   CONVERSATIONAL example:
+   - "The first woman turns to her friend and speaks in a clear feminine voice. 'Have you tried this?'"
+   - "The man smiles and speaks in a deep masculine voice. 'This changed everything for me.'"
+   - "The second woman looks at the camera and speaks in a warm feminine voice. 'Trust me, you need this.'"
+
    Without explicit voice cues, Veo may assign the WRONG voice gender to a person.
    Each person MUST have at least one clear dialogue line. No person should be silent
    while others speak — everyone contributes to the advertisement.
@@ -124,18 +137,19 @@ An advertisement video prompt has 5 parts in one paragraph:
    CRITICAL: You MUST include this EXACT sentence in the prompt text:
    "No dialogue, no speech, no voiceover — instrumental music and ambient sounds only."
 
-3. AMBIENT + PHYSICAL ACTIONS: Brief ambient sound and small natural gestures.
-   Small actions like smiling, gesturing with hands, looking at camera, nodding —
-   put these BETWEEN dialogue blocks, not during.
+3. AMBIENT + PHYSICAL ACTIONS: Brief ambient sound and natural gestures.
+   Small actions like smiling, gesturing, nodding, turning to a friend, looking at
+   camera — put these BETWEEN dialogue blocks, not during.
 
    CRITICAL — SIMPLE ACTIONS ONLY:
    Each person does ONE simple action at a time. No complex choreography.
    BAD: "She walks forward, picks up the product, turns to her friend, and high-fives."
-   GOOD: "She smiles at the camera."
+   GOOD: "She turns to her friend and smiles."
    BAD: "He dances across the room while juggling items."
-   GOOD: "He gestures with his hands."
+   GOOD: "He nods and gestures with his hands."
    No walking sequences, no multi-step interactions, no choreographed movements.
    Persons stand or sit in place — they speak and make simple gestures.
+   They CAN face each other (conversational) or the camera — depends on concept.
 
 4. STYLE: One line matching the VISUAL STYLE chosen in Phase C2 + MUSIC MOOD from Phase C3.
    Combine the music description and visual style into the ambient/style section.
@@ -156,13 +170,12 @@ An advertisement video prompt has 5 parts in one paragraph:
 - NEVER use "whispers" — triggers intimate content safety filters. Use "speaks clearly."
 - NEVER describe eyes closed — triggers safety filters.
 - Each person does ONE simple action at a time. No multi-step actions.
-  BAD: "She smiles at her partner, then back at the camera" (two actions).
-  GOOD: "She smiles warmly at the camera" (one action).
+  BAD: "She walks to the table, picks up a cup, turns around, and sits down" (four actions).
+  GOOD: "She smiles warmly" (one action).
 - DO NOT request photorealistic children/minors — causes safety filter failure.
 - Brand colors can be in the ENVIRONMENT (decor, walls, clothing accents) but NOT as
   lighting color that washes the entire scene.
 - MAXIMUM 3 persons in any video. Do NOT add crowds, groups, or extras.
-- All persons face and speak to THE CAMERA. No person-to-person conversations.
 
 ## WORDS TO AVOID (Veo Safety Filter)
 These words/phrases trigger Veo's safety filter and MUST NOT appear in prompts:
@@ -217,43 +230,47 @@ WHY THIS WORKS:
 - Simple action: looks at camera, smiles. No complex movement.
 - LOGO CLOSE is the absolute last line. Style before logo close.
 
-## EXAMPLE 8-SECOND PROMPT — 2 PERSONS:
+## EXAMPLE 8-SECOND PROMPT — 2 PERSONS (CONVERSATIONAL):
 (Concept: new collection launch, Style: Bold)
 
-"A medium take of two young Indian women standing side by side on a styled balcony
-with draped fabric and the city skyline glowing at golden hour. A small, semi-transparent
-brand logo is visible in the upper-right corner of the frame. The first woman looks at
-the camera and speaks in a clear feminine voice. 'The new collection just dropped.' The
-second woman smiles at the camera and speaks in a warm feminine voice. 'You do not want
-to miss this.' Bold upbeat music, high-contrast golden hour lighting, shallow depth of
-field. Striking commercial style. The brand logo fills the frame as the video ends
-gracefully."
+"A medium take of two young Indian women sitting together on a styled balcony with
+draped fabric and the city skyline glowing at golden hour. A small, semi-transparent
+brand logo is visible in the upper-right corner of the frame. The first woman turns to
+her friend with excitement and speaks in a clear feminine voice. 'The new collection
+just dropped.' The second woman smiles and speaks in a warm feminine voice. 'You do not
+want to miss this.' She looks at the camera. Bold upbeat music, high-contrast golden
+hour lighting, shallow depth of field. Striking commercial style. The brand logo fills
+the frame as the video ends gracefully."
 
 WHY THIS WORKS:
 - SETTING: "styled balcony with draped fabric and city skyline at golden hour" — THEMATIC
   to fashion launch, visually rich.
+- CONVERSATIONAL: Friends talking to each other, then one turns to camera at the end.
+  Feels natural and authentic — not a scripted sales pitch.
 - Person 1: "The new collection just dropped" = 5 words.
 - Person 2: "You do not want to miss this" = 7 words.
 - Total: 12 words (under 15 max). Each person has clear, separate dialogue.
 - Voice cues: both "speaks in a ... feminine voice" — ensures female voices for both.
 
-## EXAMPLE 15-SECOND PROMPT — 3 PERSONS:
+## EXAMPLE 15-SECOND PROMPT — 3 PERSONS (CONVERSATIONAL + CAMERA):
 (Concept: brand anniversary celebration, Style: Elegant)
 
 "A medium take of three young Indian people, two women and a man, standing together in
 a candlelit terrace garden with fairy lights, soft floral arrangements, and warm amber
 evening glow. A small, semi-transparent brand logo is visible in the upper-right corner
-of the frame. The first woman looks at the camera with a warm smile and speaks in a clear
-feminine voice. 'Five years of making every moment count.' The man nods and looks at the
-camera and speaks in a deep masculine voice. 'From day one, it has been about you.' The
-second woman smiles and speaks in a warm feminine voice. 'Here is to five more years
-together.' She raises her hand gently. 'Thank you for being part of this journey.' Soft
-cinematic music, warm amber lighting, shallow depth of field. Premium elegant style. The
-brand logo fills the frame as the video ends gracefully."
+of the frame. The first woman turns to her friends and speaks in a clear feminine voice.
+'Five years of making every moment count.' The man nods and speaks in a deep masculine
+voice. 'From day one, it has been about you.' The second woman smiles at them and speaks
+in a warm feminine voice. 'Here is to five more years together.' She looks at the camera.
+'Thank you for being part of this journey.' Soft cinematic music, warm amber lighting,
+shallow depth of field. Premium elegant style. The brand logo fills the frame as the
+video ends gracefully."
 
 WHY THIS WORKS:
 - SETTING: "candlelit terrace garden with fairy lights and floral arrangements" — THEMATIC
   to anniversary celebration, warm and intimate.
+- CONVERSATIONAL + CAMERA: Friends talk to each other first, then one turns to camera
+  for the closing CTA — natural flow from conversation to audience connection.
 - Colors MATCH: warm amber evening glow for a celebration/anniversary theme.
 - Person 1: "Five years of making every moment count" = 7 words.
 - Person 2: "From day one, it has been about you" = 8 words.
@@ -556,10 +573,10 @@ CRITICAL RULES FOR DIALOGUE:
   "No dialogue, no speech, no voiceover — instrumental music and ambient sounds only."
 
 CRITICAL RULES FOR ACTIONS:
-- Each person does ONE simple action at a time: smile, nod, gesture, look at camera.
+- Each person does ONE simple action at a time: smile, nod, gesture, turn to friend.
 - No walking, no picking up objects, no multi-step sequences, no choreography.
-- Persons stand or sit in place. They speak and make small gestures. That's it.
-- All persons face THE CAMERA. No person-to-person interactions.
+- Persons stand or sit in place. They speak and make simple gestures.
+- They CAN face each other (conversational) or the camera — depends on concept.
 
 CRITICAL RULES FOR LOGO:
 - The prompt MUST mention the logo TWICE:
@@ -635,7 +652,7 @@ Handle responses:
 - Dialogue MUST match the approved text from Phase C Step 2 VERBATIM — never invent new lines.
 - LOGO must appear in the prompt TWICE (placement at start + reinforcement near end).
 - Prompt MUST end with "The brand logo fills the frame as the video ends gracefully." — NOTHING after it.
-- MAXIMUM 3 persons. All face camera. Simple actions only.
+- MAXIMUM 3 persons. Simple actions only. Can face camera or each other.
 - Show prompt BEFORE generating. Never generate without approval.
 - STOP after format_response. Wait for user.
 - NEVER make up video paths.
