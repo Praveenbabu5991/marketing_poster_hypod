@@ -18,17 +18,39 @@ music mood, and visual style. NO person, NO dialogue, NO speech.
 ## PROMPT STRUCTURE (follow this exactly)
 
 A motion graphics video prompt follows the HOOK → PRODUCT REVEAL → FEATURES sequence
-in one continuous paragraph:
+in one continuous paragraph. The HOOK and setting must be THEMATICALLY connected to
+the product and its highlight — tell a STORY, not just a generic visual template.
 
-1. HOOK (0–3 sec) — Grab attention:
-   The brand logo fades in center-frame, then dissolves. Dramatic entrance.
-   "The brand logo fades in center-frame against a [background], then dissolves."
+1. HOOK (0–3 sec) — Grab attention with a THEMATIC VISUAL:
+   The opening should visually connect to the product's purpose or the highlight's meaning.
+   Then the brand logo appears briefly and dissolves.
 
-2. PRODUCT REVEAL — Show product clearly:
-   The product appears on a styled surface with appropriate lighting. A small,
-   semi-transparent brand logo is visible in the upper-right corner throughout.
-   "The product sits on a [surface] with [neutral lighting]. A small, semi-transparent
-   brand logo is visible in the upper-right corner of the frame."
+   GENERIC (BAD): "The brand logo fades in center-frame against a dark background."
+   THEMATIC (GOOD — sunscreen + "Summer Shield"):
+     "Warm golden sun rays flood the frame. The brand logo fades in center-frame, then dissolves."
+   THEMATIC (GOOD — moisturizer + "Deep Hydration"):
+     "Glistening water droplets cascade in slow motion. The brand logo fades in, then dissolves."
+   THEMATIC (GOOD — running shoes + "Ultra Light"):
+     "Wind sweeps across an empty track at dawn. The brand logo fades in, then dissolves."
+
+   The hook sets the MOOD and CONTEXT for the product. Think: what environment or
+   natural element relates to this product's purpose and the user's highlight?
+
+2. PRODUCT REVEAL — Show product in a CONTEXT-APPROPRIATE setting:
+   The product appears in a setting that naturally fits its purpose and the highlight.
+   A small, semi-transparent brand logo is visible in the upper-right corner throughout.
+
+   GENERIC (BAD): "The product sits on a dark velvet turntable."
+   CONTEXT-DRIVEN (GOOD — sunscreen + "Summer Shield"):
+     "The product descends slowly into a pool of warm sunlight on a sandy stone surface.
+      A small, semi-transparent brand logo is visible in the upper-right corner of the frame."
+   CONTEXT-DRIVEN (GOOD — moisturizer + "Deep Hydration"):
+     "The product sits on a wet marble surface with fresh water droplets around it.
+      A small, semi-transparent brand logo is visible in the upper-right corner of the frame."
+
+   The setting's colors, surfaces, and lighting should NATURALLY match the product's
+   context — not arbitrary. Sunscreen → warm sun tones. Moisturizer → cool water tones.
+   Coffee → warm wood and steam. Electronics → clean tech surfaces.
 
    Product movement — ONE movement, slow and smooth:
    FOR HOLDABLE PRODUCTS — the product moves, camera stays mostly still:
@@ -40,17 +62,15 @@ in one continuous paragraph:
    FOR VEHICLES/LARGE ITEMS — camera orbits, product stays still:
    "The camera slowly arcs around the product."
 
-3. FEATURES — Highlight benefits with ON-SCREEN TEXT:
-   The user's product highlight text appears AS TEXT overlaid on the video.
-   This is the key selling point — it MUST appear as visible text on screen.
-   Describe it clearly so Veo renders the text:
+3. FEATURES — Highlight text appears ON SCREEN:
+   The user's highlight text appears AS TEXT overlaid on the video at a NATURAL moment —
+   after the product is fully visible and the mood is set.
    "Bold white text appears on screen: '[highlight text from user]'."
 
    RULES FOR ON-SCREEN TEXT:
    - Use the EXACT highlight text the user provided in Phase B Step 2.
-   - Keep it short — MAX 2-3 words per text line. Veo renders text best when
-     it is very short. If user's highlight is longer, condense to the core
-     2-3 word phrase.
+   - MAX 2-3 words per text line. Veo renders text best when very short.
+     If user's highlight is longer, condense to the core 2-3 word phrase.
    - Describe text style: "Bold white text" or "Clean sans-serif text" matching
      the visual style chosen.
    - Text appears OVER the product — product stays visible behind the text.
@@ -58,6 +78,7 @@ in one continuous paragraph:
    - For 15s videos: 2-3 text lines appearing in sequence (each MAX 3 words).
 
 4. STYLE + MUSIC: One combined line — visual style + music mood.
+   Colors and mood should MATCH the thematic hook and product context.
    "[Music mood] music plays. [Style description], shallow depth of field,
    premium commercial style."
 
@@ -205,19 +226,21 @@ Pick ONE movement that best fits the product type and style:
 - Neon colored — colored light sources (cyan, magenta, amber), stylized
 
 ## EXAMPLE 8-SECOND PROMPT (GOLD STANDARD):
-(Product: Silk saree, Highlight: "Pure Silk", Style: Elegant, Music: Cinematic)
+(Product: Cetaphil sunscreen, Highlight: "Summer Shield", Style: Energetic, Music: Upbeat)
 
-"The brand logo fades in center-frame against a dark background, then dissolves. The product
-sits on a dark velvet turntable with soft, diffused studio lighting. A small, semi-transparent
-brand logo is visible in the upper-right corner of the frame. The product slowly rotates,
-showcasing fine details and texture from every angle. Bold white text appears on screen:
-'Pure Silk.' Elegant cinematic music plays softly. Soft studio lighting, shallow depth of
-field, premium commercial style. The brand logo fills the frame as the video ends gracefully."
+"Warm golden sun rays flood the frame in slow motion. The brand logo fades in center-frame,
+then dissolves. The product descends slowly into a pool of warm sunlight on a sandy stone
+surface. A small, semi-transparent brand logo is visible in the upper-right corner of the
+frame. The product tilts gently, catching golden light across its surface. Bold white text
+appears on screen: 'Summer Shield.' Upbeat energetic music plays. Bright warm sun tones,
+shallow depth of field, premium commercial style. The brand logo fills the frame as the
+video ends gracefully."
 
 WHY THIS WORKS:
-- HOOK: Logo intro center-frame grabs attention
-- PRODUCT REVEAL: Product on velvet turntable, slow rotation
-- FEATURES: "Pure Silk" (2 words) appears as on-screen text — short, clear, impactful
+- HOOK: "Sun rays flood the frame" — THEMATIC to sunscreen, connects to "Summer Shield"
+- PRODUCT REVEAL: Product on sandy stone surface in sunlight — matches sunscreen context
+- FEATURES: "Summer Shield" (2 words) as on-screen text — user's highlight verbatim
+- Colors MATCH product context: warm golden sun tones for sunscreen
 - Logo appears THREE times: (1) intro, (2) corner watermark, (3) LOGO CLOSE at absolute end
 - Style line BEFORE logo close. Logo close is the last sentence.
 
@@ -225,19 +248,20 @@ WHY THIS WORKS:
 (Product: Smartwatch, Highlight: "Long Battery, Water Resistant, Health Tracking",
 Style: Neon Glow, Music: Futuristic)
 
-"The brand logo fades in center-frame against a dark void, then dissolves. The product
-sits on an obsidian glass platform with pulsating neon blue and pink rim lighting. A small,
-semi-transparent brand logo is visible in the upper-right corner of the frame. The product
-slowly tilts side to side, catching colored neon reflections across its surface. Bold clean
-text appears on screen: 'Long Battery.' The text fades and new text appears: 'Water
-Resistant.' Then: 'Health Tracking.' Futuristic electronic music pulses. Neon lights, dark
-background, shallow depth of field, premium cyberpunk style. The brand logo fills the frame
-as the video ends gracefully."
+"Digital circuit patterns pulse across a dark void. The brand logo fades in center-frame,
+then dissolves. The product sits on an obsidian glass platform with pulsating neon blue and
+pink rim lighting. A small, semi-transparent brand logo is visible in the upper-right corner
+of the frame. The product slowly tilts side to side, catching colored neon reflections across
+its surface. Bold clean text appears on screen: 'Long Battery.' The text fades and new text
+appears: 'Water Resistant.' Then: 'Health Tracking.' Futuristic electronic music pulses.
+Neon lights, dark background, shallow depth of field, premium cyberpunk style. The brand logo
+fills the frame as the video ends gracefully."
 
 WHY THIS WORKS:
-- HOOK: Logo intro against dark void
-- PRODUCT REVEAL: Product on obsidian glass, neon rim lighting, slow tilt
-- FEATURES: 3 highlight lines (each 2 words) appear one after another as on-screen text
+- HOOK: "Digital circuit patterns pulse" — THEMATIC to smartwatch/tech
+- PRODUCT REVEAL: Obsidian glass + neon rim lighting — matches tech aesthetic
+- FEATURES: 3 highlight lines (each 2 words) appear one after another
+- Colors MATCH product context: neon blue/pink for tech product
 - For 15s (two parts): Part 1 has hook + reveal + first text line,
   Part 2 has remaining text lines + logo close
 - Logo close is the absolute last sentence.
@@ -365,38 +389,61 @@ STOP and wait.
 LOCK all four values internally: product name, highlight text, visual style, and music mood.
 
 ### Phase C — Choose Video Concept
-Generate 6 DIVERSE video concepts. Each concept MUST be visually distinct from the others.
-Use DIFFERENT surfaces, movements, lighting, and atmospheres for each concept.
-Pick from PRODUCT MOVEMENT OPTIONS and LIGHTING OPTIONS — do NOT repeat the same movement.
+Generate 6 DIVERSE video concepts. Each concept MUST:
+1. Be THEMATICALLY connected to the product AND the user's highlight — tell a STORY.
+2. Have a HOOK that visually represents the product's purpose or the highlight's meaning.
+3. Use a setting with NATURAL COLORS that match the product's context.
+4. Be visually distinct from the other concepts.
 
-Each concept is 1-2 sentences describing:
-- WHAT surface/setting (pick DIFFERENT ones for each concept)
-- HOW the product moves or how the camera moves (pick from PRODUCT MOVEMENT OPTIONS — vary them!)
-- WHAT lighting technique (pick from LIGHTING OPTIONS — vary them!)
-- WHAT atmosphere the video conveys
+Think: "What STORY does this product + highlight tell?" Then build a visual narrative.
+- Sunscreen + "Summer Shield" → sun rays, sandy surfaces, warm golden tones
+- Moisturizer + "Deep Hydration" → water droplets, wet surfaces, cool blue tones
+- Running shoes + "Ultra Light" → wind, floating feathers, dawn sky tones
+- Coffee + "Bold Roast" → rising steam, dark roasted tones, rustic wood
+- Perfume + "Night Bloom" → moonlit garden, dark florals, deep purple tones
+- Smartwatch + "Always On" → digital pulses, dark tech surfaces, neon accents
 
-CRITICAL: All 6 concepts must feel DIFFERENT. If one uses rotation, the next should use
-levitation or a dolly-in. If one uses dark backgrounds, the next should use bright or botanical.
+Each concept is 2-3 sentences describing:
+- THEMATIC HOOK: What visual element opens the video (connected to product + highlight)
+- PRODUCT SETTING: What surface/environment the product appears in (matching the theme)
+- MOVEMENT: How the product or camera moves (pick from PRODUCT MOVEMENT OPTIONS — vary them!)
+- COLOR PALETTE: What natural colors dominate (matching the product's context)
 
-Example concepts for HOLDABLE products (highlight: "Pure Silk"):
-  "Velvet Spotlight" — Product on dark velvet, single spotlight. Slow rotation. Text appears:
-  'Pure Silk.' Deep shadows, theatrical drama.
-  "Botanical Float" — Product levitates among lush green plants. Text appears: 'Pure Silk.'
-  Organic, earthy feel.
-  "Neon Pulse" — Product on obsidian glass, neon rim lighting. Product tilts. Text appears:
-  'Pure Silk.' Futuristic cyberpunk atmosphere.
-  "Mist Emergence" — Product materializes as fog clears. Text appears: 'Pure Silk.'
-  Ethereal, dreamlike atmosphere.
-  "Macro Journey" — Extreme close-up traversing product surface, then pulling back. Text
-  appears: 'Pure Silk.' Meditative zen feel.
-  "Ice Crystal" — Product on frost-covered surface. Gentle float. Text appears: 'Pure Silk.'
-  Cool blue-white, otherworldly glow.
+CRITICAL: All 6 concepts must feel DIFFERENT. Vary hooks, settings, movements, and lighting.
+Do NOT use generic templates — every concept must be SPECIFIC to this product + highlight.
 
-Example concepts for BUILDING/LOCATION products:
-  "Golden Hour Exterior" — Camera slowly dollies in toward the building as golden sunset
-  light bathes the facade. Warm, inviting atmosphere. Cinematic orchestral music.
-  "Dramatic Crane" — Camera cranes upward along the building exterior from ground to roof,
-  showcasing architecture. Volumetric god rays. Epic building percussion.
+Example concepts for HOLDABLE products (product: Cetaphil sunscreen, highlight: "Summer Shield"):
+  "Sun's Embrace" — Golden sun rays flood the frame as the hook. Product descends onto a
+  sandy stone surface bathed in warm sunlight. Gentle tilt catching golden light. Warm
+  amber tones throughout — a summer day feel.
+  "Beach Glow" — Soft ocean waves shimmer in the background as the hook. Product sits on
+  sun-bleached driftwood with warm natural light. Slow rotation. Sandy beige and aqua
+  blue color palette.
+  "Heat Shield" — Blazing light intensifies then softens as the hook. Product rises from
+  a sun-warmed terracotta surface. Gentle float upward. Warm terracotta and cream tones.
+  "Golden Hour" — Sunlight filters through palm leaves creating dappled shadows as the hook.
+  Product on a smooth stone slab with caustic light patterns. Dolly-in from medium to
+  close-up. Tropical green and golden tones.
+  "Desert Oasis" — Heat shimmer ripples across the frame as the hook. Product emerges from
+  mist on a cool marble surface — like an oasis. Mist clears to show product fully. Warm
+  sand to cool blue gradient.
+  "Solar Flare" — A bright lens flare sweeps across the frame as the hook. Product on
+  polished white surface with rim lighting from behind. Pull-back from close-up to full
+  product in context. Clean white and warm gold tones.
+
+Example concepts for HOLDABLE products (product: face moisturizer, highlight: "Deep Hydration"):
+  "Water Drop" — A single water droplet falls in extreme slow motion as the hook. Product
+  sits on wet marble with fresh droplets around it. Slow rotation. Cool blue and crystal
+  clear tones.
+  "Morning Dew" — Dewy water beads glisten on a surface as the hook. Product rises gently
+  from a misty, water-covered glass platform. Float upward. Soft aqua and white tones.
+
+Example concepts for BUILDING/LOCATION products (product: beach resort, highlight: "Paradise Awaits"):
+  "Ocean Approach" — Turquoise ocean waves roll toward shore as the hook. Camera slowly
+  dollies in toward the resort building with palm trees swaying. Warm tropical tones,
+  golden sunset light.
+  "Aerial Discovery" — Camera cranes upward from poolside water level to show the resort's
+  full exterior against the sky. Bright blue and white color palette.
 
 FORBIDDEN: Any concept involving a person, dialogue, opening/dispensing, or the word "reveal".
 
