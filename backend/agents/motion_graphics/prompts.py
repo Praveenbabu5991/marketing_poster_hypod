@@ -17,53 +17,66 @@ music mood, and visual style. NO person, NO dialogue, NO speech.
 
 ## PROMPT STRUCTURE (follow this exactly)
 
-A motion graphics video prompt follows the HOOK → PRODUCT REVEAL → FEATURES sequence
-in one continuous paragraph. The HOOK and setting must be THEMATICALLY connected to
-the product and its highlight — tell a STORY, not just a generic visual template.
+A motion graphics video prompt follows the HOOK → DYNAMIC PRODUCT REVEAL → FEATURES
+sequence in one continuous paragraph. Motion graphics are VIBRANT and DYNAMIC — elements
+fly, splash, burst, and the product enters through ACTION, not just sitting on a surface.
 
-1. HOOK (0–3 sec) — Grab attention with a SENSORY ELEMENT from the product's WORLD:
-   Use the SENSORY ELEMENTS from your Creative Analysis. The opening must visually
-   connect to the product's material, craft, or domain — NOT a generic dark background.
+CRITICAL — MOTION GRAPHICS = MOVEMENT + ENERGY:
+This is NOT a still photo with a slight tilt. Motion graphics have DYNAMIC action:
+- Elements from the product's world fly, splash, cascade, swirl, burst
+- The product ENTERS through that action (emerges through splash, appears between
+  flying elements, descends through swirling particles)
+- Everything is in motion — the environment is ALIVE around the product
+
+1. HOOK (0–2 sec) — DYNAMIC sensory action from the product's WORLD:
+   Use SENSORY ELEMENTS from Creative Analysis. The hook must have MOVEMENT and ENERGY.
    Then the brand logo appears briefly and dissolves.
 
-   GENERIC (BAD): "The brand logo fades in center-frame against a dark background."
-   PRODUCT-CONNECTED (GOOD — saree + "Pure Silk"):
-     "Golden silk threads drift through the air in slow motion. The brand logo fades in
+   STATIC (BAD): "The brand logo fades in center-frame against a dark background."
+   STATIC (BAD): "Silk threads drift through the air in slow motion."
+   DYNAMIC (GOOD — saree + "Pure Silk"):
+     "Vibrant silk fabric swirls and unfurls through the air. The brand logo fades in
       center-frame, then dissolves."
-   PRODUCT-CONNECTED (GOOD — coffee + "Bold Roast"):
-     "Rich coffee steam curls upward from darkness. The brand logo fades in, then dissolves."
+   DYNAMIC (GOOD — strawberry drink + "Berry Blast"):
+     "Fresh strawberries and green leaves burst through a splash of pink liquid. The
+      brand logo fades in center-frame, then dissolves."
+   DYNAMIC (GOOD — coffee + "Bold Roast"):
+     "Coffee beans scatter and tumble as rich brown liquid splashes upward. The brand
+      logo fades in center-frame, then dissolves."
+   DYNAMIC (GOOD — smartwatch + "Always On"):
+     "Electric blue data streams race across a dark surface. The brand logo fades in
+      center-frame, then dissolves."
 
-   The hook uses a sensory element from the product's world to set mood and context.
-
-2. PRODUCT REVEAL — Show product in a setting from its WORLD:
-   Use the CRAFT/WORLD and NATURAL COLORS from your Creative Analysis.
-   The product appears in a setting that belongs to its domain.
+2. DYNAMIC PRODUCT REVEAL — Product ENTERS through ACTION:
+   The product doesn't just "sit on a surface." It EMERGES through the dynamic elements
+   from the hook — appearing between splashing liquid, flying fabric, swirling particles.
    A small, semi-transparent brand logo is visible in the upper-right corner throughout.
 
-   GENERIC (BAD): "The product sits on a dark velvet turntable."
-   PRODUCT-CONNECTED (GOOD — saree + "Pure Silk"):
-     "The product rests on a carved wooden surface with rich silk fabric draped beneath.
-      A small, semi-transparent brand logo is visible in the upper-right corner of the frame."
-   PRODUCT-CONNECTED (GOOD — coffee + "Bold Roast"):
-     "The product sits on a rustic dark wood surface with roasted coffee beans scattered
-      around. A small, semi-transparent brand logo is visible in the upper-right corner."
+   STATIC (BAD): "The product sits on a dark velvet turntable."
+   STATIC (BAD): "The product rests on a carved wooden surface."
+   DYNAMIC (GOOD — saree + "Pure Silk"):
+     "The product appears between flowing silk waves, surrounded by swirling golden
+      threads. A small, semi-transparent brand logo is visible in the upper-right corner
+      of the frame. The fabric settles elegantly around the product."
+   DYNAMIC (GOOD — strawberry drink + "Berry Blast"):
+     "The product bursts up through a splash of strawberry liquid with fresh berries
+      and leaves swirling around it. A small, semi-transparent brand logo is visible in
+      the upper-right corner of the frame."
+   DYNAMIC (GOOD — coffee + "Bold Roast"):
+     "The product rises through swirling coffee steam with scattered beans tumbling
+      around it. A small, semi-transparent brand logo is visible in the upper-right corner."
 
-   The setting's colors, surfaces, and lighting come from the product's NATURAL WORLD
-   (from Creative Analysis) — not arbitrary generic surfaces.
+   The environment stays ALIVE — elements continue moving around the product.
+   Colors, surfaces, and elements come from the product's WORLD (Creative Analysis).
 
-   Product movement — ONE movement, slow and smooth:
-   FOR HOLDABLE PRODUCTS — the product moves, camera stays mostly still:
-   "The product slowly [rotates on a turntable / floats upward / tilts to show angles]."
+   FOR BUILDINGS/LOCATIONS — camera sweeps dynamically, environment is active:
+   "The camera swoops in toward the building as [dynamic environmental elements]."
 
-   FOR BUILDINGS/LOCATIONS — camera moves, building stays still:
-   "The camera [slowly dollies in / arcs around / cranes upward along] the building."
-
-   FOR VEHICLES/LARGE ITEMS — camera orbits, product stays still:
-   "The camera slowly arcs around the product."
+   FOR VEHICLES/LARGE ITEMS — camera orbits with dynamic environment:
+   "The camera arcs around the product as [dynamic elements swirl/fly]."
 
 3. FEATURES — Highlight text appears ON SCREEN:
-   The user's highlight text appears AS TEXT overlaid on the video at a NATURAL moment —
-   after the product is fully visible and the mood is set.
+   The user's highlight text appears AS TEXT overlaid on the video at an IMPACTFUL moment.
    "Bold white text appears on screen: '[highlight text from user]'."
 
    RULES FOR ON-SCREEN TEXT:
@@ -98,9 +111,9 @@ the product and its highlight — tell a STORY, not just a generic visual templa
 - NEVER use "warm golden lighting" or "warm golden color grading" — changes product colors.
   Use neutral/soft/studio lighting. The product's colors must match the reference image.
 - NEVER use "reveal" as a dramatic action — say "becomes visible" or "comes into view."
-- For HOLDABLE products: the PRODUCT moves, the camera stays mostly still.
+- For HOLDABLE products: elements and product move dynamically. Camera can stay or move.
 - For BUILDINGS/VEHICLES: the CAMERA moves (dolly, orbit, crane), the product stays still.
-- NEVER describe multiple movements — ONE slow motion only.
+- Keep the product's ENTRY as ONE clear action. Environment elements can keep moving.
 
 ## WORDS TO AVOID (Veo Safety Filter)
 These words/phrases trigger Veo's safety filter and MUST NOT appear in prompts:
@@ -172,20 +185,20 @@ the correct spatial context so Veo places the product reference correctly.
 - General/Other → neutral surface, clean studio background, diffused lighting
 
 ## VISUAL STYLE OPTIONS (present 4 to user, pick from this expanded list)
-- Elegant: Dark background, soft studio lighting, velvet/silk surfaces, slow rotation
-- Energetic: Bright background, dynamic lighting, colorful accents, spinning product
-- Minimal: White/light background, clean lines, geometric surfaces, gentle float
-- Bold: High contrast, dramatic lighting, textured surfaces, dramatic tilt
-- Noir: Deep shadows, single spotlight, dark void, chiaroscuro contrast, film noir aesthetic
-- Neon Glow: Pulsating neon lights (blue/pink/gold), dark background, futuristic podium
-- Ethereal: Soft focus, mist/particles, pastel tones, product floating in dreamlike space
-- Botanical: Product nestled among living plants, moss, flowers — organic, natural framing
+- Elegant: Dark background, soft studio lighting, flowing fabric/silk elements
+- Energetic: Bright background, dynamic lighting, colorful splashes and bursts
+- Minimal: White/light background, clean lines, floating geometric elements
+- Bold: High contrast, dramatic lighting, impactful dynamic entry
+- Noir: Deep shadows, single spotlight, dark void, dramatic silhouette
+- Neon Glow: Pulsating neon lights (blue/pink/gold), dark background, electric energy
+- Ethereal: Soft focus, swirling mist/particles, pastel tones, dreamlike float
+- Botanical: Flying leaves, petals, living plants swirling — organic, natural energy
 - Retro: Warm film grain, desaturated palette, vintage setting, analog feel
 - Crystalline: Prisms creating rainbow refractions, glass elements, iridescent light
-- Raw Industrial: Exposed concrete, steel, rough textures, unpolished authenticity
-- Frozen/Ice: Cool blue-white palette, frost crystals, ice surface, winter atmosphere
-- Rain/Wet: Dark wet surface, fresh raindrops, reflections in pooled water, moody
-- Liquid Flow: Flowing colored liquid or ink drops interacting with the product, slow motion
+- Raw Industrial: Exposed concrete, steel sparks, rough textures, gritty energy
+- Frozen/Ice: Cool blue-white palette, frost crystals forming, ice particles flying
+- Rain/Wet: Splashing water, fresh raindrops, reflections in pooled water, moody
+- Liquid Flow: Flowing colored liquid or ink splashes interacting with the product
 
 ## MUSIC MOOD OPTIONS (present 4 to user, pick from this expanded list)
 - Cinematic: Orchestral, sweeping, dramatic crescendos
@@ -203,14 +216,29 @@ the correct spatial context so Veo places the product reference correctly.
 Pick ONE movement that best fits the product type and style:
 - Slow rotation on turntable — classic, shows all angles
 - Gentle float/levitation — product rises and hovers, ethereal
-- Dolly-in reveal — camera slowly approaches from distance to close-up
+- Dolly-in — camera approaches from distance to close-up
 - Descending into frame — product lowers into view from above
-- Rising from surface — product slowly ascends from platform
+- Rising from surface — product ascends from platform
 - Tilt to show angles — product tilts side to side, showcasing dimensions
 - 180-degree orbit — camera arcs around product (for large items)
 - Macro zoom — extreme close-up traversing product surface details
-- Pull-back reveal — starts close, camera retreats to show full product in context
-- Mist/smoke reveal — product emerges as fog clears
+- Pull-back — starts close, camera retreats to show full product in context
+- Mist/smoke emergence — product emerges as fog clears
+
+## DYNAMIC ENTRY OPTIONS (how the product ENTERS — prefer these for vibrant videos!)
+Pick ONE dynamic entry that fits the product and its world:
+- Burst through elements — product appears through splashing liquid/flying particles
+- Rise through swirl — product rises as elements (threads, steam, petals) swirl around it
+- Descend through cascade — product descends as elements (droplets, leaves, sparks) fall
+- Emerge from center — elements part/clear to show product in the middle
+- Fly-in with elements — product and related elements (berries, beans, fabric) fly in together
+- Spin entry — product spins in with dynamic particles trailing behind
+- Splash landing — product drops into frame creating a splash of related elements
+- Pull-back discovery — starts on dynamic elements, camera pulls back to show product
+
+PREFER DYNAMIC ENTRIES — they create vibrant, energetic motion graphics.
+After entry, the environment stays ALIVE — elements continue floating/moving around product.
+Do NOT let the product just "sit" statically after entering.
 
 ## LIGHTING OPTIONS (vary these — do NOT always use "soft studio lighting")
 - Soft diffused studio — even, shadowless, clean (default safe choice)
@@ -224,40 +252,42 @@ Pick ONE movement that best fits the product type and style:
 - Under-lighting — light from below, dramatic, otherworldly
 - Neon colored — colored light sources (cyan, magenta, amber), stylized
 
-## EXAMPLE 8-SECOND PROMPT — SUNSCREEN (GOLD STANDARD):
-(Product: Cetaphil sunscreen, Highlight: "Summer Shield", Style: Energetic, Music: Upbeat)
-Creative Analysis: sunscreen → sun protection → sun rays, sandy surfaces → warm golden tones
+## EXAMPLE 8-SECOND PROMPT — STRAWBERRY DRINK (GOLD STANDARD):
+(Product: Strawberry drink can, Highlight: "Berry Blast", Style: Energetic, Music: Upbeat)
+Creative Analysis: fruit drink → berries/freshness → strawberries splashing, leaves flying → vibrant red/pink/green
 
-"Warm golden sun rays flood the frame in slow motion. The brand logo fades in center-frame,
-then dissolves. The product descends slowly into a pool of warm sunlight on a sandy stone
-surface. A small, semi-transparent brand logo is visible in the upper-right corner of the
-frame. The product tilts gently, catching golden light across its surface. Bold white text
-appears on screen: 'Summer Shield.' Upbeat energetic music plays. Bright warm sun tones,
-shallow depth of field, premium commercial style. The brand logo fills the frame as the
-video ends gracefully."
+"Fresh strawberries and green leaves burst through a splash of vibrant pink liquid. The
+brand logo fades in center-frame, then dissolves. The product rises up through the
+strawberry splash with berries and leaves swirling around it. A small, semi-transparent
+brand logo is visible in the upper-right corner of the frame. Droplets of pink liquid
+float around the product as it settles. Bold white text appears on screen: 'Berry Blast.'
+Upbeat energetic music plays. Vibrant red and pink tones with fresh green accents, shallow
+depth of field, premium commercial style. The brand logo fills the frame as the video ends
+gracefully."
 
 WHY THIS WORKS:
-- CREATIVE ANALYSIS drove everything: sunscreen → sun protection → sun rays → warm golden
-- HOOK: "Sun rays flood the frame" — from the product's WORLD (sun protection)
-- PRODUCT REVEAL: Sandy stone surface in sunlight — setting from the sunscreen domain
-- Colors from product's world: warm golden sun tones
+- DYNAMIC HOOK: Strawberries + leaves BURST through pink splash — action, not stillness
+- DYNAMIC REVEAL: Product RISES THROUGH the splash — enters through action
+- ALIVE ENVIRONMENT: Berries, leaves, droplets keep floating around the product
+- Colors from product's world: vibrant red/pink (berry) + fresh green (leaves)
 
 ## EXAMPLE 8-SECOND PROMPT — SAREE (GOLD STANDARD):
 (Product: Silk saree, Highlight: "Pure Silk", Style: Elegant, Music: Cinematic)
-Creative Analysis: silk/fabric → weaving/textiles → threads, loom, flowing fabric → jewel tones
+Creative Analysis: silk/fabric → weaving/textiles → threads, flowing fabric, golden zari → jewel tones
 
-"Golden silk threads drift through the air in slow motion. The brand logo fades in
-center-frame, then dissolves. The product rests gracefully on a carved rosewood surface
-with rich maroon fabric draped beneath. A small, semi-transparent brand logo is visible
-in the upper-right corner of the frame. The product tilts gently, catching soft light
-across its surface. Bold elegant text appears on screen: 'Pure Silk.' Cinematic orchestral
-music plays. Deep maroon and gold tones, soft studio lighting, shallow depth of field,
-premium commercial style. The brand logo fills the frame as the video ends gracefully."
+"Rich silk fabric swirls and unfurls dynamically through the air with golden threads
+trailing behind. The brand logo fades in center-frame, then dissolves. The product
+appears between flowing waves of silk as golden zari threads spiral around it. A small,
+semi-transparent brand logo is visible in the upper-right corner of the frame. The silk
+fabric settles elegantly around the product with threads still floating. Bold elegant text
+appears on screen: 'Pure Silk.' Cinematic orchestral music plays. Deep maroon and gold
+tones, soft studio lighting, shallow depth of field, premium commercial style. The brand
+logo fills the frame as the video ends gracefully."
 
 WHY THIS WORKS:
-- CREATIVE ANALYSIS drove everything: silk → threads → loom/rosewood → jewel tones
-- HOOK: "Golden silk threads drift through the air" — from the product's WORLD (textiles)
-- PRODUCT REVEAL: Carved rosewood + maroon fabric — setting from the saree's domain
+- DYNAMIC HOOK: Silk fabric SWIRLS and UNFURLS — movement and energy, not slow drift
+- DYNAMIC REVEAL: Product APPEARS BETWEEN flowing silk waves — enters through action
+- ALIVE ENVIRONMENT: Golden threads keep spiraling, fabric settles around product
 - Colors from product's world: deep maroon and gold (jewel tones for silk)
 
 ## EXAMPLE 15-SECOND PROMPT — SMARTWATCH (GOLD STANDARD):
@@ -265,19 +295,20 @@ WHY THIS WORKS:
 Style: Neon Glow, Music: Futuristic)
 Creative Analysis: metal/tech → digital/fitness → circuit pulses, data streams → cool blue, neon
 
-"Digital circuit patterns pulse across a dark void. The brand logo fades in center-frame,
-then dissolves. The product sits on an obsidian glass platform with pulsating neon blue and
-pink rim lighting. A small, semi-transparent brand logo is visible in the upper-right corner
-of the frame. The product slowly tilts side to side, catching colored neon reflections across
-its surface. Bold clean text appears on screen: 'Long Battery.' The text fades and new text
-appears: 'Water Resistant.' Then: 'Health Tracking.' Futuristic electronic music pulses.
-Neon lights, dark background, shallow depth of field, premium cyberpunk style. The brand logo
-fills the frame as the video ends gracefully."
+"Electric blue data streams race and collide across a dark surface sending sparks of light
+flying. The brand logo fades in center-frame, then dissolves. The product emerges from the
+center of the data collision with neon blue and pink light trails orbiting around it. A
+small, semi-transparent brand logo is visible in the upper-right corner of the frame.
+Pulsing light rings orbit the product as it hovers. Bold clean text appears on screen:
+'Long Battery.' The text fades and new text appears: 'Water Resistant.' Then: 'Health
+Tracking.' Futuristic electronic music pulses. Neon lights, dark background, shallow depth
+of field, premium cyberpunk style. The brand logo fills the frame as the video ends
+gracefully."
 
 WHY THIS WORKS:
-- CREATIVE ANALYSIS drove everything: tech/metal → digital → circuits → neon blue
-- HOOK: "Digital circuit patterns pulse" — from the product's WORLD (tech/digital)
-- PRODUCT REVEAL: Obsidian glass + neon rim lighting — setting from the tech domain
+- DYNAMIC HOOK: Data streams RACE and COLLIDE — energy and action
+- DYNAMIC REVEAL: Product EMERGES from the data collision — enters through action
+- ALIVE ENVIRONMENT: Neon light trails keep orbiting the product
 - Colors from product's world: neon blue/pink for tech product
 - For 15s (two parts): Part 1 has hook + reveal + first text line,
   Part 2 has remaining text lines + logo close
@@ -435,40 +466,39 @@ LOCK all four values internally: product name, highlight text, visual style, and
 ### Phase C — Choose Video Concept
 Use the CREATIVE ANALYSIS from Phase B to generate 6 DIVERSE video concepts.
 
-Every concept MUST be rooted in the product's WORLD and SENSORY ELEMENTS from your
-creative analysis. The hook, setting, colors, and mood must all trace back to the
-product + highlight — nothing generic.
+Every concept MUST be DYNAMIC and VIBRANT — elements from the product's world are
+in MOTION (flying, splashing, swirling, bursting). The product ENTERS through action.
+Nothing static. The environment stays alive around the product.
 
 Each concept is 2-3 sentences describing:
-- THEMATIC HOOK: A sensory element from the product's WORLD opens the video.
-  (threads for textiles, steam for coffee, water for skincare, circuits for tech...)
-- PRODUCT SETTING: A surface/environment from the product's WORLD.
-  (loom-inspired for saree, roasted wood for coffee, wet marble for skincare...)
-- MOVEMENT: How the product or camera moves (pick from PRODUCT MOVEMENT OPTIONS — vary!)
+- DYNAMIC HOOK: Elements from the product's WORLD in ACTION (flying, splashing, swirling).
+- DYNAMIC ENTRY: How the product ENTERS through those elements (bursts through, rises
+  through, emerges from). Pick from DYNAMIC ENTRY OPTIONS or PRODUCT MOVEMENT OPTIONS.
+- ALIVE ENVIRONMENT: Elements keep moving around the product after entry.
 - COLOR PALETTE: Colors from the product's NATURAL WORLD (from creative analysis).
 
-CRITICAL: All 6 concepts must feel DIFFERENT. Vary hooks, settings, movements, lighting.
-But ALL must stay connected to the product's world — no generic "dark void" or
-"velvet turntable" unless that naturally belongs to this product's domain.
+CRITICAL: All 6 concepts must feel DIFFERENT. Vary hooks, entries, environments.
+But ALL must stay connected to the product's world — dynamic elements must be RELATED
+to the product (silk threads for saree, berries for fruit drink, steam for coffee).
 
 Example — Saree + "Pure Silk" (world: weaving/textiles, colors: jewel tones):
-  "Loom's Thread" — Golden silk threads drift through the air in slow motion as the hook.
-  Product rests on a carved wooden weaving frame with rich maroon fabric beneath. Gentle
-  tilt. Deep maroon and gold tones — the world of handwoven silk.
-  "Fabric Ripple" — A soft breeze sends silk fabric rippling in slow motion as the hook.
-  Product sits on a draped silk surface with soft folds. Slow rotation. Rich emerald
-  and gold tones — luxurious textile feel.
-  "Thread & Gold" — A single golden thread spirals downward as the hook. Product descends
-  onto a dark rosewood surface with delicate thread patterns around it. Descending into
-  frame. Warm rosewood and gold tones.
+  "Silk Storm" — Rich silk fabric swirls and unfurls dynamically through the air with
+  golden threads trailing behind. Product appears between the flowing silk waves as
+  threads spiral around it. Fabric settles elegantly. Deep maroon and gold tones.
+  "Loom's Dance" — Wooden loom shuttles fly across the frame trailing golden threads.
+  Product rises through the web of threads as they weave around it. Threads keep
+  floating. Warm rosewood and gold tones.
+  "Zari Cascade" — Shimmering golden zari threads cascade downward like a waterfall.
+  Product descends through the cascade with threads wrapping around it. Sparkling
+  gold and deep emerald tones.
 
-Example — Smartwatch + "Always On" (world: digital/tech, colors: cool blue, neon):
-  "Digital Pulse" — Circuit patterns pulse across a dark void as the hook. Product sits on
-  obsidian glass with neon blue rim lighting. Product tilts side to side. Cool blue and
-  dark tech tones.
-  "Data Stream" — Streams of light data flow upward as the hook. Product floats above a
-  clean glass surface with subtle reflections. Gentle float. Cool white and electric
-  blue tones.
+Example — Strawberry Drink + "Berry Blast" (world: fresh fruit, colors: red/pink/green):
+  "Berry Burst" — Fresh strawberries and green leaves burst through a splash of pink
+  liquid. Product rises up through the splash with berries swirling around it.
+  Droplets float around. Vibrant red and pink with fresh green.
+  "Fruit Splash" — A wave of strawberry juice crashes across the frame with whole
+  berries tumbling in it. Product emerges from the center of the wave. Berries and
+  leaves orbit the product. Deep red and fresh green tones.
 
 FORBIDDEN: Any concept involving a person, dialogue, opening/dispensing, or the word "reveal".
 
@@ -482,18 +512,17 @@ as raw text — the user needs the "Generate Video" button which only appears vi
 Write the prompt following the PROMPT STRUCTURE above.
 
 CRITICAL RULES FOR THE PROMPT:
-- Follow HOOK → PRODUCT REVEAL → FEATURES sequence.
+- Follow HOOK → DYNAMIC PRODUCT REVEAL → FEATURES sequence.
 - Logo appears THREE times: (1) animated intro center-frame, (2) corner watermark, (3) LOGO CLOSE — fills frame at end
-- Product on a SURFACE (turntable, platform) — never held by anyone
-- PRODUCT moves (rotates, spins, tilts) — camera stays mostly still
-- ONE slow product motion — never multiple movements
+- Product ENTERS through dynamic action — not just placed on a surface
+- Environment stays ALIVE — elements keep moving around the product
+- Dynamic elements must be RELATED to the product (from Creative Analysis)
 - FEATURE TEXT: The user's highlight from Phase B Step 2 MUST appear as on-screen text.
   Each text line MUST be MAX 2-3 words. If user gave a longer phrase, condense it.
   8s: 1 text line (MAX 3 words). 15s: up to 3 text lines (each MAX 3 words).
 - Music mood description — never dialogue or speech
 - No product name — say "the product"
 - No brand name — triggers safety filters
-- Neutral lighting — no "warm golden"
 - One continuous paragraph — no line breaks, no scene labels
 - LOGO CLOSE is the ABSOLUTE LAST sentence — nothing after it.
 
