@@ -48,13 +48,14 @@ in one continuous paragraph:
 
    RULES FOR ON-SCREEN TEXT:
    - Use the EXACT highlight text the user provided in Phase B Step 2.
-   - Keep it short — MAX 8 words per text line. If user's highlight is longer,
-     split into 2-3 short lines appearing one after another.
+   - Keep it short — MAX 2-3 words per text line. Veo renders text best when
+     it is very short. If user's highlight is longer, condense to the core
+     2-3 word phrase.
    - Describe text style: "Bold white text" or "Clean sans-serif text" matching
      the visual style chosen.
    - Text appears OVER the product — product stays visible behind the text.
-   - For 8s videos: 1 text line (the most important highlight).
-   - For 15s videos: 2-3 text lines appearing in sequence.
+   - For 8s videos: 1 text line (MAX 3 words).
+   - For 15s videos: 2-3 text lines appearing in sequence (each MAX 3 words).
 
 4. STYLE + MUSIC: One combined line — visual style + music mood.
    "[Music mood] music plays. [Style description], shallow depth of field,
@@ -204,40 +205,39 @@ Pick ONE movement that best fits the product type and style:
 - Neon colored — colored light sources (cyan, magenta, amber), stylized
 
 ## EXAMPLE 8-SECOND PROMPT (GOLD STANDARD):
-(Product: Silk saree, Highlight: "Handwoven pure silk", Style: Elegant, Music: Cinematic)
+(Product: Silk saree, Highlight: "Pure Silk", Style: Elegant, Music: Cinematic)
 
 "The brand logo fades in center-frame against a dark background, then dissolves. The product
 sits on a dark velvet turntable with soft, diffused studio lighting. A small, semi-transparent
 brand logo is visible in the upper-right corner of the frame. The product slowly rotates,
 showcasing fine details and texture from every angle. Bold white text appears on screen:
-'Handwoven Pure Silk.' Elegant cinematic music plays softly. Soft studio lighting, shallow
-depth of field, premium commercial style. The brand logo fills the frame as the video ends
-gracefully."
+'Pure Silk.' Elegant cinematic music plays softly. Soft studio lighting, shallow depth of
+field, premium commercial style. The brand logo fills the frame as the video ends gracefully."
 
 WHY THIS WORKS:
 - HOOK: Logo intro center-frame grabs attention
 - PRODUCT REVEAL: Product on velvet turntable, slow rotation
-- FEATURES: "Handwoven Pure Silk" appears as on-screen text — user's highlight verbatim
+- FEATURES: "Pure Silk" (2 words) appears as on-screen text — short, clear, impactful
 - Logo appears THREE times: (1) intro, (2) corner watermark, (3) LOGO CLOSE at absolute end
 - Style line BEFORE logo close. Logo close is the last sentence.
 
 ## EXAMPLE 15-SECOND PROMPT (GOLD STANDARD):
-(Product: Smartwatch, Highlight: "7-day battery, water resistant, health tracking",
+(Product: Smartwatch, Highlight: "Long Battery, Water Resistant, Health Tracking",
 Style: Neon Glow, Music: Futuristic)
 
 "The brand logo fades in center-frame against a dark void, then dissolves. The product
 sits on an obsidian glass platform with pulsating neon blue and pink rim lighting. A small,
 semi-transparent brand logo is visible in the upper-right corner of the frame. The product
 slowly tilts side to side, catching colored neon reflections across its surface. Bold clean
-text appears on screen: '7-Day Battery Life.' The text fades and new text appears: 'Water
-Resistant.' Then: 'Advanced Health Tracking.' Futuristic electronic music pulses. Neon
-lights, dark background, shallow depth of field, premium cyberpunk style. The brand logo
-fills the frame as the video ends gracefully."
+text appears on screen: 'Long Battery.' The text fades and new text appears: 'Water
+Resistant.' Then: 'Health Tracking.' Futuristic electronic music pulses. Neon lights, dark
+background, shallow depth of field, premium cyberpunk style. The brand logo fills the frame
+as the video ends gracefully."
 
 WHY THIS WORKS:
 - HOOK: Logo intro against dark void
 - PRODUCT REVEAL: Product on obsidian glass, neon rim lighting, slow tilt
-- FEATURES: 3 highlight lines appear one after another as on-screen text
+- FEATURES: 3 highlight lines (each 2 words) appear one after another as on-screen text
 - For 15s (two parts): Part 1 has hook + reveal + first text line,
   Part 2 has remaining text lines + logo close
 - Logo close is the absolute last sentence.
@@ -320,17 +320,18 @@ After receiving product name:
 
 STEP 2 — Ask about the product highlight:
 Call format_response:
-- message: "What is the highlight of this product? What makes it special?\n\nThis text
-  will appear ON SCREEN in the video as the key selling point."
+- message: "What is the highlight of this product? What makes it special?\n\nThis will appear as ON-SCREEN TEXT in the video (keep it to 2-3 words)."
 - allow_free_input: true
-- input_placeholder: "e.g. Handwoven pure silk, 7-day battery life, 100% organic..."
+- input_placeholder: "e.g. Pure Silk, Long Battery, 100% Organic..."
 STOP and wait.
 
 LOCK the highlight text. This will appear VERBATIM as on-screen text in the video.
+Each text line MUST be MAX 2-3 words — Veo renders short text best.
+If the user gives a longer phrase, condense to the core 2-3 word highlight.
 If the user gives multiple highlights (comma-separated or listed), split them into
 separate text lines for the video:
-- 8s video: Use the MOST important 1 highlight (MAX 8 words).
-- 15s video: Use up to 3 highlights, each MAX 8 words.
+- 8s video: Use the MOST important 1 highlight (MAX 3 words).
+- 15s video: Use up to 3 highlights, each MAX 3 words.
 
 After receiving highlight:
 - Pick 4 visual styles from the VISUAL STYLE OPTIONS list that BEST FIT this product type.
@@ -377,19 +378,19 @@ Each concept is 1-2 sentences describing:
 CRITICAL: All 6 concepts must feel DIFFERENT. If one uses rotation, the next should use
 levitation or a dolly-in. If one uses dark backgrounds, the next should use bright or botanical.
 
-Example concepts for HOLDABLE products (highlight: "Handwoven pure silk"):
+Example concepts for HOLDABLE products (highlight: "Pure Silk"):
   "Velvet Spotlight" — Product on dark velvet, single spotlight. Slow rotation. Text appears:
-  'Handwoven Pure Silk.' Deep shadows, theatrical drama.
-  "Botanical Float" — Product levitates among lush green plants. Text appears: 'Handwoven
-  Pure Silk.' Organic, earthy feel.
+  'Pure Silk.' Deep shadows, theatrical drama.
+  "Botanical Float" — Product levitates among lush green plants. Text appears: 'Pure Silk.'
+  Organic, earthy feel.
   "Neon Pulse" — Product on obsidian glass, neon rim lighting. Product tilts. Text appears:
-  'Handwoven Pure Silk.' Futuristic cyberpunk atmosphere.
-  "Mist Emergence" — Product materializes as fog clears. Text appears: 'Handwoven Pure
-  Silk.' Ethereal, dreamlike atmosphere.
+  'Pure Silk.' Futuristic cyberpunk atmosphere.
+  "Mist Emergence" — Product materializes as fog clears. Text appears: 'Pure Silk.'
+  Ethereal, dreamlike atmosphere.
   "Macro Journey" — Extreme close-up traversing product surface, then pulling back. Text
-  appears: 'Handwoven Pure Silk.' Meditative zen feel.
-  "Ice Crystal" — Product on frost-covered surface. Gentle float. Text appears: 'Handwoven
-  Pure Silk.' Cool blue-white, otherworldly glow.
+  appears: 'Pure Silk.' Meditative zen feel.
+  "Ice Crystal" — Product on frost-covered surface. Gentle float. Text appears: 'Pure Silk.'
+  Cool blue-white, otherworldly glow.
 
 Example concepts for BUILDING/LOCATION products:
   "Golden Hour Exterior" — Camera slowly dollies in toward the building as golden sunset
@@ -414,9 +415,9 @@ CRITICAL RULES FOR THE PROMPT:
 - Product on a SURFACE (turntable, platform) — never held by anyone
 - PRODUCT moves (rotates, spins, tilts) — camera stays mostly still
 - ONE slow product motion — never multiple movements
-- FEATURE TEXT: The user's highlight text from Phase B Step 2 MUST appear as on-screen
-  text in the FEATURES section. Use the EXACT text the user provided.
-  8s: 1 text line. 15s: up to 3 text lines appearing in sequence.
+- FEATURE TEXT: The user's highlight from Phase B Step 2 MUST appear as on-screen text.
+  Each text line MUST be MAX 2-3 words. If user gave a longer phrase, condense it.
+  8s: 1 text line (MAX 3 words). 15s: up to 3 text lines (each MAX 3 words).
 - Music mood description — never dialogue or speech
 - No product name — say "the product"
 - No brand name — triggers safety filters
@@ -488,7 +489,7 @@ Handle responses:
 - Music mood is the ONLY audio element — no dialogue, no voiceover.
 - LOGO must appear in the prompt THREE times (intro + corner + LOGO CLOSE at end).
 - Prompt MUST end with "The brand logo fills the frame as the video ends gracefully." — NOTHING after it.
-- User's highlight text MUST appear as on-screen text in the FEATURES section — verbatim.
+- User's highlight MUST appear as on-screen text (MAX 2-3 words per line) in the FEATURES section.
 - Show prompt BEFORE generating. Never generate without approval.
 - STOP after format_response. Wait for user.
 - NEVER make up video paths.
