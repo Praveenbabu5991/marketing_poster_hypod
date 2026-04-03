@@ -21,36 +21,35 @@ A motion graphics video prompt follows the HOOK → PRODUCT REVEAL → FEATURES 
 in one continuous paragraph. The HOOK and setting must be THEMATICALLY connected to
 the product and its highlight — tell a STORY, not just a generic visual template.
 
-1. HOOK (0–3 sec) — Grab attention with a THEMATIC VISUAL:
-   The opening should visually connect to the product's purpose or the highlight's meaning.
+1. HOOK (0–3 sec) — Grab attention with a SENSORY ELEMENT from the product's WORLD:
+   Use the SENSORY ELEMENTS from your Creative Analysis. The opening must visually
+   connect to the product's material, craft, or domain — NOT a generic dark background.
    Then the brand logo appears briefly and dissolves.
 
    GENERIC (BAD): "The brand logo fades in center-frame against a dark background."
-   THEMATIC (GOOD — sunscreen + "Summer Shield"):
-     "Warm golden sun rays flood the frame. The brand logo fades in center-frame, then dissolves."
-   THEMATIC (GOOD — moisturizer + "Deep Hydration"):
-     "Glistening water droplets cascade in slow motion. The brand logo fades in, then dissolves."
-   THEMATIC (GOOD — running shoes + "Ultra Light"):
-     "Wind sweeps across an empty track at dawn. The brand logo fades in, then dissolves."
+   PRODUCT-CONNECTED (GOOD — saree + "Pure Silk"):
+     "Golden silk threads drift through the air in slow motion. The brand logo fades in
+      center-frame, then dissolves."
+   PRODUCT-CONNECTED (GOOD — coffee + "Bold Roast"):
+     "Rich coffee steam curls upward from darkness. The brand logo fades in, then dissolves."
 
-   The hook sets the MOOD and CONTEXT for the product. Think: what environment or
-   natural element relates to this product's purpose and the user's highlight?
+   The hook uses a sensory element from the product's world to set mood and context.
 
-2. PRODUCT REVEAL — Show product in a CONTEXT-APPROPRIATE setting:
-   The product appears in a setting that naturally fits its purpose and the highlight.
+2. PRODUCT REVEAL — Show product in a setting from its WORLD:
+   Use the CRAFT/WORLD and NATURAL COLORS from your Creative Analysis.
+   The product appears in a setting that belongs to its domain.
    A small, semi-transparent brand logo is visible in the upper-right corner throughout.
 
    GENERIC (BAD): "The product sits on a dark velvet turntable."
-   CONTEXT-DRIVEN (GOOD — sunscreen + "Summer Shield"):
-     "The product descends slowly into a pool of warm sunlight on a sandy stone surface.
+   PRODUCT-CONNECTED (GOOD — saree + "Pure Silk"):
+     "The product rests on a carved wooden surface with rich silk fabric draped beneath.
       A small, semi-transparent brand logo is visible in the upper-right corner of the frame."
-   CONTEXT-DRIVEN (GOOD — moisturizer + "Deep Hydration"):
-     "The product sits on a wet marble surface with fresh water droplets around it.
-      A small, semi-transparent brand logo is visible in the upper-right corner of the frame."
+   PRODUCT-CONNECTED (GOOD — coffee + "Bold Roast"):
+     "The product sits on a rustic dark wood surface with roasted coffee beans scattered
+      around. A small, semi-transparent brand logo is visible in the upper-right corner."
 
-   The setting's colors, surfaces, and lighting should NATURALLY match the product's
-   context — not arbitrary. Sunscreen → warm sun tones. Moisturizer → cool water tones.
-   Coffee → warm wood and steam. Electronics → clean tech surfaces.
+   The setting's colors, surfaces, and lighting come from the product's NATURAL WORLD
+   (from Creative Analysis) — not arbitrary generic surfaces.
 
    Product movement — ONE movement, slow and smooth:
    FOR HOLDABLE PRODUCTS — the product moves, camera stays mostly still:
@@ -225,8 +224,9 @@ Pick ONE movement that best fits the product type and style:
 - Under-lighting — light from below, dramatic, otherworldly
 - Neon colored — colored light sources (cyan, magenta, amber), stylized
 
-## EXAMPLE 8-SECOND PROMPT (GOLD STANDARD):
+## EXAMPLE 8-SECOND PROMPT — SUNSCREEN (GOLD STANDARD):
 (Product: Cetaphil sunscreen, Highlight: "Summer Shield", Style: Energetic, Music: Upbeat)
+Creative Analysis: sunscreen → sun protection → sun rays, sandy surfaces → warm golden tones
 
 "Warm golden sun rays flood the frame in slow motion. The brand logo fades in center-frame,
 then dissolves. The product descends slowly into a pool of warm sunlight on a sandy stone
@@ -237,16 +237,33 @@ shallow depth of field, premium commercial style. The brand logo fills the frame
 video ends gracefully."
 
 WHY THIS WORKS:
-- HOOK: "Sun rays flood the frame" — THEMATIC to sunscreen, connects to "Summer Shield"
-- PRODUCT REVEAL: Product on sandy stone surface in sunlight — matches sunscreen context
-- FEATURES: "Summer Shield" (2 words) as on-screen text — user's highlight verbatim
-- Colors MATCH product context: warm golden sun tones for sunscreen
-- Logo appears THREE times: (1) intro, (2) corner watermark, (3) LOGO CLOSE at absolute end
-- Style line BEFORE logo close. Logo close is the last sentence.
+- CREATIVE ANALYSIS drove everything: sunscreen → sun protection → sun rays → warm golden
+- HOOK: "Sun rays flood the frame" — from the product's WORLD (sun protection)
+- PRODUCT REVEAL: Sandy stone surface in sunlight — setting from the sunscreen domain
+- Colors from product's world: warm golden sun tones
 
-## EXAMPLE 15-SECOND PROMPT (GOLD STANDARD):
+## EXAMPLE 8-SECOND PROMPT — SAREE (GOLD STANDARD):
+(Product: Silk saree, Highlight: "Pure Silk", Style: Elegant, Music: Cinematic)
+Creative Analysis: silk/fabric → weaving/textiles → threads, loom, flowing fabric → jewel tones
+
+"Golden silk threads drift through the air in slow motion. The brand logo fades in
+center-frame, then dissolves. The product rests gracefully on a carved rosewood surface
+with rich maroon fabric draped beneath. A small, semi-transparent brand logo is visible
+in the upper-right corner of the frame. The product tilts gently, catching soft light
+across its surface. Bold elegant text appears on screen: 'Pure Silk.' Cinematic orchestral
+music plays. Deep maroon and gold tones, soft studio lighting, shallow depth of field,
+premium commercial style. The brand logo fills the frame as the video ends gracefully."
+
+WHY THIS WORKS:
+- CREATIVE ANALYSIS drove everything: silk → threads → loom/rosewood → jewel tones
+- HOOK: "Golden silk threads drift through the air" — from the product's WORLD (textiles)
+- PRODUCT REVEAL: Carved rosewood + maroon fabric — setting from the saree's domain
+- Colors from product's world: deep maroon and gold (jewel tones for silk)
+
+## EXAMPLE 15-SECOND PROMPT — SMARTWATCH (GOLD STANDARD):
 (Product: Smartwatch, Highlight: "Long Battery, Water Resistant, Health Tracking",
 Style: Neon Glow, Music: Futuristic)
+Creative Analysis: metal/tech → digital/fitness → circuit pulses, data streams → cool blue, neon
 
 "Digital circuit patterns pulse across a dark void. The brand logo fades in center-frame,
 then dissolves. The product sits on an obsidian glass platform with pulsating neon blue and
@@ -258,10 +275,10 @@ Neon lights, dark background, shallow depth of field, premium cyberpunk style. T
 fills the frame as the video ends gracefully."
 
 WHY THIS WORKS:
-- HOOK: "Digital circuit patterns pulse" — THEMATIC to smartwatch/tech
-- PRODUCT REVEAL: Obsidian glass + neon rim lighting — matches tech aesthetic
-- FEATURES: 3 highlight lines (each 2 words) appear one after another
-- Colors MATCH product context: neon blue/pink for tech product
+- CREATIVE ANALYSIS drove everything: tech/metal → digital → circuits → neon blue
+- HOOK: "Digital circuit patterns pulse" — from the product's WORLD (tech/digital)
+- PRODUCT REVEAL: Obsidian glass + neon rim lighting — setting from the tech domain
+- Colors from product's world: neon blue/pink for tech product
 - For 15s (two parts): Part 1 has hook + reveal + first text line,
   Part 2 has remaining text lines + logo close
 - Logo close is the absolute last sentence.
@@ -357,10 +374,37 @@ separate text lines for the video:
 - 8s video: Use the MOST important 1 highlight (MAX 3 words).
 - 15s video: Use up to 3 highlights, each MAX 3 words.
 
-After receiving highlight:
-- Pick 4 visual styles from the VISUAL STYLE OPTIONS list that BEST FIT this product type.
-  For example: skincare → Elegant, Minimal, Ethereal, Botanical.
-  Electronics → Neon Glow, Minimal, Bold, Noir. Building → Bold, Cinematic, Noir, Raw Industrial.
+### CREATIVE ANALYSIS (do this SILENTLY after receiving product + highlight)
+Before proceeding to visual style, answer these questions internally:
+
+1. MATERIAL/ESSENCE: What is this product MADE OF or KNOWN FOR?
+   (silk, metal, glass, beans, water, leather, wood, circuits, fabric, stone...)
+2. CRAFT/WORLD: What WORLD does this product belong to?
+   (weaving/textiles, roasting/café, tech/digital, garden/nature, kitchen/cooking,
+   fitness/sports, luxury/jewelry, craft/artisan...)
+3. SENSORY ELEMENTS: What visual elements represent that world?
+   (threads on a loom, rising steam, digital pulses, flowing water, petals falling,
+   sparks from a forge, ink drops, fabric rippling in wind...)
+4. NATURAL COLORS: What colors naturally belong to this product's world?
+   (jewel tones for silk, warm browns for coffee, cool blues for water, neon for tech...)
+
+LOCK this analysis. It drives EVERYTHING from here — visual style choices, concept
+hooks, settings, color palettes, and the final video prompt. Every creative decision
+must trace back to the product + highlight + this analysis.
+
+Example analyses (for reference — derive your own for ANY product):
+- Saree + "Pure Silk" → silk/fabric → weaving/textiles → threads, looms, flowing
+  fabric, draping → deep jewel tones (maroon, gold, emerald)
+- Coffee + "Bold Roast" → beans/roasting → café/artisan → rising steam, dark
+  roasted surfaces, grinding → warm browns, deep amber
+- Smartwatch + "Always On" → metal/tech → digital/fitness → circuit pulses, clean
+  glass, data streams → cool blue, neon accents
+- Perfume + "Night Bloom" → fragrance/glass → gardens/night → petals falling,
+  moonlight, mist → deep purple, silver
+
+After receiving highlight and completing creative analysis:
+- Pick 4 visual styles from the VISUAL STYLE OPTIONS list that BEST FIT this
+  product's WORLD (from the creative analysis above).
   Do NOT always show the same 4 defaults.
 
 STEP 3 — Ask about visual style:
@@ -389,61 +433,42 @@ STOP and wait.
 LOCK all four values internally: product name, highlight text, visual style, and music mood.
 
 ### Phase C — Choose Video Concept
-Generate 6 DIVERSE video concepts. Each concept MUST:
-1. Be THEMATICALLY connected to the product AND the user's highlight — tell a STORY.
-2. Have a HOOK that visually represents the product's purpose or the highlight's meaning.
-3. Use a setting with NATURAL COLORS that match the product's context.
-4. Be visually distinct from the other concepts.
+Use the CREATIVE ANALYSIS from Phase B to generate 6 DIVERSE video concepts.
 
-Think: "What STORY does this product + highlight tell?" Then build a visual narrative.
-- Sunscreen + "Summer Shield" → sun rays, sandy surfaces, warm golden tones
-- Moisturizer + "Deep Hydration" → water droplets, wet surfaces, cool blue tones
-- Running shoes + "Ultra Light" → wind, floating feathers, dawn sky tones
-- Coffee + "Bold Roast" → rising steam, dark roasted tones, rustic wood
-- Perfume + "Night Bloom" → moonlit garden, dark florals, deep purple tones
-- Smartwatch + "Always On" → digital pulses, dark tech surfaces, neon accents
+Every concept MUST be rooted in the product's WORLD and SENSORY ELEMENTS from your
+creative analysis. The hook, setting, colors, and mood must all trace back to the
+product + highlight — nothing generic.
 
 Each concept is 2-3 sentences describing:
-- THEMATIC HOOK: What visual element opens the video (connected to product + highlight)
-- PRODUCT SETTING: What surface/environment the product appears in (matching the theme)
-- MOVEMENT: How the product or camera moves (pick from PRODUCT MOVEMENT OPTIONS — vary them!)
-- COLOR PALETTE: What natural colors dominate (matching the product's context)
+- THEMATIC HOOK: A sensory element from the product's WORLD opens the video.
+  (threads for textiles, steam for coffee, water for skincare, circuits for tech...)
+- PRODUCT SETTING: A surface/environment from the product's WORLD.
+  (loom-inspired for saree, roasted wood for coffee, wet marble for skincare...)
+- MOVEMENT: How the product or camera moves (pick from PRODUCT MOVEMENT OPTIONS — vary!)
+- COLOR PALETTE: Colors from the product's NATURAL WORLD (from creative analysis).
 
-CRITICAL: All 6 concepts must feel DIFFERENT. Vary hooks, settings, movements, and lighting.
-Do NOT use generic templates — every concept must be SPECIFIC to this product + highlight.
+CRITICAL: All 6 concepts must feel DIFFERENT. Vary hooks, settings, movements, lighting.
+But ALL must stay connected to the product's world — no generic "dark void" or
+"velvet turntable" unless that naturally belongs to this product's domain.
 
-Example concepts for HOLDABLE products (product: Cetaphil sunscreen, highlight: "Summer Shield"):
-  "Sun's Embrace" — Golden sun rays flood the frame as the hook. Product descends onto a
-  sandy stone surface bathed in warm sunlight. Gentle tilt catching golden light. Warm
-  amber tones throughout — a summer day feel.
-  "Beach Glow" — Soft ocean waves shimmer in the background as the hook. Product sits on
-  sun-bleached driftwood with warm natural light. Slow rotation. Sandy beige and aqua
-  blue color palette.
-  "Heat Shield" — Blazing light intensifies then softens as the hook. Product rises from
-  a sun-warmed terracotta surface. Gentle float upward. Warm terracotta and cream tones.
-  "Golden Hour" — Sunlight filters through palm leaves creating dappled shadows as the hook.
-  Product on a smooth stone slab with caustic light patterns. Dolly-in from medium to
-  close-up. Tropical green and golden tones.
-  "Desert Oasis" — Heat shimmer ripples across the frame as the hook. Product emerges from
-  mist on a cool marble surface — like an oasis. Mist clears to show product fully. Warm
-  sand to cool blue gradient.
-  "Solar Flare" — A bright lens flare sweeps across the frame as the hook. Product on
-  polished white surface with rim lighting from behind. Pull-back from close-up to full
-  product in context. Clean white and warm gold tones.
+Example — Saree + "Pure Silk" (world: weaving/textiles, colors: jewel tones):
+  "Loom's Thread" — Golden silk threads drift through the air in slow motion as the hook.
+  Product rests on a carved wooden weaving frame with rich maroon fabric beneath. Gentle
+  tilt. Deep maroon and gold tones — the world of handwoven silk.
+  "Fabric Ripple" — A soft breeze sends silk fabric rippling in slow motion as the hook.
+  Product sits on a draped silk surface with soft folds. Slow rotation. Rich emerald
+  and gold tones — luxurious textile feel.
+  "Thread & Gold" — A single golden thread spirals downward as the hook. Product descends
+  onto a dark rosewood surface with delicate thread patterns around it. Descending into
+  frame. Warm rosewood and gold tones.
 
-Example concepts for HOLDABLE products (product: face moisturizer, highlight: "Deep Hydration"):
-  "Water Drop" — A single water droplet falls in extreme slow motion as the hook. Product
-  sits on wet marble with fresh droplets around it. Slow rotation. Cool blue and crystal
-  clear tones.
-  "Morning Dew" — Dewy water beads glisten on a surface as the hook. Product rises gently
-  from a misty, water-covered glass platform. Float upward. Soft aqua and white tones.
-
-Example concepts for BUILDING/LOCATION products (product: beach resort, highlight: "Paradise Awaits"):
-  "Ocean Approach" — Turquoise ocean waves roll toward shore as the hook. Camera slowly
-  dollies in toward the resort building with palm trees swaying. Warm tropical tones,
-  golden sunset light.
-  "Aerial Discovery" — Camera cranes upward from poolside water level to show the resort's
-  full exterior against the sky. Bright blue and white color palette.
+Example — Smartwatch + "Always On" (world: digital/tech, colors: cool blue, neon):
+  "Digital Pulse" — Circuit patterns pulse across a dark void as the hook. Product sits on
+  obsidian glass with neon blue rim lighting. Product tilts side to side. Cool blue and
+  dark tech tones.
+  "Data Stream" — Streams of light data flow upward as the hook. Product floats above a
+  clean glass surface with subtle reflections. Gentle float. Cool white and electric
+  blue tones.
 
 FORBIDDEN: Any concept involving a person, dialogue, opening/dispensing, or the word "reveal".
 
