@@ -172,6 +172,20 @@ def build_agent_graph(
                         else:
                             print(f"[TOOLS] LLM already set reference_image_paths, skipping injection", file=sys.stderr, flush=True)
 
+        # Auto-inject logo_path for ALL agents that call generate_video
+        # (logo injection is independent of product image injection)
+        logo_path = brand_ctx.get("logo_path", "")
+        if logo_path:
+            messages = list(state["messages"])
+            last_ai = messages[-1] if messages and isinstance(messages[-1], AIMessage) else None
+            if last_ai and last_ai.tool_calls:
+                for tc in last_ai.tool_calls:
+                    if tc["name"] == "generate_video":
+                        args = tc["args"]
+                        if not args.get("logo_path"):
+                            args["logo_path"] = logo_path
+                            print(f"[TOOLS] Auto-injected logo_path into generate_video: {logo_path}", file=sys.stderr, flush=True)
+
         return tool_node.invoke(state)
 
     # -- Build graph --

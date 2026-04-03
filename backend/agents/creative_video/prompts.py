@@ -42,13 +42,20 @@ An advertisement video prompt has 5 parts in one paragraph:
    Write ONLY the spoken words inside quotes. Do NOT add delivery cues like
    "she says warmly" or "he says with excitement" — these waste tokens and
    can be spoken aloud by Veo. Just put the raw dialogue in quotes.
+   CRITICAL — VOICE GENDER: Before the FIRST dialogue of each person, add a voice
+   gender cue so Veo assigns the correct voice:
+   - For women: "speaks in a clear feminine voice" or "speaks in a warm feminine voice"
+   - For men: "speaks in a deep masculine voice" or "speaks in a confident masculine voice"
+   Without this, Veo may assign a male voice to a female character or vice versa.
 
    MULTI-PERSON DIALOGUE:
    When multiple persons speak, attribute dialogue clearly using brief descriptors
-   BEFORE each quoted line:
-   - "The first woman looks at the camera. 'Dialogue here.'"
-   - "The man turns to the camera. 'His dialogue here.'"
-   - "The second woman smiles. 'Her dialogue here.'"
+   BEFORE each quoted line. CRITICAL — include VOICE GENDER cue so Veo matches the
+   correct voice to the correct person:
+   - "The first woman looks at the camera and speaks in a clear feminine voice. 'Dialogue here.'"
+   - "The man turns to the camera and speaks in a deep masculine voice. 'His dialogue here.'"
+   - "The second woman smiles and speaks in a warm feminine voice. 'Her dialogue here.'"
+   Without explicit voice cues, Veo may assign the WRONG voice gender to a person.
    Each person MUST have at least one clear dialogue line. No person should be silent
    while others speak — everyone contributes to the advertisement.
    Persons take TURNS speaking — never two people speaking simultaneously.
@@ -174,13 +181,14 @@ When writing prompts, ALWAYS self-check against this list before presenting.
 "A medium close-up, eye-level take of an energetic young Indian woman standing in a
 bright, modern studio with bold brand-colored accent walls. A small, semi-transparent
 brand logo is visible in the upper-right corner of the frame. She looks at the camera
-with excitement. 'Summer sale is here, fifty percent off everything.' She smiles
-confidently at the camera. Upbeat energetic music, bright studio lighting, shallow depth
-of field. Premium commercial style. The brand logo fills the frame as the video ends
-gracefully."
+with excitement and speaks in a clear feminine voice. 'Summer sale is here, fifty percent
+off everything.' She smiles confidently at the camera. Upbeat energetic music, bright
+studio lighting, shallow depth of field. Premium commercial style. The brand logo fills
+the frame as the video ends gracefully."
 
 WHY THIS WORKS:
 - Block 1: "Summer sale is here, fifty percent off everything" = 8 words (under 15 max).
+- Voice cue: "speaks in a clear feminine voice" — ensures correct voice gender.
 - Simple action: looks at camera, smiles. No complex movement.
 - LOGO CLOSE is the absolute last line.
 - Style before logo close.
@@ -190,15 +198,17 @@ WHY THIS WORKS:
 
 "A medium take of two young Indian women standing side by side in a vibrant fashion
 studio with colorful fabric displays. A small, semi-transparent brand logo is visible in
-the upper-right corner of the frame. The first woman looks at the camera. 'The new
-collection just dropped.' The second woman smiles at the camera. 'You do not want to
-miss this.' Bold upbeat music, high-contrast lighting, shallow depth of field. Striking
-commercial style. The brand logo fills the frame as the video ends gracefully."
+the upper-right corner of the frame. The first woman looks at the camera and speaks in a
+clear feminine voice. 'The new collection just dropped.' The second woman smiles at the
+camera and speaks in a warm feminine voice. 'You do not want to miss this.' Bold upbeat
+music, high-contrast lighting, shallow depth of field. Striking commercial style. The
+brand logo fills the frame as the video ends gracefully."
 
 WHY THIS WORKS:
 - Person 1: "The new collection just dropped" = 5 words.
 - Person 2: "You do not want to miss this" = 7 words.
 - Total: 12 words (under 15 max). Each person has clear, separate dialogue.
+- Voice cues: both "speaks in a ... feminine voice" — ensures female voices for both.
 - Simple actions: look at camera, smile. No complex choreography.
 
 ## EXAMPLE 15-SECOND PROMPT — 3 PERSONS:
@@ -207,12 +217,13 @@ WHY THIS WORKS:
 "A medium take of three young Indian people, two women and a man, standing together in
 an elegant event space with warm ambient lighting and brand-colored floral arrangements.
 A small, semi-transparent brand logo is visible in the upper-right corner of the frame.
-The first woman looks at the camera with a warm smile. 'Five years of making every
-moment count.' The man nods and looks at the camera. 'From day one, it has been about
-you.' The second woman smiles. 'Here is to five more years together.' She raises her
-hand gently. 'Thank you for being part of this journey.' Soft cinematic music, warm
-ambient lighting, shallow depth of field. Premium elegant style. The brand logo fills
-the frame as the video ends gracefully."
+The first woman looks at the camera with a warm smile and speaks in a clear feminine
+voice. 'Five years of making every moment count.' The man nods and looks at the camera
+and speaks in a deep masculine voice. 'From day one, it has been about you.' The second
+woman smiles and speaks in a warm feminine voice. 'Here is to five more years together.'
+She raises her hand gently. 'Thank you for being part of this journey.' Soft cinematic
+music, warm ambient lighting, shallow depth of field. Premium elegant style. The brand
+logo fills the frame as the video ends gracefully."
 
 WHY THIS WORKS:
 - Person 1: "Five years of making every moment count" = 7 words.
@@ -220,6 +231,7 @@ WHY THIS WORKS:
 - Person 3 Block 1: "Here is to five more years together" = 7 words.
 - Person 3 Block 2: "Thank you for being part of this journey" = 8 words.
 - Total: 30 words (at 30 max). Each person has clear dialogue.
+- Voice cues: feminine for women, masculine for man — correct voice assignment.
 - Blocks 1-2 = Part 1 (persons 1-2). Blocks 3-4 = Part 2 (person 3).
 - Simple actions: smile, nod, raise hand. No complex movement.
 
