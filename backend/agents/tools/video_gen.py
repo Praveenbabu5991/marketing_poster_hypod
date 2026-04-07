@@ -1134,20 +1134,9 @@ def generate_video(
             "branded": bool(logo_path or brand_name),
         }
 
-    # --- Post-processing: overlay logo watermark via ffmpeg ---
-    # Guarantees the brand logo is always visible as a top-right watermark,
-    # even when the RAI safety filter forced us to drop the logo reference image.
-    if res.get("status") == "success" and logo_path:
-        video_path = res["video_path"]
-        overlay_path = video_path.replace(".mp4", "_branded.mp4")
-        if _overlay_logo_on_video(video_path, logo_path, overlay_path):
-            # Replace original with branded version
-            try:
-                os.replace(overlay_path, video_path)
-                print(f"[VIDEO] Logo watermark applied successfully", file=_sys2.stderr, flush=True)
-            except Exception as e:
-                print(f"[VIDEO] Failed to replace with branded video: {e}", file=_sys2.stderr, flush=True)
-        else:
-            print(f"[VIDEO] Logo watermark skipped (overlay failed)", file=_sys2.stderr, flush=True)
+    # NOTE: ffmpeg logo overlay removed — Veo handles logo via reference image +
+    # prompt instructions. The ffmpeg overlay was causing duplicate logos (Veo renders
+    # one from prompt, ffmpeg adds another). Logo is passed as reference_image with
+    # reference_type="asset" and the prompt describes placement.
 
     return res
