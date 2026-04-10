@@ -494,9 +494,14 @@ export function Calendar() {
         setPlanPopoverOpen(true);
         return;
       }
+      // In planner mode, enable the plan watcher so any calendar_plan
+      // in the agent's response gets applied to the calendar
+      if (sidebarMode === 'planner') {
+        expectingPlanRef.current = true;
+      }
       sendMessage(text);
     },
-    [activeSessionId, sendMessage],
+    [activeSessionId, sendMessage, sidebarMode],
   );
 
   async function handleApproveAndGenerate(slotId: string, config?: SlotConfig) {
