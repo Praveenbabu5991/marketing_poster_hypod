@@ -35,7 +35,7 @@ export function CampaignPopover({ year, month, onSubmit, onClose }: CampaignPopo
   const minDate = `${year}-${pad(month)}-01`;
   const maxDate = defaultTo;
 
-  const maxPosts = useMemo(() => Math.min(10, daysBetween(fromDate, toDate)), [fromDate, toDate]);
+  const maxPosts = useMemo(() => daysBetween(fromDate, toDate), [fromDate, toDate]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

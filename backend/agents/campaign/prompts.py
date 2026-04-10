@@ -117,16 +117,28 @@ If detected:
     format_response(
       message="Here is your campaign plan...",
       media={"campaign_plan": [
-        {"date": "2026-02-07", "post_type": "creative_video", "post_idea": "Love is a Journey — cinematic brand film", "event_name": "Valentine Week"},
-        {"date": "2026-02-09", "post_type": "single_post", "post_idea": "5 Travel Destinations for Couples", "event_name": "Valentine Week"},
-        {"date": "2026-02-11", "post_type": "ugc", "post_idea": "Real Couple's Travel Story testimonial", "event_name": "Valentine Week"},
-        {"date": "2026-02-13", "post_type": "motion_graphics", "post_idea": "Product feature showcase — travel essentials", "event_name": "Valentine Week"},
-        {"date": "2026-02-14", "post_type": "sales_poster", "post_idea": "Valentine's Day 20% Off — limited offer", "event_name": "Valentine Week"}
+        {"date": "2026-02-07", "post_type": "creative_video", "post_idea": "Love is a Journey — cinematic brand film", "event_name": "Valentine Week", "event_type": "festival", "posting_time": "19:00"},
+        {"date": "2026-02-09", "post_type": "single_post", "post_idea": "5 Travel Destinations for Couples", "event_name": "Valentine Week", "event_type": "brand", "posting_time": "12:00"},
+        {"date": "2026-02-11", "post_type": "ugc", "post_idea": "Real Couple's Travel Story testimonial", "event_name": "Valentine Week", "event_type": "brand", "posting_time": "11:00"},
+        {"date": "2026-02-13", "post_type": "motion_graphics", "post_idea": "Product feature showcase — travel essentials", "event_name": "Valentine Week", "event_type": "brand", "posting_time": "10:00"},
+        {"date": "2026-02-14", "post_type": "sales_poster", "post_idea": "Valentine's Day 20% Off — limited offer", "event_name": "Valentine Week", "event_type": "festival", "posting_time": "09:00"}
       ]},
       choices=[{"id": "1", "label": "Start Generating"}, {"id": "2", "label": "Tweak the Plan"}],
       allow_free_input=true
     )
-  Each item MUST have: date (ISO), post_type (from CONTENT TYPE GUIDE), post_idea (topic), event_name (campaign theme).
+  Each item MUST have ALL these fields:
+    - date: ISO format (e.g. "2026-04-03")
+    - post_type: from CONTENT TYPE GUIDE (e.g. "single_post", "ugc", "motion_graphics")
+    - post_idea: brief description of the post concept
+    - event_name: campaign theme name
+    - event_type: one of "festival", "trending", "brand", "regular" — this controls the icon on the calendar
+    - posting_time: HH:MM in 24-hour format — optimal time for this post type
+  Posting time guidelines (same as content calendar):
+    - B2B / Professional: 08:00-10:00 weekdays
+    - Fashion / Lifestyle: 11:00-13:00 or 19:00-21:00
+    - Food & Beverage: 11:00-12:00 or 17:00-19:00
+    - Technology: 09:00-11:00
+    - General consumer: 12:00-13:00 or 19:00-21:00
 - STOP and wait for approval.
 - Then continue: Phase E (Post-by-Post) → Phase F (Summary).
 
@@ -230,8 +242,8 @@ If posts per week is missing: call format_response asking how many posts per wee
    Apply the campaign arc mapping + content pillar rotation + variety rules from the guide.
 2. Call format_response to show the plan and ask for approval.
    - CRITICAL: Include a "campaign_plan" array in the media parameter (see Trigger 1 example above).
-     Each item must have: date, post_type, post_idea, event_name.
-     This is required for the frontend to create calendar slots.
+     Each item must have: date, post_type, post_idea, event_name, event_type, posting_time.
+     This is required for the frontend to create calendar slots with proper icons and times.
    - Choices: "Start Generating" and "Tweak the Plan"
    - Set allow_free_input=true.
 3. STOP and wait for approval.

@@ -246,8 +246,10 @@ export function Calendar() {
         addSlot(plan.id, {
           date,
           event_name: rec.event_name || '',
+          event_type: rec.event_type || 'brand',
           post_type: rec.post_type || 'single_post',
           post_idea: rec.post_idea || '',
+          posting_time: rec.posting_time || '',
           status: 'suggested',
           session_id: activeSessionId,
         })
@@ -690,7 +692,7 @@ export function Calendar() {
       {planPopoverOpen && (
         <PlanPopover
           maxDays={maxDays}
-          defaultCount={selectedBrand?.max_posts_per_month ?? 12}
+          defaultCount={selectedBrand?.max_posts_per_month ?? maxDays}
           isRegenerate={plan?.status === 'active'}
           onSubmit={triggerPlanGeneration}
           onClose={() => setPlanPopoverOpen(false)}
