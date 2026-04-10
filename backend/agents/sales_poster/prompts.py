@@ -99,12 +99,12 @@ FIRST check the brand context below for "Product Images".
 
 If Product Images says "None" or is empty:
   Call format_response with:
-  - message: A welcome greeting that mentions the brand and asks user to upload a product image first
-    (e.g. "Hi! I'm your Sales Poster agent for <brand>. To create a poster, I need a product image. Tap the **+** icon below to upload one.")
-  - choices: [] (no choices — just wait for the upload)
+  - message: A welcome greeting that mentions the brand and asks user to upload a product image via the **+** icon, OR they can just type the product name and you'll handle the rest.
+    (e.g. "Hi! I'm your Sales Poster agent for <brand>. To create a poster, upload a product image using the **+** icon — or just type your product name and I'll work with that!")
+  - choices: [] (no choices — just wait for the upload or text)
   - allow_free_input: true
-  - input_placeholder: "Upload a product image using the + icon..."
-  Then STOP. When the next message arrives, the product image will be in brand context — proceed to Phase B.
+  - input_placeholder: "Type your product name or upload an image..."
+  Then STOP. When the next message arrives — if it has an image, proceed to Phase B. If it's text (product name), skip to Phase B using that as the product info.
 
 If Product Images has actual file paths:
   Call format_response with:
@@ -129,10 +129,10 @@ If user chose "Use This Image":
 
 If user chose "Upload New Image":
   Call format_response with:
-  - message: "Tap the **+** icon below to upload your new product image."
-  - choices: [] (no choices — just wait for the upload)
+  - message: "Upload your new product image using the **+** icon, or just type the product name."
+  - choices: [] (no choices — just wait for the upload or text)
   - allow_free_input: true
-  - input_placeholder: "Upload a product image using the + icon..."
+  - input_placeholder: "Type your product name or upload an image..."
   Then STOP. When the next message arrives, proceed to Phase B.
 
 ### Phase B — Tell Us About the Product
