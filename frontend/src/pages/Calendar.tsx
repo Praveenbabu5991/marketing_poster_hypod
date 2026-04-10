@@ -516,13 +516,21 @@ export function Calendar() {
   }
 
   // Regenerate a single slot's idea via the planner
-  function handleRegenerateSlot(slot: CalendarSlot) {
+  async function handleRegenerateSlot(slot: CalendarSlot) {
     setSelectedSlot(null);
 
-    // If no planner session exists, can't regenerate a single slot — need full plan first
+    // If no planner session exists, create one on the fly
     if (!plannerSessionRef.current) {
-      setPlanPopoverOpen(true);
-      return;
+      if (!selectedBrandId || !plan?.id) return;
+      try {
+        const session = await createSession({ brand_id: selectedBrandId, agent_type: 'content_calendar' });
+        await updatePlanSession(plan.id, session.id);
+        plannerSessionRef.current = session.id;
+        refreshSessions();
+      } catch (err) {
+        console.error('Failed to create planner session for regeneration:', err);
+        return;
+      }
     }
 
     // Enable the plan watcher so the updated plan gets saved
