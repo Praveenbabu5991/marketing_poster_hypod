@@ -45,7 +45,7 @@ def _retry_with_backoff(func, max_retries: int = 5, base_delay: float = 5.0):
                 return future.result(timeout=_REQUEST_TIMEOUT)
         except concurrent.futures.TimeoutError:
             last_error = TimeoutError(f"Request timed out after {_REQUEST_TIMEOUT}s")
-            logger.warning("[IMAGE] Attempt %d timed out", attempt + 1)
+            print(f"[IMAGE] Attempt {attempt + 1} timed out after {_REQUEST_TIMEOUT}s", file=sys.stderr, flush=True)
         except Exception as e:
             last_error = e
             error_str = str(e).lower()
@@ -53,10 +53,10 @@ def _retry_with_backoff(func, max_retries: int = 5, base_delay: float = 5.0):
                 raise
             if "api" in error_str and "key" in error_str:
                 raise
-            logger.warning("[IMAGE] Attempt %d failed: %s", attempt + 1, str(e)[:200])
+            print(f"[IMAGE] Attempt {attempt + 1} failed: {str(e)[:200]}", file=sys.stderr, flush=True)
         if attempt < max_retries - 1:
             delay = base_delay * (2 ** attempt)
-            logger.warning("[IMAGE] Retrying in %.0fs...", delay)
+            print(f"[IMAGE] Retrying in {delay:.0f}s...", file=sys.stderr, flush=True)
             time.sleep(delay)
     raise last_error
 
@@ -361,7 +361,11 @@ def generate_image(
         output_path = Path(save_dir)
         output_path.mkdir(parents=True, exist_ok=True)
 
-        for part in response.candidates[0].content.parts:
+        parts = response.candidates[0].content.parts
+        part_types = [("image" if p.inline_data else "text") for p in parts]
+        print(f"[IMAGE_GEN] Response parts: {part_types}", file=sys.stderr, flush=True)
+
+        for part in parts:
             if part.inline_data is not None:
                 image_id = str(uuid.uuid4())[:8]
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -371,6 +375,7 @@ def generate_image(
                 with open(image_path, "wb") as f:
                     f.write(part.inline_data.data)
 
+                print(f"[IMAGE_GEN] SUCCESS saved={filename} size={len(part.inline_data.data)}", file=sys.stderr, flush=True)
                 return {
                     "status": "success",
                     "image_path": str(image_path),
@@ -383,9 +388,14 @@ def generate_image(
                     **token_info,
                 }
 
+        # Log text parts for debugging
+        text_parts = [p.text for p in parts if hasattr(p, "text") and p.text]
+        if text_parts:
+            print(f"[IMAGE_GEN] NO IMAGE — text response: {text_parts[0][:200]}", file=sys.stderr, flush=True)
         return {"status": "error", "message": "No image was generated. Try a different prompt.", "model": IMAGE_MODEL}
 
     except Exception as e:
+        print(f"[IMAGE_GEN] EXCEPTION: {type(e).__name__}: {str(e)[:300]}", file=sys.stderr, flush=True)
         result = _format_error(e, "Try simplifying your prompt.")
         result["model"] = _get_config()[1]  # IMAGE_MODEL
         return result

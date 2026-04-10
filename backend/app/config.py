@@ -38,11 +38,11 @@ GCLOUD_LOCATION = os.getenv("GCLOUD_LOCATION", "us-central1")
 
 # --- Model Configuration (model-agnostic: provider/model-name) ---
 ORCHESTRATOR_MODEL = os.getenv("ORCHESTRATOR_MODEL", "google_genai/gemini-3.1-pro-preview")
-IDEA_MODEL = os.getenv("IDEA_MODEL", "google_genai/gemini-3-flash-preview")
-WRITER_MODEL = os.getenv("WRITER_MODEL", "google_genai/gemini-3-flash-preview")
-CAPTION_MODEL = os.getenv("CAPTION_MODEL", "gemini-3-flash-preview")
-IMAGE_MODEL = os.getenv("IMAGE_MODEL", "gemini-3.1-flash-image-preview")
-EDIT_MODEL = os.getenv("EDIT_MODEL", "gemini-3-pro-image-preview")
+IDEA_MODEL = os.getenv("IDEA_MODEL", "google_genai/gemini-3.1-pro-preview")
+WRITER_MODEL = os.getenv("WRITER_MODEL", "google_genai/gemini-3.1-pro-preview")
+CAPTION_MODEL = os.getenv("CAPTION_MODEL", "gemini-2.5-flash")
+IMAGE_MODEL = os.getenv("IMAGE_MODEL", "gemini-2.5-flash-image")
+EDIT_MODEL = os.getenv("EDIT_MODEL", "gemini-2.5-flash-image")
 VIDEO_MODEL = os.getenv("VIDEO_MODEL", "veo-3.1-generate-001")
 
 # --- Paths ---
@@ -82,6 +82,9 @@ VERTEX_PRICING = {
     "gemini-3.1-flash-image-preview": {"per_image": 0.067},
     # Gemini 3 Pro Image — $0.134/image at 1K-2K resolution
     "gemini-3-pro-image-preview": {"per_image": 0.134},
+    # Gemini 3.1 Pro Preview — native image output via generate_content
+    # Text pricing also applies; per_image is additional output cost
+    "gemini-3.1-pro-preview": {"input_per_million": 2.00, "output_per_million": 12.00, "per_image": 0.134},
 
     # --- Video generation models (per second) ---
     # Veo 3.1 Standard — $0.40/sec
@@ -107,12 +110,12 @@ def calculate_cost(
         return 0.0
 
     # Video billing — per second
-    if "per_second" in pricing:
+    if action_type == "video" and "per_second" in pricing:
         duration = video_duration_seconds or 0
         return round(pricing["per_second"] * duration, 6)
 
-    # Image billing — per image
-    if "per_image" in pricing:
+    # Image billing — per image (only when action is image generation)
+    if action_type in ("image", "edit") and "per_image" in pricing:
         return round(pricing["per_image"] * (unit_count or 1), 6)
 
     # Text billing — per million tokens
