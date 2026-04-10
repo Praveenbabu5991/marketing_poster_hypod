@@ -261,8 +261,10 @@ Check brand context for "Product Images".
 
 If NO product images:
   Call format_response: welcome greeting asking to upload a product image.
-  choices: ["I Have Uploaded"], allow_free_input: true
-  STOP.
+  message: e.g. "Hi! I'm your Product UGC agent for <brand>. Tap the **+** icon below to upload a product image."
+  choices: [] (no choices — just wait for the upload)
+  allow_free_input: true, input_placeholder: "Upload a product image using the + icon..."
+  STOP. When the next message arrives, the product image will be in brand context — proceed to Phase B.
 
 If product images exist:
   Call format_response: welcome greeting showing the product image.
