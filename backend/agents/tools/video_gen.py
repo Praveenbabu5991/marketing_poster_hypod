@@ -91,18 +91,62 @@ def _composite_logo_onto_image(source_image: Image.Image, logo_path: str, brand_
     return source_image
 
 
-def _create_endcard_image(logo_path: str, width: int, height: int, brand_colors: str = "", brand_name: str = "") -> Image.Image:
-    """Create a branded end card image with centered logo."""
-    # Parse primary brand color for background
-    bg_color = "#111111"  # dark default
-    if brand_colors:
-        first_color = brand_colors.split(",")[0].strip()
-        if first_color.startswith("#") and len(first_color) in (4, 7):
-            bg_color = first_color
+def _parse_brand_colors(brand_colors: str) -> tuple[str, str]:
+    """Extract primary and secondary hex colors from comma-separated string."""
+    primary = "#111111"
+    secondary = "#111111"
+    if not brand_colors:
+        return primary, secondary
+    parts = [c.strip() for c in brand_colors.split(",") if c.strip()]
+    valid = [c for c in parts if c.startswith("#") and len(c) in (4, 7)]
+    if len(valid) >= 1:
+        primary = valid[0]
+    if len(valid) >= 2:
+        # Pick first distinct color as secondary
+        for c in valid[1:]:
+            if c.lower() != primary.lower():
+                secondary = c
+                break
+        else:
+            secondary = primary
+    else:
+        secondary = primary
+    return primary, secondary
 
-    # Create background
-    card = Image.new("RGB", (width, height), bg_color)
+
+def _create_gradient_background(width: int, height: int, color_top: str, color_bottom: str) -> Image.Image:
+    """Create a vertical gradient from color_top to color_bottom using PIL lines."""
+
+    def hex_to_rgb(h: str) -> tuple[int, int, int]:
+        h = h.lstrip("#")
+        if len(h) == 3:
+            h = h[0]*2 + h[1]*2 + h[2]*2
+        return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16))
+
+    r1, g1, b1 = hex_to_rgb(color_top)
+    r2, g2, b2 = hex_to_rgb(color_bottom)
+
+    card = Image.new("RGB", (width, height))
     draw = ImageDraw.Draw(card)
+    for y in range(height):
+        t = y / max(1, height - 1)
+        color = (
+            int(r1 + (r2 - r1) * t),
+            int(g1 + (g2 - g1) * t),
+            int(b1 + (b2 - b1) * t),
+        )
+        draw.line([(0, y), (width, y)], fill=color)
+    return card
+
+
+def _create_endcard_image(logo_path: str, width: int, height: int, brand_colors: str = "", brand_name: str = "") -> Image.Image:
+    """Create a branded end card image with logo centered on a gradient background.
+
+    Uses primary color (top) → secondary color (bottom) gradient.
+    No text — only the logo image.
+    """
+    primary, secondary = _parse_brand_colors(brand_colors)
+    card = _create_gradient_background(width, height, primary, secondary)
 
     # Load and center the logo (30% of width)
     try:
@@ -114,24 +158,13 @@ def _create_endcard_image(logo_path: str, width: int, height: int, brand_colors:
         logo_resized = logo_img.resize(logo_new_size, Image.LANCZOS)
 
         x = (width - logo_new_size[0]) // 2
-        y = (height - logo_new_size[1]) // 2 - int(height * 0.03)
+        y = (height - logo_new_size[1]) // 2
 
         if logo_resized.mode == "RGBA":
             card.paste(logo_resized, (x, y), logo_resized)
         else:
             card.paste(logo_resized, (x, y))
-
-        # Add brand name below logo
-        if brand_name:
-            font_size = max(16, int(width * 0.04))
-            font = _get_text_font(font_size)
-            text_y = y + logo_new_size[1] + int(height * 0.03)
-            draw.text(
-                (width // 2, text_y), brand_name,
-                fill="#FFFFFF", font=font, anchor="mt",
-            )
     except Exception:
-        # If logo fails, just return the colored background
         pass
 
     return card
