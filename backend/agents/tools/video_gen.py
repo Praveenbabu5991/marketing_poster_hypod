@@ -91,6 +91,178 @@ def _composite_logo_onto_image(source_image: Image.Image, logo_path: str, brand_
     return source_image
 
 
+def _create_endcard_image(logo_path: str, width: int, height: int, brand_colors: str = "", brand_name: str = "") -> Image.Image:
+    """Create a branded end card image with centered logo."""
+    # Parse primary brand color for background
+    bg_color = "#111111"  # dark default
+    if brand_colors:
+        first_color = brand_colors.split(",")[0].strip()
+        if first_color.startswith("#") and len(first_color) in (4, 7):
+            bg_color = first_color
+
+    # Create background
+    card = Image.new("RGB", (width, height), bg_color)
+    draw = ImageDraw.Draw(card)
+
+    # Load and center the logo (30% of width)
+    try:
+        logo_img = Image.open(logo_path)
+        logo_target_w = int(width * 0.30)
+        logo_w, logo_h = logo_img.size
+        scale = logo_target_w / logo_w
+        logo_new_size = (logo_target_w, int(logo_h * scale))
+        logo_resized = logo_img.resize(logo_new_size, Image.LANCZOS)
+
+        x = (width - logo_new_size[0]) // 2
+        y = (height - logo_new_size[1]) // 2 - int(height * 0.03)
+
+        if logo_resized.mode == "RGBA":
+            card.paste(logo_resized, (x, y), logo_resized)
+        else:
+            card.paste(logo_resized, (x, y))
+
+        # Add brand name below logo
+        if brand_name:
+            font_size = max(16, int(width * 0.04))
+            font = _get_text_font(font_size)
+            text_y = y + logo_new_size[1] + int(height * 0.03)
+            draw.text(
+                (width // 2, text_y), brand_name,
+                fill="#FFFFFF", font=font, anchor="mt",
+            )
+    except Exception:
+        # If logo fails, just return the colored background
+        pass
+
+    return card
+
+
+def _add_logo_endcard(
+    video_path: str,
+    logo_path: str,
+    brand_colors: str = "",
+    brand_name: str = "",
+    endcard_duration: float = 2.0,
+    crossfade_duration: float = 0.5,
+) -> str | None:
+    """Add a logo end card with smooth crossfade to the end of a video.
+
+    Creates a branded end card image (background + centered logo), then uses
+    FFmpeg xfade to smoothly transition from the video into the end card.
+    Audio fades out during the transition.
+
+    Returns the path to the processed video, or None if processing fails.
+    """
+    import sys as _sys
+
+    resolved_logo = _resolve_image_path(logo_path)
+    if not os.path.exists(resolved_logo):
+        print(f"[VIDEO] Logo not found for end card: {resolved_logo}", file=_sys.stderr, flush=True)
+        return None
+
+    try:
+        # Step 1: Get video dimensions and duration via ffprobe
+        probe_cmd = [
+            "ffprobe", "-v", "quiet", "-print_format", "json",
+            "-show_streams", "-show_format", video_path,
+        ]
+        probe_result = subprocess.run(probe_cmd, capture_output=True, text=True, timeout=30)
+        if probe_result.returncode != 0:
+            print(f"[VIDEO] ffprobe failed: {probe_result.stderr[:200]}", file=_sys.stderr, flush=True)
+            return None
+
+        import json as _json
+        probe_data = _json.loads(probe_result.stdout)
+
+        video_stream = next(
+            (s for s in probe_data["streams"] if s["codec_type"] == "video"), None
+        )
+        if not video_stream:
+            return None
+
+        vid_w = int(video_stream["width"])
+        vid_h = int(video_stream["height"])
+        vid_duration = float(probe_data["format"]["duration"])
+        has_audio = any(s["codec_type"] == "audio" for s in probe_data["streams"])
+
+        # Get video fps (default 24)
+        fps_str = video_stream.get("r_frame_rate", "24/1")
+        try:
+            num, den = fps_str.split("/")
+            fps = round(int(num) / int(den))
+        except Exception:
+            fps = 24
+
+        print(
+            f"[VIDEO] End card: video={vid_w}x{vid_h} {vid_duration:.1f}s fps={fps} audio={has_audio}",
+            file=_sys.stderr, flush=True,
+        )
+
+        # Step 2: Create end card image
+        endcard_img = _create_endcard_image(resolved_logo, vid_w, vid_h, brand_colors, brand_name)
+        endcard_img_path = video_path.replace(".mp4", "_endcard.png")
+        endcard_img.save(endcard_img_path, "PNG")
+
+        # Step 3: FFmpeg — crossfade main video into logo end card
+        output_path = video_path.replace(".mp4", "_final.mp4")
+        xfade_offset = max(0, vid_duration - crossfade_duration)
+
+        # Build filter: crossfade main video into logo end card
+        # Input [1] is already a video stream from -loop 1 -t ... -framerate ... -i
+        vf = (
+            f"[1:v]format=yuv420p[logo];"
+            f"[0:v][logo]xfade=transition=fade:duration={crossfade_duration}:offset={xfade_offset}[v]"
+        )
+
+        cmd = [
+            "ffmpeg", "-y",
+            "-i", video_path,
+            "-loop", "1", "-t", str(endcard_duration + crossfade_duration),
+            "-framerate", str(fps), "-i", endcard_img_path,
+        ]
+
+        if has_audio:
+            # Fade audio out starting at crossfade point
+            af = f"afade=t=out:st={xfade_offset}:d={endcard_duration}"
+            cmd += ["-filter_complex", f"{vf};[0:a]{af}[a]", "-map", "[v]", "-map", "[a]"]
+        else:
+            cmd += ["-filter_complex", vf, "-map", "[v]"]
+
+        cmd += ["-c:v", "libx264", "-preset", "fast", "-crf", "23"]
+        if has_audio:
+            cmd += ["-c:a", "aac"]
+        cmd += ["-movflags", "+faststart", output_path]
+
+        print(f"[VIDEO] Running FFmpeg end card...", file=_sys.stderr, flush=True)
+        ff_result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+
+        # Clean up temp end card image
+        try:
+            os.remove(endcard_img_path)
+        except OSError:
+            pass
+
+        if ff_result.returncode != 0:
+            print(f"[VIDEO] FFmpeg end card failed: {ff_result.stderr[-300:]}", file=_sys.stderr, flush=True)
+            try:
+                os.remove(output_path)
+            except OSError:
+                pass
+            return None
+
+        if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+            # Replace original with branded version
+            os.replace(output_path, video_path)
+            print(f"[VIDEO] End card added successfully", file=_sys.stderr, flush=True)
+            return video_path
+
+        return None
+
+    except Exception as e:
+        print(f"[VIDEO] End card exception: {type(e).__name__}: {str(e)[:200]}", file=_sys.stderr, flush=True)
+        return None
+
+
 def _get_media_duration(path: str) -> float:
     """Get duration of a media file in seconds using ffprobe."""
     try:
@@ -1134,9 +1306,17 @@ def generate_video(
             "branded": bool(logo_path or brand_name),
         }
 
-    # NOTE: ffmpeg logo overlay removed — Veo handles logo via reference image +
-    # prompt instructions. The ffmpeg overlay was causing duplicate logos (Veo renders
-    # one from prompt, ffmpeg adds another). Logo is passed as reference_image with
-    # reference_type="asset" and the prompt describes placement.
+    # Add logo end card with crossfade if logo is available
+    if res.get("status") == "success" and logo_path:
+        video_file = res.get("video_path", "")
+        if video_file and os.path.exists(video_file):
+            _add_logo_endcard(
+                video_path=video_file,
+                logo_path=logo_path,
+                brand_colors=brand_colors,
+                brand_name=brand_name,
+                endcard_duration=2.0,
+                crossfade_duration=0.5,
+            )
 
     return res
