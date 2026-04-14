@@ -216,11 +216,11 @@ def _add_logo_endcard(
         xfade_offset = max(0, vid_duration - crossfade_duration)
 
         # filter_complex:
-        #   [1:v] — still image looped into a video at matching fps + pixel format
-        #   xfade merges [0:v] and [logo] with fade at the offset
+        #   Both streams must have matching fps, pixel format AND timebase for xfade.
+        #   Veo videos have timebase=1/12288 while image input has 1/24 — settb normalises.
         vf = (
-            f"[1:v]fps={fps},format=yuv420p,setpts=PTS-STARTPTS[logo];"
-            f"[0:v]format=yuv420p[main];"
+            f"[0:v]format=yuv420p,fps={fps},settb=1/{fps}[main];"
+            f"[1:v]format=yuv420p,fps={fps},settb=1/{fps}[logo];"
             f"[main][logo]xfade=transition=fade:duration={crossfade_duration}:offset={xfade_offset}[v]"
         )
 
