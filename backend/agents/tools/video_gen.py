@@ -139,44 +139,105 @@ def _create_gradient_background(width: int, height: int, color_top: str, color_b
     return card
 
 
-def _create_endcard_image(logo_path: str, width: int, height: int, brand_colors: str = "", brand_name: str = "") -> Image.Image:
-    """Create a branded end card image with logo centered on a gradient background.
+def _detect_logo_background(logo_img: Image.Image) -> str | None:
+    """Detect the logo's background color by sampling corner pixels.
 
-    Uses primary color (top) → secondary color (bottom) gradient.
+    Returns a hex color string if the logo has a solid background,
+    or None if the logo has transparency (no background).
+    """
+    # If RGBA, check if it actually uses transparency
+    if logo_img.mode == "RGBA":
+        alpha = logo_img.getchannel("A")
+        # Sample corners — if any corner is transparent, logo has no solid bg
+        w, h = logo_img.size
+        corners = [(0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1)]
+        transparent_corners = sum(1 for cx, cy in corners if alpha.getpixel((cx, cy)) < 128)
+        if transparent_corners >= 2:
+            return None  # logo has transparency, no solid bg
+
+    # Sample the 4 corners (RGB) to find the dominant background color
+    rgb_img = logo_img.convert("RGB")
+    w, h = rgb_img.size
+    corners = [
+        rgb_img.getpixel((0, 0)),
+        rgb_img.getpixel((w - 1, 0)),
+        rgb_img.getpixel((0, h - 1)),
+        rgb_img.getpixel((w - 1, h - 1)),
+    ]
+
+    # Check if corners are similar (same background color)
+    # Allow tolerance of 30 per channel
+    ref = corners[0]
+    matching = sum(
+        1 for c in corners
+        if abs(c[0] - ref[0]) < 30 and abs(c[1] - ref[1]) < 30 and abs(c[2] - ref[2]) < 30
+    )
+    if matching >= 3:
+        # Average the matching corners
+        r = sum(c[0] for c in corners) // 4
+        g = sum(c[1] for c in corners) // 4
+        b = sum(c[2] for c in corners) // 4
+        return f"#{r:02x}{g:02x}{b:02x}"
+
+    return None
+
+
+def _create_endcard_image(logo_path: str, width: int, height: int, brand_colors: str = "", brand_name: str = "") -> Image.Image:
+    """Create a branded end card image with logo centered.
+
+    Background priority:
+    1. Logo's own background color (if it has a solid bg) — seamless look
+    2. Fallback: primary → secondary brand color gradient
     No text — only the logo image.
     """
-    primary, secondary = _parse_brand_colors(brand_colors)
-    card = _create_gradient_background(width, height, primary, secondary)
+    import sys as _sys
 
-    # Load and center the logo (55% of width, capped at 70% of height)
+    # Load logo first to detect its background
+    logo_img = None
+    logo_bg = None
     try:
         logo_img = Image.open(logo_path)
-        logo_w, logo_h = logo_img.size
-
-        # Scale to 55% of video width
-        target_w = int(width * 0.55)
-        scale = target_w / logo_w
-        new_w = target_w
-        new_h = int(logo_h * scale)
-
-        # If it overflows 70% of height, scale down to fit
-        max_h = int(height * 0.70)
-        if new_h > max_h:
-            scale = max_h / logo_h
-            new_w = int(logo_w * scale)
-            new_h = max_h
-
-        logo_resized = logo_img.resize((new_w, new_h), Image.LANCZOS)
-
-        x = (width - new_w) // 2
-        y = (height - new_h) // 2
-
-        if logo_resized.mode == "RGBA":
-            card.paste(logo_resized, (x, y), logo_resized)
-        else:
-            card.paste(logo_resized, (x, y))
+        logo_bg = _detect_logo_background(logo_img)
     except Exception:
         pass
+
+    if logo_bg:
+        # Logo has a solid background — use that color for a clean match
+        card = Image.new("RGB", (width, height), logo_bg)
+        print(f"[VIDEO] End card bg: logo background {logo_bg}", file=_sys.stderr, flush=True)
+    else:
+        # Transparent logo or detection failed — use brand color gradient
+        primary, secondary = _parse_brand_colors(brand_colors)
+        card = _create_gradient_background(width, height, primary, secondary)
+        print(f"[VIDEO] End card bg: brand gradient {primary} → {secondary}", file=_sys.stderr, flush=True)
+
+    # Center the logo (55% of width, capped at 70% of height)
+    if logo_img:
+        try:
+            logo_w, logo_h = logo_img.size
+
+            target_w = int(width * 0.55)
+            scale = target_w / logo_w
+            new_w = target_w
+            new_h = int(logo_h * scale)
+
+            max_h = int(height * 0.70)
+            if new_h > max_h:
+                scale = max_h / logo_h
+                new_w = int(logo_w * scale)
+                new_h = max_h
+
+            logo_resized = logo_img.resize((new_w, new_h), Image.LANCZOS)
+
+            x = (width - new_w) // 2
+            y = (height - new_h) // 2
+
+            if logo_resized.mode == "RGBA":
+                card.paste(logo_resized, (x, y), logo_resized)
+            else:
+                card.paste(logo_resized, (x, y))
+        except Exception:
+            pass
 
     return card
 
