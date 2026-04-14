@@ -332,7 +332,11 @@ allow_free_input: true. STOP.
 If user chose "Generate More Ideas": repeat with fresh concepts. NEVER reuse previous ideas.
 
 CRITICAL — If user types free text (via direct input):
-- Treat their input as the SELECTED CONCEPT and go DIRECTLY to Phase C Step 2 (Dialogue Confirmation).
+- ALWAYS generate 6 product UGC concept variations based on the user's idea.
+- Treat the input as a THEME — explore different angles, settings, moods, dialogue styles,
+  and person types while staying true to the user's core idea.
+- Present them using format_response with 7 choices (6 variations + "Generate More Ideas").
+- Do NOT skip to Phase C. The user wants to see creative options first.
 
 ### Phase C Step 2 — Dialogue Confirmation
 The selected concept already has a DIALOGUE PREVIEW from Phase C.
