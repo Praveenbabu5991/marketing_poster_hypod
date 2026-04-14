@@ -829,8 +829,8 @@ def _generate_single_video(
 
         clamped_duration = max(5, min(8, duration_seconds))
 
-        # Veo 3.1 only supports 16:9 and 9:16
-        if aspect_ratio not in ("16:9", "9:16"):
+        # Veo 3.1 supports 16:9, 9:16 and 1:1
+        if aspect_ratio not in ("16:9", "9:16", "1:1"):
             import sys as _sys_ar
             print(f"[VIDEO] Unsupported aspect_ratio '{aspect_ratio}' — falling back to 9:16", file=_sys_ar.stderr, flush=True)
             aspect_ratio = "9:16"
@@ -1253,7 +1253,7 @@ def generate_video(
         image_path: Product image path (used as reference_image asset).
         reference_image_paths: Comma-separated paths to product images (used as reference_image assets).
         duration_seconds: Video length 5-15 seconds.
-        aspect_ratio: "9:16" (Reels/vertical) or "16:9" (YouTube/landscape). Only these two are supported by Veo 3.1.
+        aspect_ratio: "9:16" (Reels/vertical), "16:9" (YouTube/landscape), or "1:1" (square). Supported by Veo 3.1.
         logo_path: Brand logo path (used as reference_image asset).
         brand_name: Company name for prompt enhancement.
         brand_colors: Comma-separated hex colors.
