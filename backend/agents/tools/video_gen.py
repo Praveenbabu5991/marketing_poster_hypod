@@ -148,17 +148,28 @@ def _create_endcard_image(logo_path: str, width: int, height: int, brand_colors:
     primary, secondary = _parse_brand_colors(brand_colors)
     card = _create_gradient_background(width, height, primary, secondary)
 
-    # Load and center the logo (30% of width)
+    # Load and center the logo (55% of width, capped at 70% of height)
     try:
         logo_img = Image.open(logo_path)
-        logo_target_w = int(width * 0.30)
         logo_w, logo_h = logo_img.size
-        scale = logo_target_w / logo_w
-        logo_new_size = (logo_target_w, int(logo_h * scale))
-        logo_resized = logo_img.resize(logo_new_size, Image.LANCZOS)
 
-        x = (width - logo_new_size[0]) // 2
-        y = (height - logo_new_size[1]) // 2
+        # Scale to 55% of video width
+        target_w = int(width * 0.55)
+        scale = target_w / logo_w
+        new_w = target_w
+        new_h = int(logo_h * scale)
+
+        # If it overflows 70% of height, scale down to fit
+        max_h = int(height * 0.70)
+        if new_h > max_h:
+            scale = max_h / logo_h
+            new_w = int(logo_w * scale)
+            new_h = max_h
+
+        logo_resized = logo_img.resize((new_w, new_h), Image.LANCZOS)
+
+        x = (width - new_w) // 2
+        y = (height - new_h) // 2
 
         if logo_resized.mode == "RGBA":
             card.paste(logo_resized, (x, y), logo_resized)
