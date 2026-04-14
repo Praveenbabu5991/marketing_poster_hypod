@@ -112,21 +112,15 @@ An advertisement video prompt has 5 parts in one paragraph:
    - The LAST block must feel like a FINISHED thought — a CTA or tagline.
 
    CRITICAL — TIMING RULE:
-   - 8s video: Dialogue MUST be under 6 seconds. Last 2s = setup + LOGO CLOSE.
-     1s setup → under 6s dialogue (MAX 15 words) → 1s logo close.
+   - 8s video: Dialogue MUST be under 6 seconds. Last 2s = setup.
+     1s setup → under 6s dialogue (MAX 15 words).
      1-2 dialogue blocks covering the key points.
 
-   - 15s video: Dialogue MUST be under 12 seconds. Last 3s = setup + LOGO CLOSE.
-     1s setup → under 12s dialogue (MAX 30 words) → 1s person smiles → 1s logo close.
+   - 15s video: Dialogue MUST be under 12 seconds. Last 3s = setup + smile.
+     1s setup → under 12s dialogue (MAX 30 words) → 1s person smiles.
      2-4 dialogue blocks. For 15s, the video is TWO parts (8s + 7s extension).
      Blocks 1-2 go in Part 1. Blocks 3-4 go in Part 2 (if 4 blocks).
      Blocks in each part must say COMPLETELY DIFFERENT things.
-
-   MANDATORY ENDING (both 8s and 15s):
-   Every prompt MUST end with this EXACT line as the ABSOLUTE LAST sentence:
-   "The brand logo fills the frame as the video ends gracefully."
-   NOTHING comes after this line — no style, no text, no instructions.
-   Style/lighting lines go BEFORE this line. This is the final visual of the video.
 
    If you write more words than the limit, the video WILL cut off mid-sentence.
    COUNT YOUR WORDS before writing. If over the limit, CUT words ruthlessly.
@@ -157,10 +151,6 @@ An advertisement video prompt has 5 parts in one paragraph:
    shallow depth of field. Premium luxury feel."
    Example (Bold + Upbeat): "Upbeat energetic music, high-contrast lighting,
    dramatic angles. Striking visual impact."
-
-5. LOGO CLOSE (ABSOLUTE LAST LINE — nothing comes after this):
-   "The brand logo fills the frame as the video ends gracefully."
-   This MUST be the FINAL sentence in the prompt. No text after it.
 
 ## HALLUCINATION PREVENTION
 
@@ -220,7 +210,7 @@ A small, semi-transparent brand logo is visible in the upper-right corner of the
 She looks at the camera with excitement and speaks in a clear feminine voice. 'Summer
 sale is here, fifty percent off everything.' She smiles confidently at the camera.
 Upbeat energetic music, bright warm tones, shallow depth of field. Premium commercial
-style. The brand logo fills the frame as the video ends gracefully."
+style."
 
 WHY THIS WORKS:
 - SETTING: "sun-drenched rooftop terrace with tropical plants" — THEMATIC to summer sale.
@@ -228,7 +218,6 @@ WHY THIS WORKS:
 - Block 1: "Summer sale is here, fifty percent off everything" = 8 words (under 15 max).
 - Voice cue: "speaks in a clear feminine voice" — ensures correct voice gender.
 - Simple action: looks at camera, smiles. No complex movement.
-- LOGO CLOSE is the absolute last line. Style before logo close.
 
 ## EXAMPLE 8-SECOND PROMPT — 2 PERSONS (CONVERSATIONAL):
 (Concept: new collection launch, Style: Bold)
@@ -239,8 +228,7 @@ brand logo is visible in the upper-right corner of the frame. The first woman tu
 her friend with excitement and speaks in a clear feminine voice. 'The new collection
 just dropped.' The second woman smiles and speaks in a warm feminine voice. 'You do not
 want to miss this.' She looks at the camera. Bold upbeat music, high-contrast golden
-hour lighting, shallow depth of field. Striking commercial style. The brand logo fills
-the frame as the video ends gracefully."
+hour lighting, shallow depth of field. Striking commercial style."
 
 WHY THIS WORKS:
 - SETTING: "styled balcony with draped fabric and city skyline at golden hour" — THEMATIC
@@ -263,8 +251,7 @@ of the frame. The first woman turns to her friends and speaks in a clear feminin
 voice. 'From day one, it has been about you.' The second woman smiles at them and speaks
 in a warm feminine voice. 'Here is to five more years together.' She looks at the camera.
 'Thank you for being part of this journey.' Soft cinematic music, warm amber lighting,
-shallow depth of field. Premium elegant style. The brand logo fills the frame as the
-video ends gracefully."
+shallow depth of field. Premium elegant style."
 
 WHY THIS WORKS:
 - SETTING: "candlelit terrace garden with fairy lights and floral arrangements" — THEMATIC
@@ -288,8 +275,7 @@ transparent brand logo is visible in the upper-right corner of the frame. The ca
 glides past a row of styled outfits on display racks, raindrops catching the warm light.
 Puddles reflect the moody city skyline in the background. No dialogue, no speech, no
 voiceover — instrumental music and ambient sounds only. Soft cinematic orchestral music,
-moody blue and amber tones, shallow depth of field. Premium atmospheric style. The brand
-logo fills the frame as the video ends gracefully."
+moody blue and amber tones, shallow depth of field. Premium atmospheric style."
 
 WHY THIS WORKS:
 - SETTING: "rain-soaked urban rooftop with glistening cobblestones and amber street
@@ -298,7 +284,6 @@ WHY THIS WORKS:
 - No person — pure cinematic visuals tell the story.
 - "No dialogue, no speech, no voiceover" line prevents random speech.
 - Camera movement creates interest (dolly-in, glides past).
-- LOGO CLOSE is the absolute last line.
 
 ## API CONFIGURATION (set via config parameters, NOT in prompt text)
 These are NEVER written in the prompt:
@@ -564,7 +549,7 @@ CRITICAL RULES FOR DIALOGUE:
   8s video: MAX 15 spoken words (under 6s). 15s video: MAX 30 spoken words (under 12s).
   If the approved dialogue exceeds the limit, TRIM from the end — do NOT add more.
   If the approved dialogue is short (under the limit), use it as-is.
-  Fill remaining video time with visual actions (smiles, gestures) and logo close.
+  Fill remaining video time with visual actions (smiles, gestures).
 - Write dialogue in the CHOSEN LANGUAGE. If the approved dialogue is in a different
   language than chosen, translate it faithfully without adding new content.
 - For multi-person dialogue: attribute each line clearly to a specific person.
@@ -579,12 +564,11 @@ CRITICAL RULES FOR ACTIONS:
 - They CAN face each other (conversational) or the camera — depends on concept.
 
 CRITICAL RULES FOR LOGO:
-- The prompt MUST mention the logo TWICE:
-  1. Early: "A small, semi-transparent brand logo is visible in the upper-right corner
-     of the frame."
-  2. ABSOLUTE LAST LINE: "The brand logo fills the frame as the video ends gracefully."
-     Nothing comes after this line. It is the final sentence in the prompt.
+- The prompt MUST mention the logo early: "A small, semi-transparent brand logo is visible
+  in the upper-right corner of the frame."
 - NEVER describe the logo's appearance, color, or text — only its placement.
+- NOTE: The logo end card is handled automatically by FFmpeg post-processing — do NOT
+  add any logo close sentence to the prompt.
 
 PRE-GENERATION CHECK (run before presenting):
 1. Is it one continuous paragraph? No scene labels?
@@ -594,12 +578,11 @@ PRE-GENERATION CHECK (run before presenting):
 4. For multi-person: does each person have clearly attributed dialogue?
 5. Does the style line match the chosen VISUAL STYLE from Phase C2?
 6. Does the ambient/sound section match the chosen MUSIC MOOD from Phase C3?
-7. Is the LOGO mentioned twice (start + absolute last line)?
+7. Is the LOGO mentioned early (upper-right corner placement)?
 8. Are all actions simple? (No walking, no multi-step sequences)
 9. No brand names in the prompt?
 10. No "whispers," no eyes closed?
-11. Is "The brand logo fills the frame as the video ends gracefully." the ABSOLUTE LAST sentence?
-12. Maximum 3 persons? No crowds or extras?
+11. Maximum 3 persons? No crowds or extras?
 13. Is the SETTING thematic? Does it match the ad's topic/concept visually?
     NOT "bright modern studio" — but a creative environment that tells the story.
 
@@ -650,8 +633,8 @@ Handle responses:
 - NEVER include brand names — triggers safety filters.
 - Keep prompts under 200 words.
 - Dialogue MUST match the approved text from Phase C Step 2 VERBATIM — never invent new lines.
-- LOGO must appear in the prompt TWICE (placement at start + reinforcement near end).
-- Prompt MUST end with "The brand logo fills the frame as the video ends gracefully." — NOTHING after it.
+- LOGO must appear in the prompt once (placement at start — upper-right corner).
+- Do NOT add any logo close sentence — FFmpeg handles the end card automatically.
 - MAXIMUM 3 persons. Simple actions only. Can face camera or each other.
 - Show prompt BEFORE generating. Never generate without approval.
 - STOP after format_response. Wait for user.

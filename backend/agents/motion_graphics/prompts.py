@@ -94,10 +94,6 @@ This is NOT a still photo with a slight tilt. Motion graphics have DYNAMIC actio
    "[Music mood] music plays. [Style description], shallow depth of field,
    premium commercial style."
 
-5. LOGO CLOSE (ABSOLUTE LAST LINE — nothing comes after this):
-   "The brand logo fills the frame as the video ends gracefully."
-   This MUST be the FINAL sentence in the prompt. No text after it.
-
 ## HALLUCINATION PREVENTION
 
 - NEVER describe the product's appearance (color, shape, texture, material, pattern).
@@ -262,8 +258,7 @@ strawberry splash with berries and leaves swirling around it. A small, semi-tran
 brand logo is visible in the upper-right corner of the frame. Droplets of pink liquid
 float around the product as it settles. Bold white text appears on screen: 'Berry Blast.'
 Upbeat energetic music plays. Vibrant red and pink tones with fresh green accents, shallow
-depth of field, premium commercial style. The brand logo fills the frame as the video ends
-gracefully."
+depth of field, premium commercial style."
 
 WHY THIS WORKS:
 - DYNAMIC HOOK: Strawberries + leaves BURST through pink splash — action, not stillness
@@ -281,8 +276,7 @@ appears between flowing waves of silk as golden zari threads spiral around it. A
 semi-transparent brand logo is visible in the upper-right corner of the frame. The silk
 fabric settles elegantly around the product with threads still floating. Bold elegant text
 appears on screen: 'Pure Silk.' Cinematic orchestral music plays. Deep maroon and gold
-tones, soft studio lighting, shallow depth of field, premium commercial style. The brand
-logo fills the frame as the video ends gracefully."
+tones, soft studio lighting, shallow depth of field, premium commercial style."
 
 WHY THIS WORKS:
 - DYNAMIC HOOK: Silk fabric SWIRLS and UNFURLS — movement and energy, not slow drift
@@ -302,8 +296,7 @@ small, semi-transparent brand logo is visible in the upper-right corner of the f
 Pulsing light rings orbit the product as it hovers. Bold clean text appears on screen:
 'Long Battery.' The text fades and new text appears: 'Water Resistant.' Then: 'Health
 Tracking.' Futuristic electronic music pulses. Neon lights, dark background, shallow depth
-of field, premium cyberpunk style. The brand logo fills the frame as the video ends
-gracefully."
+of field, premium cyberpunk style."
 
 WHY THIS WORKS:
 - DYNAMIC HOOK: Data streams RACE and COLLIDE — energy and action
@@ -311,8 +304,7 @@ WHY THIS WORKS:
 - ALIVE ENVIRONMENT: Neon light trails keep orbiting the product
 - Colors from product's world: neon blue/pink for tech product
 - For 15s (two parts): Part 1 has hook + reveal + first text line,
-  Part 2 has remaining text lines + logo close
-- Logo close is the absolute last sentence.
+  Part 2 has remaining text lines.
 
 ## API CONFIGURATION (set via config parameters, NOT in prompt text)
 These are NEVER written in the prompt:
@@ -518,7 +510,7 @@ Write the prompt following the PROMPT STRUCTURE above.
 
 CRITICAL RULES FOR THE PROMPT:
 - Follow HOOK → DYNAMIC PRODUCT REVEAL → FEATURES sequence.
-- Logo appears THREE times: (1) animated intro center-frame, (2) corner watermark, (3) LOGO CLOSE — fills frame at end
+- Logo appears TWICE: (1) animated intro center-frame, (2) corner watermark
 - Product ENTERS through dynamic action — not just placed on a surface
 - Environment stays ALIVE — elements keep moving around the product
 - Dynamic elements must be RELATED to the product (from Creative Analysis)
@@ -529,20 +521,18 @@ CRITICAL RULES FOR THE PROMPT:
 - No product name — say "the product"
 - No brand name — triggers safety filters
 - One continuous paragraph — no line breaks, no scene labels
-- LOGO CLOSE is the ABSOLUTE LAST sentence — nothing after it.
 
 PRE-GENERATION CHECK (run before presenting):
 1. Is it one continuous paragraph? No line breaks, no scene labels?
 2. Does it say "the product" and never the product's actual name?
 3. Does it avoid describing the product's appearance?
 4. Does the on-screen text EXACTLY match the user's highlight from Phase B Step 2?
-5. Is the LOGO mentioned three times (intro + corner + logo close at end)?
+5. Is the LOGO mentioned twice (intro center-frame + corner watermark)?
 6. Is there NO person, NO dialogue, NO speech?
 7. Is the lighting neutral (no "warm golden")?
 8. No brand names in the prompt?
 9. Correct movement? Holdable → product moves. Building/Vehicle → camera moves.
 10. Music mood described (not speech/dialogue)?
-11. Is "The brand logo fills the frame as the video ends gracefully." the ABSOLUTE LAST sentence?
 
 CRITICAL: You MUST call the `format_response` tool to present this prompt. NEVER output
 the prompt as raw text — the user will not see buttons if you do.
@@ -593,8 +583,8 @@ Handle responses:
 - NEVER include a person, dialogue, or speech.
 - Keep prompts under 200 words.
 - Music mood is the ONLY audio element — no dialogue, no voiceover.
-- LOGO must appear in the prompt THREE times (intro + corner + LOGO CLOSE at end).
-- Prompt MUST end with "The brand logo fills the frame as the video ends gracefully." — NOTHING after it.
+- LOGO must appear in the prompt TWICE (intro center-frame + corner watermark).
+- Do NOT add any logo close sentence — FFmpeg handles the end card automatically.
 - User's highlight MUST appear as on-screen text (MAX 2-3 words per line) in the FEATURES section.
 - Show prompt BEFORE generating. Never generate without approval.
 - STOP after format_response. Wait for user.
@@ -608,7 +598,7 @@ The brand logo path is in brand context below.
 ALWAYS pass it as logo_path when calling generate_video.
 The logo is passed as a reference image (reference_type="asset") — Veo uses the image
 to know what the logo looks like. The PROMPT must describe WHERE the logo appears
-(center-frame intro, upper-right corner, reinforcement at end) so Veo places it correctly.
+(center-frame intro, upper-right corner) so Veo places it correctly.
 Do NOT use ls to verify the path — just pass it directly.
 Do NOT describe the logo's appearance/color/text — only its placement and animation.
 

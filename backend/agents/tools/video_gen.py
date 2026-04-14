@@ -350,16 +350,8 @@ def _split_prompt_for_parts(prompt: str, person_generation: str = "allow_all") -
         if style:
             part1_prompt += style
 
-        # Part 2: continuation — person keeps speaking seamlessly, logo close is the LAST thing
+        # Part 2: continuation — person keeps speaking seamlessly
         remaining_text = prompt[split_pos:style_start].rstrip().rstrip('.,;')
-
-        # Extract logo close line if present — it must stay at the absolute end
-        logo_close = ""
-        logo_pattern = _re.compile(r'[^.]*brand logo fills the frame[^.]*\.', _re.IGNORECASE)
-        logo_match = logo_pattern.search(remaining_text)
-        if logo_match:
-            logo_close = logo_match.group(0).strip()
-            remaining_text = (remaining_text[:logo_match.start()] + remaining_text[logo_match.end():]).strip().rstrip('.,;')
 
         part2_prompt = (
             f"Smooth continuation of the same scene. Same person, same setting, "
@@ -369,11 +361,7 @@ def _split_prompt_for_parts(prompt: str, person_generation: str = "allow_all") -
             f"No more speech, no mumbling, no vocalizations. Only ambient music. "
         )
         if style:
-            part2_prompt += style + " "
-        if logo_close:
-            part2_prompt += logo_close
-        else:
-            part2_prompt += "The brand logo fills the frame as the video ends gracefully."
+            part2_prompt += style
 
         return part1_prompt, part2_prompt
 
@@ -395,8 +383,7 @@ def _split_prompt_for_parts(prompt: str, person_generation: str = "allow_all") -
             "No dialogue, no speech, no voiceover. "
         )
     if style:
-        part2_prompt += style + " "
-    part2_prompt += "The brand logo fills the frame as the video ends gracefully."
+        part2_prompt += style
     return prompt, part2_prompt
 
 
