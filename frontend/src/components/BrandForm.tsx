@@ -328,7 +328,7 @@ export function BrandForm({ initial, onSubmit, loading }: Props) {
           />
         )}
         <p className="mt-1 text-xs text-text-muted">
-          PNG with transparent background recommended. Min 512×512px for best results in videos.
+          Min 512×512px recommended for best results in videos.
         </p>
       </div>
 
