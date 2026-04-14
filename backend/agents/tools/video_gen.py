@@ -147,9 +147,9 @@ def _add_logo_endcard(
 ) -> str | None:
     """Add a logo end card with smooth crossfade to the end of a video.
 
-    Creates a branded end card image (background + centered logo), then uses
-    FFmpeg xfade to smoothly transition from the video into the end card.
-    Audio fades out during the transition.
+    Strategy: trim last 0.5s from the main video, then crossfade into a
+    2.5s logo end card video.  The end card holds as the FINAL frame —
+    nothing plays after it.  Audio fades out during the crossfade.
 
     Returns the path to the processed video, or None if processing fails.
     """
@@ -161,7 +161,7 @@ def _add_logo_endcard(
         return None
 
     try:
-        # Step 1: Get video dimensions and duration via ffprobe
+        # ── Step 1: probe the main video ──
         probe_cmd = [
             "ffprobe", "-v", "quiet", "-print_format", "json",
             "-show_streams", "-show_format", video_path,
@@ -185,7 +185,6 @@ def _add_logo_endcard(
         vid_duration = float(probe_data["format"]["duration"])
         has_audio = any(s["codec_type"] == "audio" for s in probe_data["streams"])
 
-        # Get video fps (default 24)
         fps_str = video_stream.get("r_frame_rate", "24/1")
         try:
             num, den = fps_str.split("/")
@@ -198,33 +197,49 @@ def _add_logo_endcard(
             file=_sys.stderr, flush=True,
         )
 
-        # Step 2: Create end card image
+        # ── Step 2: create end-card image at exact video resolution ──
         endcard_img = _create_endcard_image(resolved_logo, vid_w, vid_h, brand_colors, brand_name)
         endcard_img_path = video_path.replace(".mp4", "_endcard.png")
         endcard_img.save(endcard_img_path, "PNG")
 
-        # Step 3: FFmpeg — crossfade main video into logo end card
+        # ── Step 3: FFmpeg — two-step approach for a clean hold ──
+        #
+        # (a) Create a silent end-card clip from the still image.
+        # (b) Use xfade to crossfade the main video into the end-card clip.
+        #
+        # xfade offset = point in main video where crossfade begins.
+        # The end card's total duration = crossfade_duration + endcard_duration
+        # so it fades in for 0.5s then HOLDS the logo for 2.0s as final frames.
+
         output_path = video_path.replace(".mp4", "_final.mp4")
+        endcard_total = crossfade_duration + endcard_duration  # 2.5s
         xfade_offset = max(0, vid_duration - crossfade_duration)
 
-        # Build filter: crossfade main video into logo end card
-        # Input [1] is already a video stream from -loop 1 -t ... -framerate ... -i
+        # filter_complex:
+        #   [1:v] — still image looped into a video at matching fps + pixel format
+        #   xfade merges [0:v] and [logo] with fade at the offset
         vf = (
-            f"[1:v]format=yuv420p[logo];"
-            f"[0:v][logo]xfade=transition=fade:duration={crossfade_duration}:offset={xfade_offset}[v]"
+            f"[1:v]fps={fps},format=yuv420p,setpts=PTS-STARTPTS[logo];"
+            f"[0:v]format=yuv420p[main];"
+            f"[main][logo]xfade=transition=fade:duration={crossfade_duration}:offset={xfade_offset}[v]"
         )
 
         cmd = [
             "ffmpeg", "-y",
             "-i", video_path,
-            "-loop", "1", "-t", str(endcard_duration + crossfade_duration),
-            "-framerate", str(fps), "-i", endcard_img_path,
+            # Image → video: loop for endcard_total seconds at video fps
+            "-loop", "1",
+            "-t", str(endcard_total),
+            "-framerate", str(fps),
+            "-i", endcard_img_path,
         ]
 
         if has_audio:
-            # Fade audio out starting at crossfade point
-            af = f"afade=t=out:st={xfade_offset}:d={endcard_duration}"
-            cmd += ["-filter_complex", f"{vf};[0:a]{af}[a]", "-map", "[v]", "-map", "[a]"]
+            af = f"afade=t=out:st={xfade_offset}:d={crossfade_duration}"
+            cmd += [
+                "-filter_complex", f"{vf};[0:a]{af}[a]",
+                "-map", "[v]", "-map", "[a]",
+            ]
         else:
             cmd += ["-filter_complex", vf, "-map", "[v]"]
 
@@ -233,7 +248,8 @@ def _add_logo_endcard(
             cmd += ["-c:a", "aac"]
         cmd += ["-movflags", "+faststart", output_path]
 
-        print(f"[VIDEO] Running FFmpeg end card...", file=_sys.stderr, flush=True)
+        print(f"[VIDEO] Running FFmpeg end card: xfade_offset={xfade_offset:.2f} endcard={endcard_total:.1f}s",
+              file=_sys.stderr, flush=True)
         ff_result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
 
         # Clean up temp end card image
@@ -243,7 +259,7 @@ def _add_logo_endcard(
             pass
 
         if ff_result.returncode != 0:
-            print(f"[VIDEO] FFmpeg end card failed: {ff_result.stderr[-300:]}", file=_sys.stderr, flush=True)
+            print(f"[VIDEO] FFmpeg end card failed: {ff_result.stderr[-500:]}", file=_sys.stderr, flush=True)
             try:
                 os.remove(output_path)
             except OSError:
@@ -251,9 +267,8 @@ def _add_logo_endcard(
             return None
 
         if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
-            # Replace original with branded version
             os.replace(output_path, video_path)
-            print(f"[VIDEO] End card added successfully", file=_sys.stderr, flush=True)
+            print(f"[VIDEO] End card added successfully — logo is the final frame", file=_sys.stderr, flush=True)
             return video_path
 
         return None

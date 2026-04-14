@@ -327,6 +327,9 @@ export function BrandForm({ initial, onSubmit, loading }: Props) {
             className="text-sm text-text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-accent file:px-4 file:py-2 file:text-sm file:text-white file:cursor-pointer"
           />
         )}
+        <p className="mt-1 text-xs text-text-muted">
+          PNG with transparent background recommended. Min 512×512px for best results in videos.
+        </p>
       </div>
 
       {/* Brand Colors */}
