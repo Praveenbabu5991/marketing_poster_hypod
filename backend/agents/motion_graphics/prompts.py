@@ -75,21 +75,7 @@ This is NOT a still photo with a slight tilt. Motion graphics have DYNAMIC actio
    FOR VEHICLES/LARGE ITEMS — camera orbits with dynamic environment:
    "The camera arcs around the product as [dynamic elements swirl/fly]."
 
-3. FEATURES — Highlight text appears ON SCREEN:
-   The user's highlight text appears AS TEXT overlaid on the video at an IMPACTFUL moment.
-   "Bold white text appears on screen: '[highlight text from user]'."
-
-   RULES FOR ON-SCREEN TEXT:
-   - Use the EXACT highlight text the user provided in Phase B Step 2.
-   - MAX 2-3 words per text line. Veo renders text best when very short.
-     If user's highlight is longer, condense to the core 2-3 word phrase.
-   - Describe text style: "Bold white text" or "Clean sans-serif text" matching
-     the visual style chosen.
-   - Text appears OVER the product — product stays visible behind the text.
-   - For 8s videos: 1 text line (MAX 3 words).
-   - For 15s videos: 2-3 text lines appearing in sequence (each MAX 3 words).
-
-4. STYLE + MUSIC: One combined line — visual style + music mood.
+3. STYLE + MUSIC: One combined line — visual style + music mood.
    Colors and mood should MATCH the thematic hook and product context.
    "[Music mood] music plays. [Style description], shallow depth of field,
    premium commercial style."
@@ -256,7 +242,7 @@ Creative Analysis: fruit drink → berries/freshness → strawberries splashing,
 brand logo fades in center-frame, then dissolves. The product rises up through the
 strawberry splash with berries and leaves swirling around it. A small, semi-transparent
 brand logo is visible in the upper-right corner of the frame. Droplets of pink liquid
-float around the product as it settles. Bold white text appears on screen: 'Berry Blast.'
+float around the product as it settles.
 Upbeat energetic music plays. Vibrant red and pink tones with fresh green accents, shallow
 depth of field, premium commercial style."
 
@@ -274,8 +260,8 @@ Creative Analysis: silk/fabric → weaving/textiles → threads, flowing fabric,
 trailing behind. The brand logo fades in center-frame, then dissolves. The product
 appears between flowing waves of silk as golden zari threads spiral around it. A small,
 semi-transparent brand logo is visible in the upper-right corner of the frame. The silk
-fabric settles elegantly around the product with threads still floating. Bold elegant text
-appears on screen: 'Pure Silk.' Cinematic orchestral music plays. Deep maroon and gold
+fabric settles elegantly around the product with threads still floating.
+Cinematic orchestral music plays. Deep maroon and gold
 tones, soft studio lighting, shallow depth of field, premium commercial style."
 
 WHY THIS WORKS:
@@ -293,9 +279,8 @@ Creative Analysis: metal/tech → digital/fitness → circuit pulses, data strea
 flying. The brand logo fades in center-frame, then dissolves. The product emerges from the
 center of the data collision with neon blue and pink light trails orbiting around it. A
 small, semi-transparent brand logo is visible in the upper-right corner of the frame.
-Pulsing light rings orbit the product as it hovers. Bold clean text appears on screen:
-'Long Battery.' The text fades and new text appears: 'Water Resistant.' Then: 'Health
-Tracking.' Futuristic electronic music pulses. Neon lights, dark background, shallow depth
+Pulsing light rings orbit the product as it hovers.
+Futuristic electronic music pulses. Neon lights, dark background, shallow depth
 of field, premium cyberpunk style."
 
 WHY THIS WORKS:
@@ -303,8 +288,6 @@ WHY THIS WORKS:
 - DYNAMIC REVEAL: Product EMERGES from the data collision — enters through action
 - ALIVE ENVIRONMENT: Neon light trails keep orbiting the product
 - Colors from product's world: neon blue/pink for tech product
-- For 15s (two parts): Part 1 has hook + reveal + first text line,
-  Part 2 has remaining text lines.
 
 ## API CONFIGURATION (set via config parameters, NOT in prompt text)
 These are NEVER written in the prompt:
@@ -410,12 +393,15 @@ Example flow:
 - User says: "It's a premium smartwatch with 7-day battery life and water resistance"
 - You suggest: ["7-Day Battery", "Water Resistant", "Premium Tech", "Always Ready"]
 
-LOCK the highlight text. This will appear VERBATIM as on-screen text in the video.
-Each text line MUST be MAX 2-3 words — Veo renders text best when very short.
-If the user gives multiple highlights (comma-separated or listed), split them into
-separate text lines for the video:
-- 8s video: Use the MOST important 1 highlight (MAX 3 words).
-- 15s video: Use up to 3 highlights, each MAX 3 words.
+LOCK the highlight text. FFmpeg will overlay this text on the video with correct spelling.
+Do NOT include any text instructions in the Veo prompt — Veo cannot spell correctly.
+Instead, pass the text via the `overlay_texts` parameter when calling generate_video.
+
+Format: "text|start_sec|duration_sec" pipe-separated. For multiple texts, chain them:
+- 8s video: 1 highlight, e.g. "Pure Silk|3|2"
+- 15s video: up to 3 highlights in sequence, e.g. "Long Battery|3|2|Water Resistant|7|2|Health Tracking|11|2"
+
+Each text line MUST be MAX 2-3 words for visual impact.
 
 ### CREATIVE ANALYSIS (do this SILENTLY after receiving product + highlight)
 Use the product name (Step 1), the description sentence (Step 2a), AND the highlight
@@ -514,9 +500,7 @@ CRITICAL RULES FOR THE PROMPT:
 - Product ENTERS through dynamic action — not just placed on a surface
 - Environment stays ALIVE — elements keep moving around the product
 - Dynamic elements must be RELATED to the product (from Creative Analysis)
-- FEATURE TEXT: The user's highlight from Phase B Step 2 MUST appear as on-screen text.
-  Each text line MUST be MAX 2-3 words. If user gave a longer phrase, condense it.
-  8s: 1 text line (MAX 3 words). 15s: up to 3 text lines (each MAX 3 words).
+- Do NOT include text/highlight in the Veo prompt — FFmpeg handles text overlay via overlay_texts parameter.
 - Music mood description — never dialogue or speech
 - No product name — say "the product"
 - No brand name — triggers safety filters
@@ -526,8 +510,7 @@ PRE-GENERATION CHECK (run before presenting):
 1. Is it one continuous paragraph? No line breaks, no scene labels?
 2. Does it say "the product" and never the product's actual name?
 3. Does it avoid describing the product's appearance?
-4. Does the on-screen text EXACTLY match the user's highlight from Phase B Step 2?
-5. Is the LOGO mentioned twice (intro center-frame + corner watermark)?
+4. Is the LOGO mentioned twice (intro center-frame + corner watermark)?
 6. Is there NO person, NO dialogue, NO speech?
 7. Is the lighting neutral (no "warm golden")?
 8. No brand names in the prompt?
@@ -585,7 +568,7 @@ Handle responses:
 - Music mood is the ONLY audio element — no dialogue, no voiceover.
 - LOGO must appear in the prompt TWICE (intro center-frame + corner watermark).
 - Do NOT add any logo close sentence — FFmpeg handles the end card automatically.
-- User's highlight MUST appear as on-screen text (MAX 2-3 words per line) in the FEATURES section.
+- Do NOT put highlight text in the Veo prompt. Pass it via overlay_texts parameter — FFmpeg renders it with correct spelling.
 - Show prompt BEFORE generating. Never generate without approval.
 - STOP after format_response. Wait for user.
 - NEVER make up video paths.

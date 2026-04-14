@@ -383,6 +383,129 @@ def _add_logo_endcard(
         return None
 
 
+def _add_text_overlays(
+    video_path: str,
+    overlay_texts: str,
+    brand_colors: str = "",
+) -> str | None:
+    """Overlay text on a video at specified timestamps using FFmpeg drawtext.
+
+    Args:
+        video_path: Path to the video file (modified in-place on success).
+        overlay_texts: Pipe-separated entries, each: "text|start_sec|duration_sec"
+            e.g. "Pure Silk|3|2|Berry Blast|6|2"
+        brand_colors: Comma-separated hex colors (first used for text shadow/bg).
+
+    Returns path on success, None on failure.
+    """
+    import sys as _sys
+
+    if not overlay_texts or not overlay_texts.strip():
+        return video_path  # nothing to overlay
+
+    # Parse entries: "text|start|duration|text|start|duration|..."
+    parts = [p.strip() for p in overlay_texts.split("|")]
+    entries = []
+    i = 0
+    while i + 2 < len(parts):
+        try:
+            text = parts[i]
+            start = float(parts[i + 1])
+            dur = float(parts[i + 2])
+            if text:
+                entries.append((text, start, dur))
+        except (ValueError, IndexError):
+            pass
+        i += 3
+
+    if not entries:
+        print(f"[VIDEO] No valid text overlay entries parsed", file=_sys.stderr, flush=True)
+        return video_path
+
+    # Find a suitable font
+    font_file = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+    for fp in [
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+    ]:
+        if os.path.exists(fp):
+            font_file = fp
+            break
+
+    # Probe video dimensions for font sizing
+    try:
+        probe_cmd = [
+            "ffprobe", "-v", "quiet", "-print_format", "json",
+            "-show_streams", video_path,
+        ]
+        probe_result = subprocess.run(probe_cmd, capture_output=True, text=True, timeout=30)
+        import json as _json
+        probe_data = _json.loads(probe_result.stdout)
+        vid_stream = next((s for s in probe_data["streams"] if s["codec_type"] == "video"), None)
+        vid_w = int(vid_stream["width"]) if vid_stream else 720
+        vid_h = int(vid_stream["height"]) if vid_stream else 1280
+    except Exception:
+        vid_w, vid_h = 720, 1280
+
+    # Font size: ~5% of video width (scales with resolution)
+    font_size = max(24, int(vid_w * 0.06))
+
+    # Build drawtext filters — each text fades in/out
+    fade_dur = 0.3
+    filters = []
+    for text, start, dur in entries:
+        # Escape special characters for FFmpeg drawtext
+        escaped = text.replace("'", "'\\''").replace(":", "\\:").replace("%", "%%")
+        end = start + dur
+        # Alpha expression: fade in for fade_dur, hold, fade out for fade_dur
+        alpha_expr = (
+            f"if(lt(t\\,{start})\\,0\\,"
+            f"if(lt(t\\,{start + fade_dur})\\,(t-{start})/{fade_dur}\\,"
+            f"if(lt(t\\,{end - fade_dur})\\,1\\,"
+            f"if(lt(t\\,{end})\\,({end}-t)/{fade_dur}\\,0))))"
+        )
+        f = (
+            f"drawtext=fontfile='{font_file}':text='{escaped}'"
+            f":fontsize={font_size}:fontcolor=white"
+            f":borderw=3:bordercolor=black@0.6"
+            f":x=(w-text_w)/2:y=(h-text_h)/2"
+            f":alpha='{alpha_expr}'"
+        )
+        filters.append(f)
+
+    filter_str = ",".join(filters)
+    output_path = video_path.replace(".mp4", "_text.mp4")
+
+    cmd = [
+        "ffmpeg", "-y",
+        "-i", video_path,
+        "-vf", filter_str,
+        "-c:v", "libx264", "-preset", "fast", "-crf", "23",
+        "-c:a", "copy",
+        "-movflags", "+faststart",
+        output_path,
+    ]
+
+    print(f"[VIDEO] Overlaying {len(entries)} text(s): {[(t, s, d) for t, s, d in entries]}",
+          file=_sys.stderr, flush=True)
+    ff_result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+
+    if ff_result.returncode != 0:
+        print(f"[VIDEO] Text overlay failed: {ff_result.stderr[-500:]}", file=_sys.stderr, flush=True)
+        try:
+            os.remove(output_path)
+        except OSError:
+            pass
+        return None
+
+    if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+        os.replace(output_path, video_path)
+        print(f"[VIDEO] Text overlay added successfully", file=_sys.stderr, flush=True)
+        return video_path
+
+    return None
+
+
 def _get_media_duration(path: str) -> float:
     """Get duration of a media file in seconds using ffprobe."""
     try:
@@ -1299,6 +1422,7 @@ def generate_video(
     negative_prompt: str = "",
     output_dir: str = "",
     person_generation: str = "allow_all",
+    overlay_texts: str = "",
 ) -> dict:
     """Generate a video using Veo 3.1 with native audio and reference images.
 
@@ -1325,6 +1449,8 @@ def generate_video(
         negative_prompt: Elements to exclude.
         output_dir: Directory to save video.
         person_generation: "allow_all" for videos with people, "dont_allow" for motion graphics without people.
+        overlay_texts: Pipe-separated text overlays: "text|start_sec|duration_sec|text|start_sec|duration_sec".
+            FFmpeg renders pixel-perfect text on top of the video. E.g. "Pure Silk|3|2|Handwoven|6|2".
     """
 
     import sys as _sys2
@@ -1413,17 +1539,28 @@ def generate_video(
             "branded": bool(logo_path or brand_name),
         }
 
-    # Add logo end card with crossfade if logo is available
-    if res.get("status") == "success" and logo_path:
+    # Post-processing pipeline (order matters):
+    # 1. Text overlays (on the video content)
+    # 2. Logo end card (appended after video)
+    if res.get("status") == "success":
         video_file = res.get("video_path", "")
         if video_file and os.path.exists(video_file):
-            _add_logo_endcard(
-                video_path=video_file,
-                logo_path=logo_path,
-                brand_colors=brand_colors,
-                brand_name=brand_name,
-                endcard_duration=2.0,
-                crossfade_duration=0.5,
-            )
+            # Step 1: Text overlays
+            if overlay_texts:
+                _add_text_overlays(
+                    video_path=video_file,
+                    overlay_texts=overlay_texts,
+                    brand_colors=brand_colors,
+                )
+            # Step 2: Logo end card
+            if logo_path:
+                _add_logo_endcard(
+                    video_path=video_file,
+                    logo_path=logo_path,
+                    brand_colors=brand_colors,
+                    brand_name=brand_name,
+                    endcard_duration=2.0,
+                    crossfade_duration=0.5,
+                )
 
     return res
