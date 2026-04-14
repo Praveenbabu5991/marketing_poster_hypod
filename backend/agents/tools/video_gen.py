@@ -468,7 +468,7 @@ def _add_text_overlays(
             f"drawtext=fontfile='{font_file}':text='{escaped}'"
             f":fontsize={font_size}:fontcolor=white"
             f":borderw=3:bordercolor=black@0.6"
-            f":x=(w-text_w)/2:y=(h-text_h)/2"
+            f":x=(w-text_w)/2:y=h*0.78"
             f":alpha='{alpha_expr}'"
         )
         filters.append(f)
