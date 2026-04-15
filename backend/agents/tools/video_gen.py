@@ -447,13 +447,67 @@ def _add_text_overlays(
     except Exception:
         vid_w, vid_h = 720, 1280
 
-    # Font size: ~5% of video width (scales with resolution)
+    # Font size: ~6% of video width (scales with resolution)
     font_size = max(24, int(vid_w * 0.06))
 
-    # Build drawtext filters — each text fades in/out
+    # Parse brand primary color for light-background text
+    primary_color = "white"
+    if brand_colors:
+        parts_c = [c.strip() for c in brand_colors.split(",") if c.strip()]
+        for c in parts_c:
+            if c.startswith("#") and len(c) in (4, 7):
+                primary_color = c
+                break
+
+    # Extract a frame to detect background brightness at text area
+    def _get_text_color_for_time(vid_path: str, t: float, w: int, h: int) -> tuple[str, str]:
+        """Sample the text area of a frame and return (fontcolor, bordercolor)."""
+        try:
+            frame_path = vid_path.replace(".mp4", f"_sample_{int(t*10)}.png")
+            subprocess.run(
+                ["ffmpeg", "-y", "-ss", str(t), "-i", vid_path,
+                 "-frames:v", "1", "-q:v", "2", frame_path],
+                capture_output=True, timeout=15,
+            )
+            if not os.path.exists(frame_path):
+                return ("white", "black@0.6")
+
+            frame_img = Image.open(frame_path)
+            # Sample a horizontal strip at y=78% (where text goes), center 60% of width
+            text_y = int(h * 0.78)
+            strip_h = max(1, int(h * 0.06))
+            x_start = int(w * 0.2)
+            x_end = int(w * 0.8)
+            crop = frame_img.crop((x_start, text_y, x_end, text_y + strip_h))
+            # Average brightness
+            pixels = list(crop.getdata())
+            if pixels:
+                avg_r = sum(p[0] for p in pixels) / len(pixels)
+                avg_g = sum(p[1] for p in pixels) / len(pixels)
+                avg_b = sum(p[2] for p in pixels) / len(pixels)
+                brightness = (avg_r * 299 + avg_g * 587 + avg_b * 114) / 1000
+            else:
+                brightness = 0
+
+            os.remove(frame_path)
+
+            if brightness > 128:
+                # Light background — use brand primary color with dark border
+                return (primary_color, "black@0.6")
+            else:
+                # Dark background — use white with dark border
+                return ("white", "black@0.6")
+        except Exception:
+            return ("white", "black@0.6")
+
+    # Build drawtext filters — each text fades in/out with auto-contrast color
     fade_dur = 0.3
     filters = []
     for text, start, dur in entries:
+        # Detect text color based on background at this timestamp
+        font_color, border_color = _get_text_color_for_time(video_path, start + 0.5, vid_w, vid_h)
+        print(f"[VIDEO] Text '{text}' at {start}s: bg→{font_color}", file=_sys.stderr, flush=True)
+
         # Escape special characters for FFmpeg drawtext
         escaped = text.replace("'", "'\\''").replace(":", "\\:").replace("%", "%%")
         end = start + dur
@@ -466,8 +520,8 @@ def _add_text_overlays(
         )
         f = (
             f"drawtext=fontfile='{font_file}':text='{escaped}'"
-            f":fontsize={font_size}:fontcolor=white"
-            f":borderw=3:bordercolor=black@0.6"
+            f":fontsize={font_size}:fontcolor={font_color}"
+            f":borderw=3:bordercolor={border_color}"
             f":x=(w-text_w)/2:y=h*0.78"
             f":alpha='{alpha_expr}'"
         )
