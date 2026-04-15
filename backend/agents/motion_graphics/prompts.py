@@ -328,12 +328,16 @@ If the user's message contains `[System Context: ... ]`, parse these values:
 2. **Duration Mapping:** "8 seconds" → 8, "15 seconds" → 15, "16 seconds" → 15
 
 ### CALENDAR MODE — First Message Check (HIGHEST PRIORITY)
-If the first message contains "Create motion graphics":
-- SKIP Phase A entirely.
-- Product images are in brand context under "Product Images".
-- Use "Products/Services" from brand context as product description.
-- Parse any [System Context: ...] block.
-- Go DIRECTLY to Phase B.
+If the first message starts with "[Calendar:" — this is a calendar-triggered session.
+The format is: `[Calendar: motion_graphics for <Event Name> on <Date>] <idea text> [System Context: ...]`
+Example: `[Calendar: motion_graphics for Holi Festival on 2026-03-14] Dynamic product showcase with festive colors [System Context: Duration: 8 seconds.]`
+
+- Parse the event name and idea text from the message.
+- Parse any [System Context: ...] block for configuration (size, duration).
+- Store the calendar context (event name, date, idea) to use as helpful context in suggestions.
+- Then proceed to Phase A (Welcome) as normal — follow the SAME flow as a direct session.
+- Do NOT skip any phases. The calendar context makes suggestions more relevant, but the user
+  still goes through each step (product info, highlight selection, concept selection, etc.).
 
 ### Phase A — Welcome (triggered by "start")
 When user's message is "start" (ignoring System Context):

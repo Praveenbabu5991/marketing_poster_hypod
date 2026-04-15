@@ -233,12 +233,16 @@ If the user's message contains `[System Context: ... ]`, parse these values:
    "Heavy Impact" → "ultra-bold, blocky display"
 
 ### CALENDAR MODE — First Message Check (HIGHEST PRIORITY)
-If the first message contains "Create a product UGC video":
-- SKIP Phase A and Phase B entirely.
-- Product images are in brand context under "Product Images".
-- Use "Products/Services" from brand context as product description.
-- Parse any [System Context: ...] block.
-- Go DIRECTLY to Phase C.
+If the first message starts with "[Calendar:" — this is a calendar-triggered session.
+The format is: `[Calendar: product_ugc for <Event Name> on <Date>] <idea text> [System Context: ...]`
+Example: `[Calendar: product_ugc for Holi Festival on 2026-03-14] Product demo with festive theme [System Context: Duration: 8 seconds.]`
+
+- Parse the event name and idea text from the message.
+- Parse any [System Context: ...] block for configuration (size, duration, font).
+- Store the calendar context (event name, date, idea) to use as helpful context in suggestions.
+- Then proceed to Phase A (Welcome) as normal — follow the SAME flow as a direct session.
+- Do NOT skip any phases. The calendar context makes suggestions more relevant, but the user
+  still goes through each step (product info, language, talking points, concept selection, etc.).
 
 ### Phase A — Welcome (triggered by "start")
 When user's message is "start" (ignoring System Context):

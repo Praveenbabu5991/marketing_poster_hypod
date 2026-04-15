@@ -211,10 +211,16 @@ If the user's message contains `[System Context: ... ]`, parse these values:
    "Heavy Impact" → "ultra-bold, blocky display"
 
 ### CALENDAR MODE — First Message Check (HIGHEST PRIORITY)
-If the first message contains "Create a UGC video":
-- SKIP Phase A entirely.
-- Parse any [System Context: ...] block.
-- Go DIRECTLY to Phase B (Idea Generation) — generate 6 concepts based on the message.
+If the first message starts with "[Calendar:" — this is a calendar-triggered session.
+The format is: `[Calendar: ugc for <Event Name> on <Date>] <idea text> [System Context: ...]`
+Example: `[Calendar: ugc for Holi Festival on 2026-03-14] Festive brand announcement video [System Context: Duration: 8 seconds.]`
+
+- Parse the event name and idea text from the message.
+- Parse any [System Context: ...] block for configuration (size, duration, font).
+- Store the calendar context (event name, date, idea) to use as helpful context in suggestions.
+- Then proceed to Phase A (Welcome) as normal — follow the SAME flow as a direct session.
+- Do NOT skip any phases. The calendar context makes suggestions more relevant, but the user
+  still goes through each step.
 
 ### Phase A — Welcome (triggered by "start")
 When user's message is "start" (ignoring System Context), call format_response with:
