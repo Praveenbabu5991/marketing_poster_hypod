@@ -7,7 +7,7 @@ export function getPlan(brandId: string, year: number, month: number): Promise<C
 
 export function saveSlots(
   planId: string,
-  slots: Array<{ date: string; event_name: string; event_type: string; post_idea: string; post_type: string }>,
+  slots: Array<{ date: string; event_name: string; event_type: string; post_idea: string; post_type: string; dialogue?: string }>,
 ): Promise<CalendarSlot[]> {
   return fetchApi(`/api/v1/calendar/plans/${planId}/slots`, {
     method: 'POST',
@@ -47,6 +47,7 @@ export function addSlot(
     generated_image?: string;
     caption?: string;
     hashtags?: string;
+    dialogue?: string;
   },
 ): Promise<CalendarSlot> {
   return fetchApi(`/api/v1/calendar/plans/${planId}/slots/add`, {

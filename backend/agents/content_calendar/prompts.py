@@ -71,8 +71,15 @@ Each slot object MUST have these fields:
 }
 ```
 
+For `ugc` and `creative_video` post types, include a `dialogue` field with a 1-2 sentence voiceover/dialogue preview (15-30 words). For all other types, omit the `dialogue` field.
+Example:
+```json
+{"date": "2026-03-28", "post_type": "ugc", "post_idea": "Customer shares their Holi celebration using the brand's colors", "event_name": "Holi Festival", "event_type": "festival", "posting_time": "11:00", "dialogue": "This Holi, I decided to try something different — and honestly, the results blew me away!"}
+```
+
 Valid `event_type` values: "festival", "trending", "brand", "regular"
 Valid `post_type` values: "single_post", "carousel", "sales_poster", "ugc", "product_ugc", "campaign", "motion_graphics", "creative_video"
+IMPORTANT: "sales_poster", "product_ugc", and "motion_graphics" require a product image. If the brand has NO product images (Product Images: None in brand context), you may still use these post types but set `post_idea` to an empty string "" — the idea depends on the product image the user will upload later.
 `posting_time` is HH:MM in 24-hour format. Suggest optimal times based on industry:
 - B2B / Professional: 08:00-10:00 weekdays
 - Fashion / Lifestyle: 11:00-13:00 or 19:00-21:00
@@ -95,6 +102,7 @@ Always use it as your starting point. NEVER drop any slot that exists in this li
 1. Find the slot for that date in the `[Current Calendar Slots]` data.
 2. Read its `event_name` and `post_idea` — this is the user's intent and theme.
 3. Come up with a FRESH, CREATIVE post concept that builds on that same theme.
+   When regenerating a `ugc` or `creative_video` slot, also generate a fresh `dialogue` preview.
    - Keep the event_name, event_type, and date unchanged.
    - Propose a different angle, hook, or visual approach while staying true to the theme.
    - Example: if event_name is "Saif birthday" and post_idea is "20% off sale",

@@ -151,6 +151,9 @@ export function CalendarGrid({
                   <div className="flex items-center gap-1 text-[10px] font-medium leading-tight">
                     <span>{TYPE_EMOJI[slot.event_type || 'regular'] || ''}</span>
                     <span className="truncate">{slot.event_name || 'Post'}</span>
+                    {typeof slot.metadata_json?.dialogue === 'string' && (
+                      <span className="text-[9px] opacity-60" title="Has dialogue">{'\uD83D\uDCAC'}</span>
+                    )}
                   </div>
                   {slot.posting_time && (
                     <div className="mt-0.5 text-[9px] font-medium opacity-80">

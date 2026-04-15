@@ -235,6 +235,18 @@ export function CalendarPopover({
               <p className="mb-3 text-sm leading-relaxed text-text-primary">{slot.post_idea}</p>
             )}
 
+            {/* Dialogue preview for video agents */}
+            {typeof slot.metadata_json?.dialogue === 'string' && (
+              <div className="mb-3 rounded-lg bg-bg-elevated px-3 py-2">
+                <p className="mb-1 text-[10px] font-medium uppercase tracking-wider text-text-muted">
+                  Dialogue Preview
+                </p>
+                <p className="text-xs italic leading-relaxed text-text-secondary">
+                  "{slot.metadata_json.dialogue}"
+                </p>
+              </div>
+            )}
+
             {/* Post type & time */}
             <div className="mb-4 flex items-center gap-4">
               <div className="flex items-center gap-2">

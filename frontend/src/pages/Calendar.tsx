@@ -145,6 +145,7 @@ export function Calendar() {
                 post_idea: match.post_idea,
                 post_type: match.post_type,
                 posting_time: match.posting_time,
+                dialogue: match.dialogue || undefined,
                 status: 'suggested',
               })
                 .then((saved) => {
@@ -250,6 +251,7 @@ export function Calendar() {
           post_type: rec.post_type || 'single_post',
           post_idea: rec.post_idea || '',
           posting_time: rec.posting_time || '',
+          dialogue: rec.dialogue || undefined,
           status: 'suggested',
           session_id: activeSessionId,
         })

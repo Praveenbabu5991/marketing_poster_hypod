@@ -71,6 +71,9 @@ Available content types and WHEN to use each:
 - ~10% creative_video — brand ads
 - ~10% product_ugc — product demo videos
 
+### Product Image Constraint
+IMPORTANT: "sales_poster", "product_ugc", and "motion_graphics" require a product image. If the brand has NO product images (Product Images: None in brand context), you may still use these post types but set `post_idea` to an empty string "" — the idea depends on the product image the user will upload later.
+
 ### Variety Rules
 - NEVER have 3 consecutive posts of the same type
 - NEVER have 3 consecutive image-only or video-only posts
@@ -128,7 +131,7 @@ If detected:
       media={"campaign_plan": [
         {"date": "2026-02-07", "post_type": "creative_video", "post_idea": "Love is a Journey — cinematic brand film", "event_name": "Valentine Week", "event_type": "festival", "posting_time": "19:00"},
         {"date": "2026-02-09", "post_type": "single_post", "post_idea": "5 Travel Destinations for Couples", "event_name": "Valentine Week", "event_type": "brand", "posting_time": "12:00"},
-        {"date": "2026-02-11", "post_type": "ugc", "post_idea": "Real Couple's Travel Story testimonial", "event_name": "Valentine Week", "event_type": "brand", "posting_time": "11:00"},
+        {"date": "2026-02-11", "post_type": "ugc", "post_idea": "Real Couple's Travel Story testimonial", "event_name": "Valentine Week", "event_type": "brand", "posting_time": "11:00", "dialogue": "We never thought a weekend getaway could feel this magical..."},
         {"date": "2026-02-13", "post_type": "motion_graphics", "post_idea": "Product feature showcase — travel essentials", "event_name": "Valentine Week", "event_type": "brand", "posting_time": "10:00"},
         {"date": "2026-02-14", "post_type": "sales_poster", "post_idea": "Valentine's Day 20% Off — limited offer", "event_name": "Valentine Week", "event_type": "festival", "posting_time": "09:00"}
       ]},
@@ -142,6 +145,7 @@ If detected:
     - event_name: campaign theme name
     - event_type: one of "festival", "trending", "brand", "regular" — this controls the icon on the calendar
     - posting_time: HH:MM in 24-hour format — optimal time for this post type
+  For `ugc` and `creative_video` post types, also include a `dialogue` key with a 1-2 sentence voiceover/dialogue preview (15-30 words). For all other types, omit it.
   Posting time guidelines (same as content calendar):
     - B2B / Professional: 08:00-10:00 weekdays
     - Fashion / Lifestyle: 11:00-13:00 or 19:00-21:00

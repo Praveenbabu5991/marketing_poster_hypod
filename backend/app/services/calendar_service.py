@@ -126,6 +126,9 @@ async def save_slots_from_agent(
         # Skip dates already occupied by campaign slots
         if s.date in kept_dates:
             continue
+        metadata = {}
+        if s.dialogue:
+            metadata["dialogue"] = s.dialogue
         slot = CalendarSlot(
             plan_id=plan_id,
             slot_date=date.fromisoformat(s.date),
@@ -135,6 +138,7 @@ async def save_slots_from_agent(
             post_type=s.post_type,
             posting_time=s.posting_time,
             status="suggested",
+            metadata_json=metadata if metadata else None,
         )
         db.add(slot)
         new_slots.append(slot)
@@ -216,9 +220,16 @@ async def add_slot(
             slot.caption = data.caption
         if data.hashtags:
             slot.hashtags = data.hashtags
+        if data.dialogue is not None:
+            existing_meta = slot.metadata_json or {}
+            existing_meta["dialogue"] = data.dialogue
+            slot.metadata_json = existing_meta
         slot.updated_at = datetime.now(timezone.utc)
     else:
         # Create new slot
+        metadata = {}
+        if data.dialogue:
+            metadata["dialogue"] = data.dialogue
         slot = CalendarSlot(
             plan_id=plan_id,
             slot_date=slot_date,
@@ -228,6 +239,7 @@ async def add_slot(
             post_type=data.post_type,
             posting_time=data.posting_time,
             status=data.status,
+            metadata_json=metadata if metadata else None,
         )
         if data.session_id:
             slot.session_id = uuid.UUID(data.session_id)
