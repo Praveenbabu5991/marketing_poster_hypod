@@ -30,22 +30,18 @@ This is NOT a still photo with a slight tilt. Motion graphics have DYNAMIC actio
 
 1. HOOK (0–2 sec) — DYNAMIC sensory action from the product's WORLD:
    Use SENSORY ELEMENTS from Creative Analysis. The hook must have MOVEMENT and ENERGY.
-   Then the brand logo appears briefly and dissolves.
+   NO logo, NO brand name in the hook — jump straight into the action.
 
    STATIC (BAD): "The brand logo fades in center-frame against a dark background."
    STATIC (BAD): "Silk threads drift through the air in slow motion."
    DYNAMIC (GOOD — saree + "Pure Silk"):
-     "Vibrant silk fabric swirls and unfurls through the air. The brand logo fades in
-      center-frame, then dissolves."
+     "Vibrant silk fabric swirls and unfurls through the air."
    DYNAMIC (GOOD — strawberry drink + "Berry Blast"):
-     "Fresh strawberries and green leaves burst through a splash of pink liquid. The
-      brand logo fades in center-frame, then dissolves."
+     "Fresh strawberries and green leaves burst through a splash of pink liquid."
    DYNAMIC (GOOD — coffee + "Bold Roast"):
-     "Coffee beans scatter and tumble as rich brown liquid splashes upward. The brand
-      logo fades in center-frame, then dissolves."
+     "Coffee beans scatter and tumble as rich brown liquid splashes upward."
    DYNAMIC (GOOD — smartwatch + "Always On"):
-     "Electric blue data streams race across a dark surface. The brand logo fades in
-      center-frame, then dissolves."
+     "Electric blue data streams race across a dark surface."
 
 2. DYNAMIC PRODUCT REVEAL — Product ENTERS through ACTION:
    The product doesn't just "sit on a surface." It EMERGES through the dynamic elements
@@ -239,8 +235,7 @@ Do NOT let the product just "sit" statically after entering.
 Creative Analysis: fruit drink → berries/freshness → strawberries splashing, leaves flying → vibrant red/pink/green
 
 "Fresh strawberries and green leaves burst through a splash of vibrant pink liquid. The
-brand logo fades in center-frame, then dissolves. The product rises up through the
-strawberry splash with berries and leaves swirling around it. A small, semi-transparent
+product rises up through the strawberry splash with berries and leaves swirling around it. A small, semi-transparent
 brand logo is visible in the upper-right corner of the frame. Droplets of pink liquid
 float around the product as it settles.
 Upbeat energetic music plays. Vibrant red and pink tones with fresh green accents, shallow
@@ -257,8 +252,8 @@ WHY THIS WORKS:
 Creative Analysis: silk/fabric → weaving/textiles → threads, flowing fabric, golden zari → jewel tones
 
 "Rich silk fabric swirls and unfurls dynamically through the air with golden threads
-trailing behind. The brand logo fades in center-frame, then dissolves. The product
-appears between flowing waves of silk as golden zari threads spiral around it. A small,
+trailing behind. The product appears between flowing waves of silk as golden zari threads
+spiral around it. A small,
 semi-transparent brand logo is visible in the upper-right corner of the frame. The silk
 fabric settles elegantly around the product with threads still floating.
 Cinematic orchestral music plays. Deep maroon and gold
@@ -276,8 +271,8 @@ Style: Neon Glow, Music: Futuristic)
 Creative Analysis: metal/tech → digital/fitness → circuit pulses, data streams → cool blue, neon
 
 "Electric blue data streams race and collide across a dark surface sending sparks of light
-flying. The brand logo fades in center-frame, then dissolves. The product emerges from the
-center of the data collision with neon blue and pink light trails orbiting around it. A
+flying. The product emerges from the center of the data collision with neon blue and pink
+light trails orbiting around it. A
 small, semi-transparent brand logo is visible in the upper-right corner of the frame.
 Pulsing light rings orbit the product as it hovers.
 Futuristic electronic music pulses. Neon lights, dark background, shallow depth
@@ -500,7 +495,7 @@ Write the prompt following the PROMPT STRUCTURE above.
 
 CRITICAL RULES FOR THE PROMPT:
 - Follow HOOK → DYNAMIC PRODUCT REVEAL → FEATURES sequence.
-- Logo appears TWICE: (1) animated intro center-frame, (2) corner watermark
+- Logo appears ONCE as corner watermark (upper-right, semi-transparent)
 - Product ENTERS through dynamic action — not just placed on a surface
 - Environment stays ALIVE — elements keep moving around the product
 - Dynamic elements must be RELATED to the product (from Creative Analysis)
@@ -514,7 +509,7 @@ PRE-GENERATION CHECK (run before presenting):
 1. Is it one continuous paragraph? No line breaks, no scene labels?
 2. Does it say "the product" and never the product's actual name?
 3. Does it avoid describing the product's appearance?
-4. Is the LOGO mentioned twice (intro center-frame + corner watermark)?
+4. Is the LOGO mentioned once (corner watermark only, NO intro)?
 6. Is there NO person, NO dialogue, NO speech?
 7. Is the lighting neutral (no "warm golden")?
 8. No brand names in the prompt?
@@ -575,7 +570,7 @@ Handle responses:
 - NEVER include a person, dialogue, or speech.
 - Keep prompts under 200 words.
 - Music mood is the ONLY audio element — no dialogue, no voiceover.
-- LOGO must appear in the prompt TWICE (intro center-frame + corner watermark).
+- LOGO must appear in the prompt ONCE (corner watermark only — NO intro logo).
 - Do NOT add any logo close sentence — FFmpeg handles the end card automatically.
 - Do NOT put highlight text in the Veo prompt. Pass it via overlay_texts parameter — FFmpeg renders it with correct spelling.
 - Show prompt BEFORE generating. Never generate without approval.
@@ -590,7 +585,7 @@ The brand logo path is in brand context below.
 ALWAYS pass it as logo_path when calling generate_video.
 The logo is passed as a reference image (reference_type="asset") — Veo uses the image
 to know what the logo looks like. The PROMPT must describe WHERE the logo appears
-(center-frame intro, upper-right corner) so Veo places it correctly.
+(upper-right corner watermark only) so Veo places it correctly.
 Do NOT use ls to verify the path — just pass it directly.
 Do NOT describe the logo's appearance/color/text — only its placement and animation.
 

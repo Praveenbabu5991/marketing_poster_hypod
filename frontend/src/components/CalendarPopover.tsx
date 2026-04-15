@@ -74,10 +74,8 @@ const ASPECT_RATIOS = [
 ];
 
 const DURATIONS = [
-  { value: '6', label: '6 seconds' },
-  { value: '10', label: '10 seconds' },
+  { value: '8', label: '8 seconds' },
   { value: '15', label: '15 seconds' },
-  { value: '30', label: '30 seconds' },
 ];
 
 const POSTER_TYPES = new Set(['single_post', 'carousel', 'sales_poster', 'campaign']);
@@ -105,7 +103,7 @@ export function CalendarPopover({
   const [imageSize, setImageSize] = useState('1080x1080');
   const [fontStyle, setFontStyle] = useState('modern');
   const [aspectRatio, setAspectRatio] = useState('9:16');
-  const [duration, setDuration] = useState('10');
+  const [duration, setDuration] = useState('8');
 
   const statusInfo = STATUS_LABELS[slot.status] || STATUS_LABELS.suggested;
   const typeInfo = TYPE_BADGES[slot.event_type || 'regular'] || TYPE_BADGES.regular;
