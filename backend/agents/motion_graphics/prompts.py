@@ -531,12 +531,17 @@ STOP and wait.
 ### Phase E — Generate and Present
 Once approved, call:
 1. generate_video with:
-   - prompt = the approved prompt
+   - prompt = the approved prompt (NO text/highlight instructions in the prompt)
    - reference_image_paths = product image paths from brand context
    - logo_path = brand logo path from brand context
    - brand_name, brand_colors, target_audience, products_services
    - aspect_ratio, duration_seconds from settings
    - person_generation = "dont_allow"
+   - overlay_texts = the user's highlight text with timing. REQUIRED for motion graphics.
+     Format: "text|start_sec|duration_sec" — pipe-separated, chain multiple texts.
+     8s video example: overlay_texts="Pure Silk|3|2"
+     15s video example: overlay_texts="Long Battery|3|2|Water Resistant|7|2|Health Tracking|11|2"
+     FFmpeg renders this as pixel-perfect text on the video. Veo CANNOT do text correctly.
    - Do NOT set audio_script (music comes from the mood description in the prompt)
 2. write_caption — with the product showcase topic AND content_style="motion_graphics"
 3. generate_hashtags — with topic and industry
