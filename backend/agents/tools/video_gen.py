@@ -473,8 +473,8 @@ def _add_text_overlays(
                 return ("white", "black@0.6")
 
             frame_img = Image.open(frame_path)
-            # Sample a horizontal strip at y=78% (where text goes), center 60% of width
-            text_y = int(h * 0.78)
+            # Sample a horizontal strip at y=85% (where text goes), center 60% of width
+            text_y = int(h * 0.85)
             strip_h = max(1, int(h * 0.06))
             x_start = int(w * 0.2)
             x_end = int(w * 0.8)
@@ -522,7 +522,7 @@ def _add_text_overlays(
             f"drawtext=fontfile='{font_file}':text='{escaped}'"
             f":fontsize={font_size}:fontcolor={font_color}"
             f":borderw=3:bordercolor={border_color}"
-            f":x=(w-text_w)/2:y=h*0.78"
+            f":x=(w-text_w)/2:y=h*0.85"
             f":alpha='{alpha_expr}'"
         )
         filters.append(f)
