@@ -87,6 +87,7 @@ class AddSlotRequest(BaseModel):
     caption: Optional[str] = None
     hashtags: Optional[str] = None
     dialogue: Optional[str] = None
+    metadata_json: Optional[dict] = None
 
 
 class CreateContentRequest(BaseModel):

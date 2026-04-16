@@ -54,6 +54,8 @@ export function Calendar() {
   // When regenerating a single slot, track its date so the plan watcher
   // uses addSlot (upsert) instead of saveSlots (bulk replace)
   const regeneratingSlotDateRef = useRef<string | null>(null);
+  // Metadata to preserve during regeneration (e.g. user-selected duration)
+  const regeneratingMetaRef = useRef<Record<string, unknown> | null>(null);
 
   // Track the last processed plan message ID to avoid re-processing old plans
   // when expectingPlanRef is re-enabled for regeneration
@@ -130,7 +132,9 @@ export function Calendar() {
           lastProcessedPlanMsgIdRef.current = msg.id; // Remember this message
 
           const regenDate = regeneratingSlotDateRef.current;
+          const regenMeta = regeneratingMetaRef.current;
           regeneratingSlotDateRef.current = null;
+          regeneratingMetaRef.current = null;
 
           if (regenDate) {
             // Regenerating a single slot — find the matching slot in the
@@ -139,6 +143,8 @@ export function Calendar() {
               (s: Record<string, unknown>) => s.date === regenDate
             ) as Record<string, string> | undefined;
             if (match) {
+              // Merge user-selected config (duration, aspect_ratio, etc.) into metadata
+              const slotMeta = regenMeta ? { ...regenMeta } : undefined;
               addSlot(plan.id, {
                 date: match.date,
                 event_name: match.event_name,
@@ -147,6 +153,7 @@ export function Calendar() {
                 post_type: match.post_type,
                 posting_time: match.posting_time,
                 dialogue: match.dialogue || undefined,
+                metadata_json: slotMeta,
                 status: 'suggested',
               })
                 .then((saved) => {
@@ -515,10 +522,12 @@ export function Calendar() {
         }
       }
 
-      // Save config to metadata_json if provided
+      // Save config to metadata_json, merging with existing metadata (e.g. duration from regeneration)
       const updateData: CalendarSlotUpdate = { status: 'approved' };
       if (config && Object.keys(config).length > 0) {
-        updateData.metadata_json = config as Record<string, unknown>;
+        const currentSlot = plan?.slots.find((s) => s.id === currentSlotId);
+        const existingMeta = (currentSlot?.metadata_json || {}) as Record<string, unknown>;
+        updateData.metadata_json = { ...existingMeta, ...config };
       }
       await handleSlotUpdate(currentSlotId, updateData);
       setSelectedSlot(null);
@@ -530,6 +539,13 @@ export function Calendar() {
 
   // Regenerate a single slot's idea via the planner
   async function handleRegenerateSlot(slot: CalendarSlot, duration?: string) {
+    // Stash existing metadata + user-selected duration so the plan watcher
+    // can include it in the addSlot call (avoids stale-ID issues with handleSlotUpdate)
+    const existingMeta = (slot.metadata_json || {}) as Record<string, unknown>;
+    regeneratingMetaRef.current = duration
+      ? { ...existingMeta, duration }
+      : Object.keys(existingMeta).length > 0 ? { ...existingMeta } : null;
+
     setSelectedSlot(null);
 
     // If no planner session exists, create one on the fly

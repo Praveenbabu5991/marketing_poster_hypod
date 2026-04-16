@@ -48,6 +48,7 @@ export function addSlot(
     caption?: string;
     hashtags?: string;
     dialogue?: string;
+    metadata_json?: Record<string, unknown>;
   },
 ): Promise<CalendarSlot> {
   return fetchApi(`/api/v1/calendar/plans/${planId}/slots/add`, {

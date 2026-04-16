@@ -110,13 +110,18 @@ async def save_slots_from_agent(
     existing = await get_slots(db, plan_id)
 
     # Separate campaign slots (preserve) from planner slots (replace)
+    # Also preserve metadata_json (duration, aspect_ratio, etc.) from existing slots
     campaign_statuses = {"generated", "generating"}
     kept_slots = []
     kept_dates: set[str] = set()
+    existing_meta: dict[str, dict] = {}
     for slot in existing:
+        date_str = slot.slot_date.isoformat()
+        if slot.metadata_json:
+            existing_meta[date_str] = dict(slot.metadata_json)
         if slot.session_id and slot.status in campaign_statuses:
             kept_slots.append(slot)
-            kept_dates.add(slot.slot_date.isoformat())
+            kept_dates.add(date_str)
         else:
             await db.delete(slot)
     await db.flush()
@@ -126,7 +131,8 @@ async def save_slots_from_agent(
         # Skip dates already occupied by campaign slots
         if s.date in kept_dates:
             continue
-        metadata = {}
+        # Merge: preserve existing metadata (duration, aspect_ratio) + add dialogue
+        metadata = existing_meta.get(s.date, {})
         if s.dialogue:
             metadata["dialogue"] = s.dialogue
         slot = CalendarSlot(
@@ -226,16 +232,19 @@ async def add_slot(
             slot.caption = data.caption
         if data.hashtags:
             slot.hashtags = data.hashtags
-        # Update dialogue in metadata_json — use a new dict so SQLAlchemy
-        # detects the change (avoids mutable JSON tracking issues)
+        # Update metadata_json — merge incoming metadata + dialogue into existing
+        # Use a new dict so SQLAlchemy detects the change (mutable JSON tracking)
+        new_meta = dict(slot.metadata_json) if slot.metadata_json else {}
+        if data.metadata_json:
+            new_meta.update(data.metadata_json)
         if data.dialogue is not None:
-            new_meta = dict(slot.metadata_json) if slot.metadata_json else {}
             new_meta["dialogue"] = data.dialogue
+        if new_meta:
             slot.metadata_json = new_meta
         slot.updated_at = datetime.now(timezone.utc)
     else:
         # Create new slot
-        metadata = {}
+        metadata = dict(data.metadata_json) if data.metadata_json else {}
         if data.dialogue:
             metadata["dialogue"] = data.dialogue
         slot = CalendarSlot(

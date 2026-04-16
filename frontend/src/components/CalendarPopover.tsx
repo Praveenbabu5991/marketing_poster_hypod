@@ -99,11 +99,12 @@ export function CalendarPopover({
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Config state for generation options
-  const [imageSize, setImageSize] = useState('1080x1080');
-  const [fontStyle, setFontStyle] = useState('modern');
-  const [aspectRatio, setAspectRatio] = useState('9:16');
-  const [duration, setDuration] = useState('8');
+  // Config state for generation options — restore from metadata if available
+  const meta = slot.metadata_json as Record<string, unknown> | null;
+  const [imageSize, setImageSize] = useState((meta?.image_size as string) || '1080x1080');
+  const [fontStyle, setFontStyle] = useState((meta?.font_style as string) || 'modern');
+  const [aspectRatio, setAspectRatio] = useState((meta?.aspect_ratio as string) || '9:16');
+  const [duration, setDuration] = useState((meta?.duration as string) || '8');
 
   const statusInfo = STATUS_LABELS[slot.status] || STATUS_LABELS.suggested;
   const typeInfo = TYPE_BADGES[slot.event_type || 'regular'] || TYPE_BADGES.regular;
