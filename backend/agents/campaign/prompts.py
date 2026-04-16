@@ -145,7 +145,11 @@ If detected:
     - event_name: campaign theme name
     - event_type: one of "festival", "trending", "brand", "regular" — this controls the icon on the calendar
     - posting_time: HH:MM in 24-hour format — optimal time for this post type
-  For `ugc` and `creative_video` post types, also include a `dialogue` key with a 1-2 sentence voiceover/dialogue preview (15-30 words). For all other types, omit it.
+  For `ugc` and `creative_video` post types, also include a `dialogue` key with a 1-2 sentence voiceover/dialogue preview. Dialogue length depends on video duration:
+  - 8 seconds → MAX 15 words
+  - 15 seconds → MAX 30 words
+  Default to 15 words if no duration is specified.
+  For all other types, omit it.
   Posting time guidelines (same as content calendar):
     - B2B / Professional: 08:00-10:00 weekdays
     - Fashion / Lifestyle: 11:00-13:00 or 19:00-21:00

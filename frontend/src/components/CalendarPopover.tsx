@@ -15,7 +15,7 @@ interface CalendarPopoverProps {
   onUpdate: (slotId: string, data: CalendarSlotUpdate) => Promise<void>;
   onApproveAndGenerate: (slotId: string, config?: SlotConfig) => Promise<void>;
   onViewSession: (slot: CalendarSlot) => void;
-  onRegenerate: (slot: CalendarSlot) => void;
+  onRegenerate: (slot: CalendarSlot, duration?: string) => void;
   hasProductImages: boolean;
   onUploadProductImage: (file: File) => Promise<void>;
 }
@@ -430,8 +430,19 @@ export function CalendarPopover({
                   >
                     Edit
                   </button>
+                  {isVideo && (
+                    <select
+                      value={duration}
+                      onChange={(e) => setDuration(e.target.value)}
+                      className="rounded-lg border border-border bg-bg-page px-2 py-1.5 text-xs text-text-primary focus:border-accent focus:outline-none"
+                    >
+                      {DURATIONS.map((d) => (
+                        <option key={d.value} value={d.value}>{d.label}</option>
+                      ))}
+                    </select>
+                  )}
                   <button
-                    onClick={() => { onRegenerate(slot); onClose(); }}
+                    onClick={() => { onRegenerate(slot, isVideo ? duration : undefined); onClose(); }}
                     disabled={loading}
                     className="rounded-lg px-4 py-1.5 text-sm text-text-muted hover:bg-bg-elevated hover:text-text-primary"
                   >

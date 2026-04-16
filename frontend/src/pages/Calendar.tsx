@@ -419,6 +419,11 @@ export function Calendar() {
       const idea = slot.post_idea || slot.event_name || 'a branded post';
       const eventContext = slot.event_name ? ` for ${slot.event_name} on ${slot.slot_date}` : '';
 
+      // Extract dialogue from slot metadata for video types
+      const dialogue = typeof slot.metadata_json?.dialogue === 'string'
+        ? slot.metadata_json.dialogue : null;
+      const dialogueBlock = dialogue ? ` [Dialogue: "${dialogue}"]` : '';
+
       // Build config instructions
       let configInstructions = '';
       if (config?.image_size) configInstructions += ` Image size: ${config.image_size}.`;
@@ -432,7 +437,7 @@ export function Calendar() {
         : '';
 
       // Send a simple calendar trigger — backend prompts handle all flow logic
-      pendingMessageRef.current = `[Calendar: ${result.agent_type}${eventContext}] ${idea}${systemContext}`;
+      pendingMessageRef.current = `[Calendar: ${result.agent_type}${eventContext}] ${idea}${dialogueBlock}${systemContext}`;
       setActiveSessionId(result.session_id);
     } catch (err) {
       expectingContentRef.current = false;
@@ -509,7 +514,7 @@ export function Calendar() {
   }
 
   // Regenerate a single slot's idea via the planner
-  async function handleRegenerateSlot(slot: CalendarSlot) {
+  async function handleRegenerateSlot(slot: CalendarSlot, duration?: string) {
     setSelectedSlot(null);
 
     // If no planner session exists, create one on the fly
@@ -531,7 +536,8 @@ export function Calendar() {
     regeneratingSlotDateRef.current = slot.slot_date;
 
     const dateStr = slot.slot_date;
-    const msg = `Regenerate ${dateStr}`;
+    const durationBlock = duration ? ` [Duration: ${duration} seconds]` : '';
+    const msg = `Regenerate ${dateStr}${durationBlock}`;
 
     if (activeSessionId === plannerSessionRef.current && sidebarMode === 'planner') {
       // Already on the planner session — send directly

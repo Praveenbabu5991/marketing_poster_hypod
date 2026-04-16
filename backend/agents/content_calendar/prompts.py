@@ -71,7 +71,11 @@ Each slot object MUST have these fields:
 }
 ```
 
-For `ugc` and `creative_video` post types, include a `dialogue` field with a 1-2 sentence voiceover/dialogue preview (15-30 words). For all other types, omit the `dialogue` field.
+For `ugc` and `creative_video` post types, include a `dialogue` field with a 1-2 sentence voiceover/dialogue preview. Dialogue length depends on video duration:
+- 8 seconds → MAX 15 words
+- 15 seconds → MAX 30 words
+Default to 15 words if no duration is specified.
+For all other types, omit the `dialogue` field.
 Example:
 ```json
 {"date": "2026-03-28", "post_type": "ugc", "post_idea": "Customer shares their Holi celebration using the brand's colors", "event_name": "Holi Festival", "event_type": "festival", "posting_time": "11:00", "dialogue": "This Holi, I decided to try something different — and honestly, the results blew me away!"}
@@ -99,10 +103,15 @@ The `[Current Calendar Slots]` in every message is the AUTHORITATIVE source of t
 Always use it as your starting point. NEVER drop any slot that exists in this list.
 
 **Handling "Regenerate YYYY-MM-DD" requests:**
+The message may include `[Duration: X seconds]` (e.g., "Regenerate 2026-03-14 [Duration: 8 seconds]").
+If present, size the dialogue to match: 8s → MAX 15 words, 15s → MAX 30 words.
+If no duration specified, default to MAX 15 words.
+
 1. Find the slot for that date in the `[Current Calendar Slots]` data.
 2. Read its `event_name` and `post_idea` — this is the user's intent and theme.
 3. Come up with a FRESH, CREATIVE post concept that builds on that same theme.
-   When regenerating a `ugc` or `creative_video` slot, also generate a fresh `dialogue` preview.
+   When regenerating a `ugc` or `creative_video` slot, also generate a fresh `dialogue` preview
+   sized to the duration from the message (or default 15 words).
    - Keep the event_name, event_type, and date unchanged.
    - Propose a different angle, hook, or visual approach while staying true to the theme.
    - Example: if event_name is "Saif birthday" and post_idea is "20% off sale",

@@ -212,14 +212,23 @@ If the user's message contains `[System Context: ... ]`, parse these values:
 
 ### CALENDAR MODE — First Message Check (HIGHEST PRIORITY)
 If the first message starts with "[Calendar:" — this is a calendar-triggered session.
-The format is: `[Calendar: ugc for <Event Name> on <Date>] <idea text> [System Context: ...]`
-Example: `[Calendar: ugc for Holi Festival on 2026-03-14] Festive brand announcement video [System Context: Duration: 8 seconds.]`
+The format is: `[Calendar: ugc for <Event Name> on <Date>] <idea text> [Dialogue: "..."] [System Context: ...]`
+Example: `[Calendar: ugc for Holi Festival on 2026-03-14] Festive brand announcement video [Dialogue: "This Holi, dress in colors that match your energy!"] [System Context: Duration: 8 seconds.]`
 
-- Parse the event name and idea text from the message.
-- Parse any [System Context: ...] block for configuration (size, duration, font).
-- Store the calendar context (event name, date, idea) to use as helpful context in suggestions.
-- Then proceed to Phase A (Welcome) as normal — follow the SAME flow as a direct session.
-- Do NOT skip any phases. The calendar context makes suggestions more relevant, but the user
+Parse the event name, idea text, and any [System Context: ...] block.
+
+**If the message also contains `[Dialogue: "..."]`:**
+→ The user already has an approved idea + dialogue from the calendar card.
+→ Skip Phase A (Welcome) and Phase B (Idea Suggestions) entirely.
+→ Lock the idea from the message as the selected concept.
+→ Lock the dialogue from the `[Dialogue:]` block as the initial dialogue.
+→ Jump directly to Phase C (Language + Dialogue Confirmation).
+  Present the dialogue in Step 2 so the user can still modify it, choose language, approve/edit the prompt, etc.
+  The flow is: Phase C (Language → Dialogue Confirm) → Phase D (Prompt Approval) → Phase E (Generate).
+
+**If NO `[Dialogue:]` block is present:**
+→ Proceed to Phase A (Welcome) as normal. Do NOT skip any phases.
+  The calendar context (event name, date, idea) makes suggestions more relevant, but the user
   still goes through each step.
 
 ### Phase A — Welcome (triggered by "start")
