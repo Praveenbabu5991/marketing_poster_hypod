@@ -19,7 +19,7 @@ const AUTO_START_AGENTS = new Set([
   'product_ugc',
   'quick_image',
   'motion_graphics',
-  'creative_video',
+  'advertisement',
 ]);
 
 export function Chat() {
@@ -42,7 +42,7 @@ export function Chat() {
   // Helper to get settings context
   const getSettingsContext = () => {
     const posterAgents = ['sales_poster', 'single_post', 'carousel', 'quick_image'];
-    const videoAgents = ['product_ugc', 'ugc', 'motion_graphics', 'creative_video'];
+    const videoAgents = ['product_ugc', 'ugc', 'motion_graphics', 'advertisement'];
     
     if (session?.agent_type && posterAgents.includes(session.agent_type)) {
       return `Size: ${posterSize}, Font: ${posterFont}`;
@@ -181,7 +181,7 @@ export function Chat() {
         )}
 
         {/* Settings Panel for Video Agents */}
-        {session?.agent_type && ['product_ugc', 'ugc', 'motion_graphics', 'creative_video'].includes(session.agent_type) && (
+        {session?.agent_type && ['product_ugc', 'ugc', 'motion_graphics', 'advertisement'].includes(session.agent_type) && (
           <div className="flex flex-row items-center gap-6 px-6 pb-4 overflow-x-auto">
             <div className="flex items-center gap-2 text-sm">
               <span className="text-text-muted">Size:</span>

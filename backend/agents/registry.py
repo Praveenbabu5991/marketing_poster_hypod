@@ -57,7 +57,7 @@ AGENT_CONFIGS = {
         "icon": "sparkles",
         "requires_product_images": True,
     },
-    "creative_video": {
+    "advertisement": {
         "name": "Advertisement",
         "description": "Create branded advertisement videos — 1 to 3 persons, creative concepts, no product image required",
         "icon": "clapperboard",
@@ -129,7 +129,7 @@ def get_agent_graph(agent_type: str) -> StateGraph:
     elif agent_type == "motion_graphics":
         from agents.motion_graphics.graph import build_motion_graphics_graph
         return build_motion_graphics_graph(llm)
-    elif agent_type == "creative_video":
+    elif agent_type == "advertisement":
         from agents.creative_video.graph import build_creative_video_graph
         return build_creative_video_graph(llm)
     elif agent_type == "content_calendar":

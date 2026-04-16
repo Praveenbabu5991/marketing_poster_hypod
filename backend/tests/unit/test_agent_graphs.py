@@ -71,7 +71,7 @@ class TestAgentGraphs:
         compiled = graph.compile()
         assert compiled is not None
 
-    def test_creative_video_graph_builds(self):
+    def test_advertisement_graph_builds(self):
         from agents.creative_video.graph import build_creative_video_graph
         graph = build_creative_video_graph(_make_mock_llm())
         assert graph is not None
@@ -92,7 +92,7 @@ class TestAgentRegistry:
         assert "product_ugc" in AGENT_CONFIGS
         assert "quick_image" in AGENT_CONFIGS
         assert "motion_graphics" in AGENT_CONFIGS
-        assert "creative_video" in AGENT_CONFIGS
+        assert "advertisement" in AGENT_CONFIGS
         assert "content_calendar" in AGENT_CONFIGS
 
     def test_product_agents_require_product_images(self):

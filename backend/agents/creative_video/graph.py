@@ -29,5 +29,5 @@ def build_creative_video_graph(llm: BaseChatModel):
         llm=llm,
         tools=CREATIVE_VIDEO_TOOLS,
         system_prompt=CREATIVE_VIDEO_PROMPT,
-        graph_name="creative_video",
+        graph_name="advertisement",
     )

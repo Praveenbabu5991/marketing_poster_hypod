@@ -15,7 +15,7 @@ class CalendarSlotData(BaseModel):
     post_idea: str = ""
     post_type: str = "single_post"
     posting_time: Optional[str] = None  # HH:MM 24h format
-    dialogue: Optional[str] = None  # Video dialogue preview (ugc, creative_video only)
+    dialogue: Optional[str] = None  # Video dialogue preview (ugc, advertisement only)
 
 
 class CalendarSlotUpdate(BaseModel):

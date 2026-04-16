@@ -503,14 +503,26 @@ export function Calendar() {
   async function handleApproveAndGenerate(slotId: string, config?: SlotConfig) {
     if (!selectedBrandId || streaming) return;
     try {
+      // The popover may hold a stale slot ID if saveSlots replaced all slots.
+      // Look up the current slot by date to get the latest ID.
+      const popoverSlot = plan?.slots.find((s) => s.id === slotId);
+      let currentSlotId = slotId;
+      if (!popoverSlot) {
+        const selectedDate = selectedSlot?.slot_date;
+        const freshSlot = selectedDate ? plan?.slots.find((s) => s.slot_date === selectedDate) : null;
+        if (freshSlot) {
+          currentSlotId = freshSlot.id;
+        }
+      }
+
       // Save config to metadata_json if provided
       const updateData: CalendarSlotUpdate = { status: 'approved' };
       if (config && Object.keys(config).length > 0) {
         updateData.metadata_json = config as Record<string, unknown>;
       }
-      await handleSlotUpdate(slotId, updateData);
+      await handleSlotUpdate(currentSlotId, updateData);
       setSelectedSlot(null);
-      await handleGenerateContent(slotId, config);
+      await handleGenerateContent(currentSlotId, config);
     } catch (err) {
       console.error('Failed to approve and generate:', err);
     }

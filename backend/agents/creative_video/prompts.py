@@ -329,8 +329,8 @@ If the user's message contains `[System Context: ... ]`, parse these values:
 
 ### CALENDAR MODE — First Message Check (HIGHEST PRIORITY)
 If the first message starts with "[Calendar:" — this is a calendar-triggered session.
-The format is: `[Calendar: creative_video for <Event Name> on <Date>] <idea text> [Dialogue: "..."] [System Context: ...]`
-Example: `[Calendar: creative_video for Holi Festival on 2026-03-14] Festive brand advertisement [Dialogue: "This Holi, celebrate in style with us!"] [System Context: Duration: 8 seconds.]`
+The format is: `[Calendar: advertisement for <Event Name> on <Date>] <idea text> [Dialogue: "..."] [System Context: ...]`
+Example: `[Calendar: advertisement for Holi Festival on 2026-03-14] Festive brand advertisement [Dialogue: "This Holi, celebrate in style with us!"] [System Context: Duration: 8 seconds.]`
 
 Parse the event name, idea text, and any [System Context: ...] block.
 

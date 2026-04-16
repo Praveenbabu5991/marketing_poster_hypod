@@ -36,7 +36,7 @@ const AGENT_LABELS: Record<string, string> = {
   ugc: 'UGC',
   product_ugc: 'Product UGC',
   motion_graphics: 'Motion Graphics',
-  creative_video: 'Advertisement',
+  advertisement: 'Advertisement',
 };
 
 const TYPE_BADGES: Record<string, { label: string; cls: string }> = {
@@ -79,7 +79,7 @@ const DURATIONS = [
 ];
 
 const POSTER_TYPES = new Set(['single_post', 'carousel', 'sales_poster', 'campaign']);
-const VIDEO_TYPES = new Set(['ugc', 'product_ugc', 'motion_graphics', 'creative_video']);
+const VIDEO_TYPES = new Set(['ugc', 'product_ugc', 'motion_graphics', 'advertisement']);
 
 export function CalendarPopover({
   slot,

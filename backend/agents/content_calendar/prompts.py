@@ -71,7 +71,7 @@ Each slot object MUST have these fields:
 }
 ```
 
-For `ugc` and `creative_video` post types, include a `dialogue` field with a 1-2 sentence voiceover/dialogue preview. Dialogue length depends on video duration:
+For `ugc` and `advertisement` post types, include a `dialogue` field with a 1-2 sentence voiceover/dialogue preview. Dialogue length depends on video duration:
 - 8 seconds → MAX 15 words
 - 15 seconds → MAX 30 words
 Default to 15 words if no duration is specified.
@@ -82,7 +82,7 @@ Example:
 ```
 
 Valid `event_type` values: "festival", "trending", "brand", "regular"
-Valid `post_type` values: "single_post", "carousel", "sales_poster", "ugc", "product_ugc", "campaign", "motion_graphics", "creative_video"
+Valid `post_type` values: "single_post", "carousel", "sales_poster", "ugc", "product_ugc", "campaign", "motion_graphics", "advertisement"
 IMPORTANT: "sales_poster", "product_ugc", and "motion_graphics" require a product image. If the brand has NO product images (Product Images: None in brand context), you may still use these post types but set `post_idea` to an empty string "" — the idea depends on the product image the user will upload later.
 `posting_time` is HH:MM in 24-hour format. Suggest optimal times based on industry:
 - B2B / Professional: 08:00-10:00 weekdays
@@ -110,7 +110,7 @@ If no duration specified, default to MAX 15 words.
 1. Find the slot for that date in the `[Current Calendar Slots]` data.
 2. Read its `event_name` and `post_idea` — this is the user's intent and theme.
 3. Come up with a FRESH, CREATIVE post concept that builds on that same theme.
-   When regenerating a `ugc` or `creative_video` slot, also generate a fresh `dialogue` preview
+   When regenerating a `ugc` or `advertisement` slot, also generate a fresh `dialogue` preview
    sized to the duration from the message (or default 15 words).
    - Keep the date, event_name, event_type, post_type, and posting_time unchanged.
    - NEVER change the post_type during regeneration. A carousel stays a carousel, a ugc stays a ugc, etc.

@@ -48,19 +48,19 @@ Available content types and WHEN to use each:
 | ugc              | Video  | Person naturally using product, testimonials, social proof   |
 | product_ugc      | Video  | Product demo with person, unboxing, hands-on review         |
 | motion_graphics  | Video  | Animated product showcase, feature highlights (NO person)   |
-| creative_video   | Video  | Ad-style video with person(s), brand storytelling, lifestyle|
+| advertisement   | Video  | Ad-style video with person(s), brand storytelling, lifestyle|
 
 ### Campaign Arc → Content Type Mapping
-- **Opening posts (first ~20%)**: Grab attention → `creative_video`, `motion_graphics`, bold `single_post`
+- **Opening posts (first ~20%)**: Grab attention → `advertisement`, `motion_graphics`, bold `single_post`
 - **Middle posts (~60%)**: Build interest → `single_post`, `ugc`, `product_ugc`, `motion_graphics`
-- **Closing posts (last ~20%)**: Convert → `sales_poster`, `creative_video` with CTA, `ugc` testimonial
+- **Closing posts (last ~20%)**: Convert → `sales_poster`, `advertisement` with CTA, `ugc` testimonial
 
 ### Content Pillar → Content Type
 - Educational (tips, how-to, knowledge) → `single_post`
 - Social Proof (testimonials, reviews) → `ugc`
 - Product Showcase (features, demo) → `motion_graphics` or `product_ugc`
 - Promotional (sales, offers — max 20% of posts) → `sales_poster`
-- Brand Storytelling (lifestyle, behind-the-scenes) → `creative_video`
+- Brand Storytelling (lifestyle, behind-the-scenes) → `advertisement`
 - Engagement (quotes, polls, relatable) → `single_post`
 
 ### Recommended Mix (adapt to campaign size)
@@ -68,7 +68,7 @@ Available content types and WHEN to use each:
 - ~15% sales_poster — promotional (never exceed 20%)
 - ~20% ugc — social proof videos
 - ~15% motion_graphics — product showcase videos
-- ~10% creative_video — brand ads
+- ~10% advertisement — brand ads
 - ~10% product_ugc — product demo videos
 
 ### Product Image Constraint
@@ -129,7 +129,7 @@ If detected:
     format_response(
       message="Here is your campaign plan...",
       media={"campaign_plan": [
-        {"date": "2026-02-07", "post_type": "creative_video", "post_idea": "Love is a Journey — cinematic brand film", "event_name": "Valentine Week", "event_type": "festival", "posting_time": "19:00"},
+        {"date": "2026-02-07", "post_type": "advertisement", "post_idea": "Love is a Journey — cinematic brand film", "event_name": "Valentine Week", "event_type": "festival", "posting_time": "19:00"},
         {"date": "2026-02-09", "post_type": "single_post", "post_idea": "5 Travel Destinations for Couples", "event_name": "Valentine Week", "event_type": "brand", "posting_time": "12:00"},
         {"date": "2026-02-11", "post_type": "ugc", "post_idea": "Real Couple's Travel Story testimonial", "event_name": "Valentine Week", "event_type": "brand", "posting_time": "11:00", "dialogue": "We never thought a weekend getaway could feel this magical..."},
         {"date": "2026-02-13", "post_type": "motion_graphics", "post_idea": "Product feature showcase — travel essentials", "event_name": "Valentine Week", "event_type": "brand", "posting_time": "10:00"},
@@ -145,7 +145,7 @@ If detected:
     - event_name: campaign theme name
     - event_type: one of "festival", "trending", "brand", "regular" — this controls the icon on the calendar
     - posting_time: HH:MM in 24-hour format — optimal time for this post type
-  For `ugc` and `creative_video` post types, also include a `dialogue` key with a 1-2 sentence voiceover/dialogue preview. Dialogue length depends on video duration:
+  For `ugc` and `advertisement` post types, also include a `dialogue` key with a 1-2 sentence voiceover/dialogue preview. Dialogue length depends on video duration:
   - 8 seconds → MAX 15 words
   - 15 seconds → MAX 30 words
   Default to 15 words if no duration is specified.
@@ -299,7 +299,7 @@ E2. GENERATE: After user approves, generate based on the post's content type:
        - cta_text: clear call-to-action (e.g. "Shop Now", "Order Today", "Link in Bio")
        - occasion_text: if tied to a festival/event, include greeting
 
-    **VIDEO TYPES (ugc, product_ugc, motion_graphics, creative_video):**
+    **VIDEO TYPES (ugc, product_ugc, motion_graphics, advertisement):**
     All video types use generate_video + write_caption + generate_hashtags.
     The KEY difference is the PROMPT STYLE:
 
@@ -318,7 +318,7 @@ E2. GENERATE: After user approves, generate based on the post's content type:
     - Tone: sleek, animated, showcase. Product floats, rotates, or transforms.
     - Example angle: "Product rotating with dynamic particle effects and feature callouts."
 
-    **For creative_video:**
+    **For advertisement:**
     - Prompt describes a CINEMATIC SCENE with person(s) in a creative concept.
     - Tone: ad-style, storytelling, aspirational, high production value.
     - Example angle: "A stylish couple walking through a city at golden hour, using the product."
@@ -357,7 +357,7 @@ E3. PRESENT RESULT: Call format_response with:
           choices=[{"id": "1", "label": "Next Post"}, ...],
           allow_free_input=true
         )
-      Example format_response call for calendar-mode video post (ugc, product_ugc, motion_graphics, creative_video):
+      Example format_response call for calendar-mode video post (ugc, product_ugc, motion_graphics, advertisement):
         format_response(
           message="Week 1 — Post 2 of 6: ...\n\nCaption: ...\n\nHashtags: ...",
           media={"video_path": "/generated/video_xxx.mp4"},
@@ -400,7 +400,7 @@ Handle responses:
 - NEVER re-ask a question the user already answered. Parse ALL info from each message.
 - NEVER go back to idea recommendation after user has selected a theme.
 - The flow is: Welcome → Ideas → Duration → Posts/week → Plan → Post-by-Post → Summary.
-- ALL campaigns (date-range AND per-slot) use mixed content types from the CONTENT TYPE GUIDE (single_post, sales_poster, ugc, product_ugc, motion_graphics, creative_video). Apply the recommended mix and variety rules.
+- ALL campaigns (date-range AND per-slot) use mixed content types from the CONTENT TYPE GUIDE (single_post, sales_poster, ugc, product_ugc, motion_graphics, advertisement). Apply the recommended mix and variety rules.
 - Maintain consistent brand identity (colors, logo, tone) across ALL posts.
 - The "start" trigger is sent automatically by the frontend (it may contain a [System Context] block, which you should parse but otherwise treat the message as just "start") (it may contain a [System Context] block, which you should parse but otherwise treat the message as just "start"), not by the user.
 - When user selects by number ("1", "2", "3"), map to the corresponding choice.
