@@ -205,12 +205,18 @@ async def add_slot(
     slot = result.scalar_one_or_none()
 
     if slot:
-        # Update existing slot
-        slot.event_name = data.event_name or slot.event_name
-        slot.event_type = data.event_type or slot.event_type
-        slot.post_idea = data.post_idea or slot.post_idea
-        slot.post_type = data.post_type or slot.post_type
-        slot.posting_time = data.posting_time or slot.posting_time
+        # Update existing slot — overwrite fields when explicitly provided
+        # (non-empty means the caller intended to set it; empty string = not provided)
+        if data.event_name:
+            slot.event_name = data.event_name
+        if data.event_type:
+            slot.event_type = data.event_type
+        if data.post_idea:
+            slot.post_idea = data.post_idea
+        if data.post_type:
+            slot.post_type = data.post_type
+        if data.posting_time is not None:
+            slot.posting_time = data.posting_time
         slot.status = data.status
         if data.session_id:
             slot.session_id = uuid.UUID(data.session_id)
@@ -220,10 +226,12 @@ async def add_slot(
             slot.caption = data.caption
         if data.hashtags:
             slot.hashtags = data.hashtags
+        # Update dialogue in metadata_json — use a new dict so SQLAlchemy
+        # detects the change (avoids mutable JSON tracking issues)
         if data.dialogue is not None:
-            existing_meta = slot.metadata_json or {}
-            existing_meta["dialogue"] = data.dialogue
-            slot.metadata_json = existing_meta
+            new_meta = dict(slot.metadata_json) if slot.metadata_json else {}
+            new_meta["dialogue"] = data.dialogue
+            slot.metadata_json = new_meta
         slot.updated_at = datetime.now(timezone.utc)
     else:
         # Create new slot

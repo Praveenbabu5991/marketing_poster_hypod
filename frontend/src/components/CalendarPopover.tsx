@@ -430,17 +430,6 @@ export function CalendarPopover({
                   >
                     Edit
                   </button>
-                  {isVideo && (
-                    <select
-                      value={duration}
-                      onChange={(e) => setDuration(e.target.value)}
-                      className="rounded-lg border border-border bg-bg-page px-2 py-1.5 text-xs text-text-primary focus:border-accent focus:outline-none"
-                    >
-                      {DURATIONS.map((d) => (
-                        <option key={d.value} value={d.value}>{d.label}</option>
-                      ))}
-                    </select>
-                  )}
                   <button
                     onClick={() => { onRegenerate(slot, isVideo ? duration : undefined); onClose(); }}
                     disabled={loading}

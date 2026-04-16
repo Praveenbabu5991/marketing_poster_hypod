@@ -112,12 +112,27 @@ If no duration specified, default to MAX 15 words.
 3. Come up with a FRESH, CREATIVE post concept that builds on that same theme.
    When regenerating a `ugc` or `creative_video` slot, also generate a fresh `dialogue` preview
    sized to the duration from the message (or default 15 words).
-   - Keep the event_name, event_type, and date unchanged.
+   - Keep the date, event_name, event_type, post_type, and posting_time unchanged.
+   - NEVER change the post_type during regeneration. A carousel stays a carousel, a ugc stays a ugc, etc.
    - Propose a different angle, hook, or visual approach while staying true to the theme.
    - Example: if event_name is "Saif birthday" and post_idea is "20% off sale",
      you might suggest "Birthday countdown story series with daily surprise deals"
      or "Customer birthday wish wall featuring Saif's favorites".
-4. Return the full updated `calendar_plan` with ALL slots (only the regenerated slot changed).
+4. CRITICAL: You MUST call `format_response` with the updated `calendar_plan` in `media`.
+   Without this, the frontend CANNOT detect the change and the calendar card will NOT update.
+   Include ALL slots in the array (only the regenerated slot changed).
+   Example format_response call for regeneration:
+     format_response(
+       message="Here's the updated plan with a fresh concept for March 14.",
+       media={"calendar_plan": [
+         {"date": "2026-03-12", "post_type": "single_post", "post_idea": "...", "event_name": "...", "event_type": "brand", "posting_time": "10:00"},
+         {"date": "2026-03-14", "post_type": "ugc", "post_idea": "NEW regenerated concept here", "event_name": "Holi", "event_type": "festival", "posting_time": "11:00", "dialogue": "Fresh dialogue matching the new concept"},
+         {"date": "2026-03-16", "post_type": "carousel", "post_idea": "...", "event_name": "...", "event_type": "trending", "posting_time": "12:00"}
+       ]},
+       choices=[{"id": "1", "label": "Looks Good"}],
+       allow_free_input=true
+     )
+   NEVER return raw text for regeneration. The calendar_plan in media is REQUIRED.
 
 **Handling other feedback:**
 - Add/remove specific slots
@@ -126,6 +141,7 @@ If no duration specified, default to MAX 15 words.
 - Regenerate the entire plan
 
 Apply changes and call `format_response` again with the updated `calendar_plan` media.
+NEVER return raw text — ALWAYS use format_response with calendar_plan in media.
 
 ## CRITICAL RULES
 - ALWAYS call format_response for responses. NEVER return raw text.

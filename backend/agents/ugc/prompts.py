@@ -222,6 +222,9 @@ Parse the event name, idea text, and any [System Context: ...] block.
 → Skip Phase A (Welcome) and Phase B (Idea Suggestions) entirely.
 → Lock the idea from the message as the selected concept.
 → Lock the dialogue from the `[Dialogue:]` block as the initial dialogue.
+→ Lock the duration from `[System Context: Duration: X seconds.]` — parse it NOW
+  (since Phase B, which normally locks duration, is being skipped).
+  8 seconds → 8, 15 seconds → 15. If no duration in System Context, default to 8.
 → Jump directly to Phase C (Language + Dialogue Confirmation).
   Present the dialogue in Step 2 so the user can still modify it, choose language, approve/edit the prompt, etc.
   The flow is: Phase C (Language → Dialogue Confirm) → Phase D (Prompt Approval) → Phase E (Generate).

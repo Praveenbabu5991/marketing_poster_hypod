@@ -74,6 +74,7 @@ export function Calendar() {
     setSelectedSlot(null);
     expectingPlanRef.current = false;
     expectingContentRef.current = false;
+
     processedCampaignDatesRef.current = new Set();
     lastProcessedPlanMsgIdRef.current = null;
     setSidebarMode('planner');
@@ -359,6 +360,7 @@ export function Calendar() {
 
     // Mark that we're actively generating — enables the plan watcher
     expectingPlanRef.current = true;
+
     setPlanPopoverOpen(false);
 
     try {
@@ -491,6 +493,7 @@ export function Calendar() {
       // in the agent's response gets applied to the calendar
       if (sidebarMode === 'planner') {
         expectingPlanRef.current = true;
+    
       }
       sendMessage(text);
     },
@@ -533,6 +536,7 @@ export function Calendar() {
 
     // Enable the plan watcher so the updated plan gets saved
     expectingPlanRef.current = true;
+
     regeneratingSlotDateRef.current = slot.slot_date;
 
     const dateStr = slot.slot_date;
