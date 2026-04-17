@@ -97,7 +97,14 @@ def _generate_title(message: str, agent_type: str, brand_name: str = "") -> str 
     # Skip very short confirmations
     if lower in ("yes", "no", "ok", "sure", "next", "done", "continue",
                  "generate", "next post", "start generating", "finish campaign",
-                 "looks good", "use this image", "generate video"):
+                 "looks good", "use this image", "generate video",
+                 "suggest ideas", "suggest idea", "skip", "approve",
+                 "set image size", "set video size", "english", "hindi",
+                 "generate image", "generate poster", "generate carousel",
+                 "upload image", "upload product image"):
+        return None
+    # Skip "Set X to: Y" config messages (e.g., "Set image size to: 9:16")
+    if re.match(r"Set .+ to:", clean, re.I):
         return None
     # Skip "Plan N posts" → planner sessions get titled from calendar slot
     if re.match(r"Plan \d+ posts", clean, re.I):
