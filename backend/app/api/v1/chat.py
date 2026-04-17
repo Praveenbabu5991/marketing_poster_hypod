@@ -101,7 +101,8 @@ def _generate_title(message: str, agent_type: str, brand_name: str = "") -> str 
                  "suggest ideas", "suggest idea", "skip", "approve",
                  "set image size", "set video size", "english", "hindi",
                  "generate image", "generate poster", "generate carousel",
-                 "upload image", "upload product image",
+                 "upload image", "upload new image", "upload product image",
+                 "upload logo",
                  "i have uploaded the product image"):
         return None
     # Skip "Set X to: Y" config messages (e.g., "Set image size to: 9:16")
