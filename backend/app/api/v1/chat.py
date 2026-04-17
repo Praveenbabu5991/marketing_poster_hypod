@@ -53,7 +53,20 @@ def _generate_title(message: str, agent_type: str, brand_name: str = "") -> str 
     clean = re.sub(r"\[(?:System|Calendar) Context:[^\]]*\]", "", message).strip()
     # Strip [Current Calendar Slots: ...] blocks
     clean = re.sub(r"\[Current Calendar Slots:[^\]]*\]", "", clean).strip()
+    # Strip [Dialogue: "..."] blocks
+    clean = re.sub(r'\[Dialogue:\s*"[^"]*"\]', "", clean).strip()
     clean = clean.strip()
+
+    # Calendar-triggered content: "[Calendar: agent_type for Event on YYYY-MM-DD] idea text"
+    m = re.match(r"\[Calendar:\s*\w+(?:\s+for\s+(.+?))?\s+on\s+[\d-]+\]\s*(.+)", clean, re.I | re.S)
+    if m:
+        event = (m.group(1) or "").strip()
+        idea = (m.group(2) or "").strip()
+        # Use event name as title, or idea if no event
+        title = event if event else idea
+        if len(title) > 60:
+            title = title[:57] + "..."
+        return title or None
 
     # Campaign date-range: "Generate campaign from 2026-02-07 to 2026-02-14, 4 posts: Valentine Week"
     m = re.match(r"Generate campaign from [\d-]+ to [\d-]+,?\s*\d*\s*posts?:\s*(.+)", clean, re.I)
@@ -83,7 +96,8 @@ def _generate_title(message: str, agent_type: str, brand_name: str = "") -> str 
         return None
     # Skip very short confirmations
     if lower in ("yes", "no", "ok", "sure", "next", "done", "continue",
-                 "generate", "next post", "start generating", "finish campaign"):
+                 "generate", "next post", "start generating", "finish campaign",
+                 "looks good", "use this image", "generate video"):
         return None
     # Skip "Plan N posts" → planner sessions get titled from calendar slot
     if re.match(r"Plan \d+ posts", clean, re.I):
@@ -122,6 +136,8 @@ async def chat(
     # For content_calendar sessions, inject calendar context so the planner
     # knows the date range and all current slots (including manually added ones).
     message = request.message
+    import sys
+    print(f"[CHAT] session={session_id} agent={session.agent_type} msg={message[:500]}", file=sys.stderr, flush=True)
     if session.agent_type == "content_calendar":
         plan = await calendar_service.get_plan_by_planner_session(db, session_id)
         if plan:
