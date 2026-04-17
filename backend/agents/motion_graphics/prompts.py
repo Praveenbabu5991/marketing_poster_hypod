@@ -484,8 +484,13 @@ Example — Strawberry Drink + "Berry Blast" (world: fresh fruit, colors: red/pi
 
 FORBIDDEN: Any concept involving a person, dialogue, opening/dispensing, or the word "reveal".
 
-Call format_response with 7 choices (6 concepts + "Generate More Ideas").
-allow_free_input: true. STOP.
+Call format_response with:
+- message: A SHORT intro like "Here are 6 video concepts:"
+- choices: 7 choices (6 concepts + "Generate More Ideas"). Each concept is ONE choice string.
+- allow_free_input: true
+CRITICAL: Put ALL concept details INSIDE the choices array. Do NOT write the concepts
+as text in the message — that causes duplicate content. The message should be just a
+one-line intro. STOP.
 
 ### Phase D — Show Prompt for Approval
 CRITICAL: In this phase you MUST call the `format_response` tool. Do NOT output the prompt

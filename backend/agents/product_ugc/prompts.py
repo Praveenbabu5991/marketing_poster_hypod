@@ -330,8 +330,13 @@ Example concepts for LOCATION/BUILDING products:
 
 FORBIDDEN: Any concept involving opening, dispensing, unfolding, or "revealing" the product.
 
-Call format_response with 7 choices (6 concepts + "Generate More Ideas").
-allow_free_input: true. STOP.
+Call format_response with:
+- message: A SHORT intro like "Here are 6 video concepts based on your talking points:"
+- choices: 7 choices (6 concepts + "Generate More Ideas"). Each concept is ONE choice string.
+- allow_free_input: true
+CRITICAL: Put ALL concept details INSIDE the choices array. Do NOT write the concepts
+as text in the message — that causes duplicate content. The message should be just a
+one-line intro. STOP.
 
 If user chose "Generate More Ideas": repeat with fresh concepts. NEVER reuse previous ideas.
 

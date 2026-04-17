@@ -431,8 +431,13 @@ Lock the duration NOW. All dialogue previews MUST fit within:
      past styled outfits under soft rain. Music only — no dialogue. Moody blue tones.
      Atmospheric, cinematic."
 
-3. Call format_response with 7 choices (6 concepts + "Generate More Ideas").
-   allow_free_input: true. STOP.
+3. Call format_response with:
+   - message: A SHORT intro like "Here are 6 video concepts:"
+   - choices: 7 choices (6 concepts + "Generate More Ideas"). Each concept is ONE choice string.
+   - allow_free_input: true
+   CRITICAL: Put ALL concept details INSIDE the choices array. Do NOT write the concepts
+   as text in the message — that causes duplicate content. The message should be just a
+   one-line intro. STOP.
 
 If user chose "Generate More Ideas": repeat with fresh concepts. NEVER reuse previous ideas.
 
