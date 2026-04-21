@@ -318,8 +318,10 @@ def generate_image(
     # --- Pre-deduct credits (fail fast on insufficient balance) ---
     credits_cost = ACTION_CREDITS["image"]
     credits_deducted = False
+    print(f"[IMAGE_GEN][CREDITS] _user_id={_user_id!r} cost={credits_cost}", file=sys.stderr, flush=True)
     try:
         credits_deducted = _maybe_deduct_credits(_user_id, credits_cost, "image_gen")
+        print(f"[IMAGE_GEN][CREDITS] deducted={credits_deducted}", file=sys.stderr, flush=True)
     except InsufficientCreditsError as e:
         return {
             "status": "error",

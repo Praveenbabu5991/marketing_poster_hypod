@@ -65,9 +65,9 @@ class UsageMonitoringHandler(AsyncCallbackHandler):
                 db_session.add(log_entry)
                 await db_session.flush()  # get log_entry.id
 
-                if credits > 0 and log_entry.action_type == "text":
-                    # LLM calls: post-deduct from wallet + audit row
-                    # (Image/video tools handle their own deduction.)
+                if credits > 0 and log_entry.action_type in ("text", "search"):
+                    # LLM + search calls: post-deduct from wallet + audit row.
+                    # Image/video tools handle their own pre-deduction.
                     wallet = await db_session.scalar(
                         select(UserCredits)
                         .where(UserCredits.user_id == log_entry.user_id)
@@ -92,12 +92,13 @@ class UsageMonitoringHandler(AsyncCallbackHandler):
                     meta = {"node": (log_entry.metadata_json or {}).get("node", "")}
                     if overdraft:
                         meta["overdraft"] = True
+                    reason = "search" if log_entry.action_type == "search" else "llm_call"
                     db_session.add(
                         CreditTransaction(
                             user_id=log_entry.user_id,
                             delta=-credits,
                             balance_after=wallet.balance,
-                            reason="llm_call",
+                            reason=reason,
                             usage_log_id=log_entry.id,
                             metadata_json=meta,
                         )
@@ -271,8 +272,9 @@ class UsageMonitoringHandler(AsyncCallbackHandler):
                 video_duration_seconds=duration,
             )
 
-            # Credits were already deducted pre-call inside the tool itself
-            # (see image_gen.py / video_gen.py). Here we just record it on the log.
+            # Image/video tools pre-deduct themselves (see image_gen.py / video_gen.py).
+            # Here we just record credits_charged on the log. Text tools (caption /
+            # hashtag) and search are post-deducted by _log_usage below.
             credits = 0
             if status == "success":
                 if action_type == "image":
@@ -281,6 +283,9 @@ class UsageMonitoringHandler(AsyncCallbackHandler):
                     credits = credits_for_video(duration or 8)
                 elif action_type == "search":
                     credits = ACTION_CREDITS["search"]
+                elif action_type == "text":
+                    # Caption / hashtag / other text tools
+                    credits = ACTION_CREDITS["llm_text"]
 
             log = UsageLog(
                 user_id=self.user_id,

@@ -154,6 +154,7 @@ def build_agent_graph(
         # can pre-deduct from the wallet and log usage with attribution.
         user_id = state.get("user_id", "")
         session_id = state.get("session_id", "")
+        print(f"[TOOLS][CREDITS] injection user_id={user_id!r} session_id={session_id!r}", file=sys.stderr, flush=True)
         if user_id:
             messages = list(state["messages"])
             last_ai = messages[-1] if messages and isinstance(messages[-1], AIMessage) else None
@@ -165,6 +166,7 @@ def build_agent_graph(
                         # Tools accept these as optional args ignored by the LLM.
                         args.setdefault("_user_id", str(user_id))
                         args.setdefault("_session_id", str(session_id))
+                        print(f"[TOOLS][CREDITS] injected into {tc['name']}: _user_id={args.get('_user_id')!r}", file=sys.stderr, flush=True)
 
         if product_images and graph_name in _PRODUCT_IMAGE_AGENTS:
             # Mutate the last AIMessage's tool_calls to inject user_images
