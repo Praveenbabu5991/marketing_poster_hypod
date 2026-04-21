@@ -31,6 +31,24 @@ async def get_usage_summary(
     )
 
 
+@router.get("/breakdown")
+async def get_usage_breakdown(
+    group_by: str = Query("action", pattern="^(action|agent|session|model)$"),
+    start_date: Optional[date] = Query(None),
+    end_date: Optional[date] = Query(None),
+    user: UserDetails = Depends(require_authenticated_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Usage pivoted by action / agent / session / model."""
+    return await usage_service.get_usage_breakdown(
+        db=db,
+        user_id=user.user_id,
+        group_by=group_by,
+        start_date=start_date,
+        end_date=end_date,
+    )
+
+
 @router.get("/history", response_model=UsageHistoryResponse)
 async def get_usage_history(
     limit: int = Query(50, ge=1, le=500),

@@ -140,14 +140,31 @@ def build_agent_graph(
     _PRODUCT_IMAGE_AGENTS = {"sales_poster", "product_ugc", "motion_graphics"}
 
     def tools_with_injection(state: AgentState) -> dict:
-        """Wrap ToolNode to inject product images from brand context.
+        """Wrap ToolNode to inject product images from brand context AND
+        inject user_id/session_id so tools can deduct credits.
 
-        Only applies to sales_poster and product_ugc agents.
-        Other agents (single_post, campaign, carousel, etc.) should NOT
+        Only applies product image injection to sales_poster and product_ugc
+        agents. Other agents (single_post, campaign, carousel, etc.) should NOT
         get product images injected — they generate original creative content.
         """
         brand_ctx = state.get("brand_context", {})
         product_images = brand_ctx.get("product_images", [])
+
+        # Inject user_id + session_id into every credit-costing tool so it
+        # can pre-deduct from the wallet and log usage with attribution.
+        user_id = state.get("user_id", "")
+        session_id = state.get("session_id", "")
+        if user_id:
+            messages = list(state["messages"])
+            last_ai = messages[-1] if messages and isinstance(messages[-1], AIMessage) else None
+            if last_ai and last_ai.tool_calls:
+                for tc in last_ai.tool_calls:
+                    if tc["name"] in ("generate_image", "edit_image",
+                                       "generate_video", "animate_image"):
+                        args = tc["args"]
+                        # Tools accept these as optional args ignored by the LLM.
+                        args.setdefault("_user_id", str(user_id))
+                        args.setdefault("_session_id", str(session_id))
 
         if product_images and graph_name in _PRODUCT_IMAGE_AGENTS:
             # Mutate the last AIMessage's tool_calls to inject user_images

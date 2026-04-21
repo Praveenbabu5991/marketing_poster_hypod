@@ -6,9 +6,10 @@ interface Props {
   message: ChatMessageType;
   isLastInteractive: boolean;
   onInteractiveSelect: (value: string) => void;
+  costForLabel?: (label: string) => number | null;
 }
 
-export function ChatMessage({ message, isLastInteractive, onInteractiveSelect }: Props) {
+export function ChatMessage({ message, isLastInteractive, onInteractiveSelect, costForLabel }: Props) {
   if (message.role === 'tool') {
     return <ToolIndicator message={message.content} active={message.toolActive ?? false} />;
   }
@@ -59,6 +60,7 @@ export function ChatMessage({ message, isLastInteractive, onInteractiveSelect }:
             data={message.interactive}
             onSelect={onInteractiveSelect}
             disabled={!isLastInteractive}
+            costForLabel={costForLabel}
           />
         )}
       </div>

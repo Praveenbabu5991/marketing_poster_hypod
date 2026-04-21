@@ -6,9 +6,11 @@ interface Props {
   data: InteractiveResponse;
   onSelect: (value: string) => void;
   disabled: boolean;
+  /** Map from choice label → credit cost. Used to render "• 400 credits" hint. */
+  costForLabel?: (label: string) => number | null;
 }
 
-export function InteractiveCard({ data, onSelect, disabled }: Props) {
+export function InteractiveCard({ data, onSelect, disabled, costForLabel }: Props) {
   const [freeText, setFreeText] = useState('');
   const [selectedMulti, setSelectedMulti] = useState<Set<string>>(new Set());
 
@@ -82,19 +84,29 @@ export function InteractiveCard({ data, onSelect, disabled }: Props) {
         </div>
       ) : data.has_choices ? (
         <div className="space-y-2">
-          {data.choices.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => handleChoice(c.label)}
-              disabled={disabled}
-              className="block w-full rounded-lg border border-border bg-bg-card px-4 py-3 text-left transition-colors hover:border-accent hover:bg-bg-elevated disabled:opacity-60 disabled:hover:border-border disabled:hover:bg-bg-card"
-            >
-              <div className="text-sm font-medium text-text-primary">{c.label}</div>
-              {c.description && (
-                <div className="mt-1 text-xs text-text-muted">{c.description}</div>
-              )}
-            </button>
-          ))}
+          {data.choices.map((c) => {
+            const cost = costForLabel ? costForLabel(c.label) : null;
+            return (
+              <button
+                key={c.id}
+                onClick={() => handleChoice(c.label)}
+                disabled={disabled}
+                className="block w-full rounded-lg border border-border bg-bg-card px-4 py-3 text-left transition-colors hover:border-accent hover:bg-bg-elevated disabled:opacity-60 disabled:hover:border-border disabled:hover:bg-bg-card"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-sm font-medium text-text-primary">{c.label}</div>
+                  {cost != null && cost > 0 && (
+                    <span className="shrink-0 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-400">
+                      {cost.toLocaleString()} credits
+                    </span>
+                  )}
+                </div>
+                {c.description && (
+                  <div className="mt-1 text-xs text-text-muted">{c.description}</div>
+                )}
+              </button>
+            );
+          })}
         </div>
       ) : null}
 

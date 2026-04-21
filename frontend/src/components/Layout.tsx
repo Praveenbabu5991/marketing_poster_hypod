@@ -5,12 +5,30 @@ import { listBrands, deleteBrand } from '../api/brands';
 import { listSessions, deleteSession, updateSession } from '../api/sessions';
 import type { Brand, Session } from '../types';
 
+function decodeJwtRoles(token: string): string[] {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return [];
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+    const roles = payload['cognito:groups'];
+    return Array.isArray(roles) ? roles : [];
+  } catch {
+    return [];
+  }
+}
+
 export function Layout() {
-  const { selectedBrandId, setSelectedBrandId } = useStore();
+  const { selectedBrandId, setSelectedBrandId, credits, refreshCredits, token } = useStore();
   const [brands, setBrands] = useState<Brand[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   const navigate = useNavigate();
   const location = useLocation();
+  const isAdmin = decodeJwtRoles(token).includes('ADMIN');
+
+  // Load + refresh credit balance on mount and route change
+  useEffect(() => {
+    refreshCredits();
+  }, [location.pathname]);
 
   // Editing state for session rename
   const [renamingId, setRenamingId] = useState<string | null>(null);
@@ -317,7 +335,77 @@ export function Layout() {
             </svg>
             Usage & Costs
           </Link>
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs transition-colors hover:bg-bg-elevated hover:text-text-primary no-underline ${
+                location.pathname === '/admin'
+                  ? 'bg-bg-elevated text-text-primary'
+                  : 'text-text-muted'
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5">
+                <path d="M8 1.5a2.5 2.5 0 0 1 2.5 2.5v1h-5V4A2.5 2.5 0 0 1 8 1.5ZM3 6.5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6.5Z" />
+              </svg>
+              Admin
+            </Link>
+          )}
         </div>
+
+        {/* Credit balance badge */}
+        {credits && (
+          <Link
+            to="/usage"
+            className="mx-4 mb-4 block rounded-lg border border-border bg-bg-elevated px-3 py-2 no-underline transition-colors hover:border-accent"
+            title={`Plan: ${credits.plan} — resets ${credits.resets_at ? new Date(credits.resets_at).toLocaleDateString() : 'n/a'}`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted">
+                Credits
+              </span>
+              <span className="text-[10px] text-text-muted">{credits.plan}</span>
+            </div>
+            <div className="mt-1 flex items-baseline gap-1">
+              <span
+                className={`text-lg font-bold ${
+                  credits.monthly_allowance > 0 &&
+                  credits.balance / credits.monthly_allowance < 0.1
+                    ? 'text-red-400'
+                    : credits.monthly_allowance > 0 &&
+                      credits.balance / credits.monthly_allowance < 0.3
+                    ? 'text-amber-400'
+                    : 'text-text-primary'
+                }`}
+              >
+                {credits.balance.toLocaleString()}
+              </span>
+              {credits.monthly_allowance > 0 && (
+                <span className="text-xs text-text-muted">
+                  / {credits.monthly_allowance.toLocaleString()}
+                </span>
+              )}
+            </div>
+            {credits.monthly_allowance > 0 && (
+              <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-bg-page">
+                <div
+                  className={`h-full ${
+                    credits.balance / credits.monthly_allowance < 0.1
+                      ? 'bg-red-400'
+                      : credits.balance / credits.monthly_allowance < 0.3
+                      ? 'bg-amber-400'
+                      : 'bg-accent'
+                  }`}
+                  style={{
+                    width: `${Math.max(
+                      0,
+                      Math.min(100, (credits.balance / credits.monthly_allowance) * 100),
+                    )}%`,
+                  }}
+                />
+              </div>
+            )}
+          </Link>
+        )}
       </aside>
 
       {/* Main Content */}

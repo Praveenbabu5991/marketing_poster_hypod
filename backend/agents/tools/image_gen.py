@@ -8,21 +8,74 @@ Prompt construction follows official Gemini image generation guide:
   - aspect_ratio and image_size via API config
 """
 
+import asyncio
 import concurrent.futures
 import logging
 import os
 import io
+import sys
 import uuid
 import time
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
+from uuid import UUID
 
 from langchain_core.tools import tool
 from PIL import Image
 
+from app.services import credit_service
+from app.services.credit_service import InsufficientCreditsError
+from app.services.pricing import ACTION_CREDITS
+
 logger = logging.getLogger(__name__)
 _REQUEST_TIMEOUT = 120  # Image gen can be slower, especially under quota pressure
+
+
+def _run_async(coro):
+    """Run a coroutine from a sync tool. Uses a dedicated thread to avoid conflicts
+    with any outer event loop that LangGraph may be running.
+    """
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+    if loop is not None:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
+            return ex.submit(lambda: asyncio.run(coro)).result()
+    return asyncio.run(coro)
+
+
+def _maybe_deduct_credits(user_id: str, credits: int, reason: str) -> bool:
+    """Pre-deduct credits before an expensive API call. Returns True if deducted.
+
+    If user_id is empty (e.g. callbacks/tests without wallet), skip silently.
+    Raises on insufficient credits so the caller can convert it into a user error.
+    """
+    if not user_id or credits <= 0:
+        return False
+    try:
+        uid = UUID(str(user_id))
+    except Exception:
+        return False
+    _run_async(credit_service.check_and_deduct_standalone(
+        uid, credits, reason,
+    ))
+    return True
+
+
+def _maybe_refund_credits(user_id: str, credits: int, reason: str) -> None:
+    """Refund credits (called when pre-deducted call fails)."""
+    if not user_id or credits <= 0:
+        return
+    try:
+        uid = UUID(str(user_id))
+    except Exception:
+        return
+    try:
+        _run_async(credit_service.refund_standalone(uid, credits, reason))
+    except Exception as e:
+        logger.warning("[IMAGE] Refund failed: %s", e)
 
 
 def _get_config():
@@ -234,6 +287,8 @@ def generate_image(
     aspect_ratio: str = "1:1",
     output_dir: str = "",
     font_style: str = "bold sans-serif",
+    _user_id: str = "",
+    _session_id: str = "",
 ) -> dict:
     """Generate a social media post image using Gemini.
 
@@ -258,8 +313,20 @@ def generate_image(
     save_dir = output_dir or str(GENERATED_DIR)
 
     # Debug: log all arguments received from LLM
-    import sys
     print(f"[IMAGE_GEN] prompt='{prompt[:80]}...' logo_path='{logo_path}' user_images='{user_images}' user_image_instructions='{user_image_instructions}' aspect_ratio='{aspect_ratio}'", file=sys.stderr, flush=True)
+
+    # --- Pre-deduct credits (fail fast on insufficient balance) ---
+    credits_cost = ACTION_CREDITS["image"]
+    credits_deducted = False
+    try:
+        credits_deducted = _maybe_deduct_credits(_user_id, credits_cost, "image_gen")
+    except InsufficientCreditsError as e:
+        return {
+            "status": "error",
+            "message": f"Insufficient credits. Need {e.required}, have {e.balance}.",
+            "model": IMAGE_MODEL,
+            "error_code": "insufficient_credits",
+        }
 
     try:
         client = _get_client()
@@ -392,10 +459,16 @@ def generate_image(
         text_parts = [p.text for p in parts if hasattr(p, "text") and p.text]
         if text_parts:
             print(f"[IMAGE_GEN] NO IMAGE — text response: {text_parts[0][:200]}", file=sys.stderr, flush=True)
+        # No image produced — refund the pre-deducted credits
+        if credits_deducted:
+            _maybe_refund_credits(_user_id, credits_cost, "image_gen_failed")
         return {"status": "error", "message": "No image was generated. Try a different prompt.", "model": IMAGE_MODEL}
 
     except Exception as e:
         print(f"[IMAGE_GEN] EXCEPTION: {type(e).__name__}: {str(e)[:300]}", file=sys.stderr, flush=True)
+        # Refund on hard failure
+        if credits_deducted:
+            _maybe_refund_credits(_user_id, credits_cost, "image_gen_failed")
         result = _format_error(e, "Try simplifying your prompt.")
         result["model"] = _get_config()[1]  # IMAGE_MODEL
         return result

@@ -47,6 +47,8 @@ async def stream_agent(
         "messages": [HumanMessage(content=message)],
         "brand_context": brand_context,
         "generated_assets": [],
+        "user_id": str(user_id),
+        "session_id": str(session_id),
     }
 
     last_status_sent = False  # Deduplicate consecutive "Thinking..." events

@@ -1,7 +1,7 @@
 """Usage logging model for per-user, per-model API cost tracking."""
 
 import uuid
-from sqlalchemy import Column, String, Integer, Float, Text, DateTime, ForeignKey
+from sqlalchemy import Column, String, Integer, Float, Text, DateTime, ForeignKey, Boolean
 from sqlalchemy import Uuid, JSON
 from sqlalchemy.sql import func
 from app.database import Base
@@ -44,5 +44,10 @@ class UsageLog(Base):
 
     # Arbitrary metadata
     metadata_json = Column(JSON, nullable=True, default=dict)
+
+    # Credits charged to user (INR, 1 credit = ₹1). 0 if not billed (e.g. failures).
+    credits_charged = Column(Integer, nullable=False, default=0)
+    # True if credits were refunded after this log was written (e.g. tool failed after deduct).
+    refunded = Column(Boolean, nullable=False, default=False)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)

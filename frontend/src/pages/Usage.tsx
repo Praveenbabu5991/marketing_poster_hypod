@@ -1,5 +1,13 @@
 import { useEffect, useState } from 'react';
-import { fetchUsageSummary, fetchUsageHistory } from '../api/usage';
+import {
+  fetchUsageSummary,
+  fetchUsageHistory,
+  fetchUsageBreakdown,
+  type BreakdownGroupBy,
+  type BreakdownResponse,
+} from '../api/usage';
+import { getHistory as getCreditHistory, type CreditTransaction } from '../api/credits';
+import { useStore } from '../store/useStore';
 import type {
   UsageSummaryResponse,
   UsageSummaryItem,
@@ -98,6 +106,131 @@ function StatCard({
       >
         {value}
       </p>
+    </div>
+  );
+}
+
+// ── Pivot Breakdown Panel ───────────────────────────────────────
+
+const GROUP_LABELS: Record<BreakdownGroupBy, string> = {
+  action: 'By Action',
+  agent: 'By Agent',
+  session: 'By Session',
+  model: 'By Model',
+};
+
+const AGENT_LABELS: Record<string, string> = {
+  single_post: 'Single Post',
+  carousel: 'Carousel',
+  campaign: 'Campaign',
+  sales_poster: 'Sales Poster',
+  ugc: 'UGC',
+  product_ugc: 'Product UGC',
+  motion_graphics: 'Motion Graphics',
+  advertisement: 'Advertisement',
+  content_calendar: 'Content Calendar',
+  quick_image: 'Quick Image',
+};
+
+function prettyKey(groupBy: BreakdownGroupBy, key: string): string {
+  if (groupBy === 'action') {
+    return ACTION_LABELS[key] ?? key;
+  }
+  if (groupBy === 'agent') {
+    return AGENT_LABELS[key] ?? key;
+  }
+  if (groupBy === 'model') return shortModel(key);
+  return key;
+}
+
+function BreakdownPanel({
+  groupBy,
+  setGroupBy,
+  data,
+  loading,
+}: {
+  groupBy: BreakdownGroupBy;
+  setGroupBy: (g: BreakdownGroupBy) => void;
+  data: BreakdownResponse | null;
+  loading: boolean;
+}) {
+  const items = data?.items ?? [];
+  const total = data?.total_credits ?? 0;
+
+  return (
+    <div className="rounded-xl border border-border bg-bg-card p-5">
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-text-primary">
+          Credit spend breakdown
+        </h2>
+        <div className="flex gap-1 rounded-lg border border-border p-0.5">
+          {(Object.keys(GROUP_LABELS) as BreakdownGroupBy[]).map((g) => (
+            <button
+              key={g}
+              onClick={() => setGroupBy(g)}
+              className={`rounded px-3 py-1 text-xs font-medium transition-colors ${
+                groupBy === g
+                  ? 'bg-accent text-white'
+                  : 'text-text-muted hover:text-text-primary'
+              }`}
+            >
+              {GROUP_LABELS[g]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {loading && <div className="text-sm text-text-muted">Loading…</div>}
+
+      {!loading && items.length === 0 && (
+        <div className="py-8 text-center text-sm text-text-muted">
+          No usage yet for this window.
+        </div>
+      )}
+
+      {!loading && items.length > 0 && (
+        <div className="space-y-2">
+          {items.map((item) => {
+            const pct = total > 0 ? (item.credits / total) * 100 : 0;
+            const label =
+              groupBy === 'session'
+                ? item.label || '(untitled)'
+                : prettyKey(groupBy, item.key);
+            const sub =
+              groupBy === 'session' && item.agent_type
+                ? AGENT_LABELS[item.agent_type] ?? item.agent_type
+                : null;
+            return (
+              <div key={item.key} className="space-y-1">
+                <div className="flex items-center justify-between text-sm">
+                  <div className="min-w-0 flex-1 truncate pr-3 text-text-primary">
+                    {label}
+                    {sub && (
+                      <span className="ml-2 text-xs text-text-muted">({sub})</span>
+                    )}
+                  </div>
+                  <div className="flex shrink-0 items-center gap-3 text-xs text-text-muted">
+                    <span>{item.calls} {item.calls === 1 ? 'call' : 'calls'}</span>
+                    <span className="w-20 text-right font-semibold text-text-primary">
+                      {item.credits.toLocaleString()} credits
+                    </span>
+                    <span className="w-12 text-right">{pct.toFixed(0)}%</span>
+                  </div>
+                </div>
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-bg-page">
+                  <div
+                    className="h-full bg-accent"
+                    style={{ width: `${Math.max(1, pct)}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+          <div className="mt-3 flex justify-end border-t border-border pt-3 text-sm font-semibold text-text-primary">
+            Total: {total.toLocaleString()} credits
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -389,6 +522,23 @@ export function Usage() {
   const [history, setHistory] = useState<UsageHistoryResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [tab, setTab] = useState<'usage' | 'transactions'>('usage');
+  const [creditTx, setCreditTx] = useState<CreditTransaction[]>([]);
+  const [txLoading, setTxLoading] = useState(false);
+  const { credits, refreshCredits } = useStore();
+
+  useEffect(() => {
+    refreshCredits();
+  }, []);
+
+  useEffect(() => {
+    if (tab !== 'transactions') return;
+    setTxLoading(true);
+    getCreditHistory(0, 100)
+      .then((r) => setCreditTx(r.items))
+      .catch(console.error)
+      .finally(() => setTxLoading(false));
+  }, [tab]);
 
   // Filters
   const [startDate, setStartDate] = useState('');
@@ -396,6 +546,24 @@ export function Usage() {
   const [filterAction, setFilterAction] = useState('');
   const [page, setPage] = useState(0);
   const pageSize = 25;
+
+  // Pivot
+  const [groupBy, setGroupBy] = useState<BreakdownGroupBy>('action');
+  const [breakdown, setBreakdown] = useState<BreakdownResponse | null>(null);
+  const [breakdownLoading, setBreakdownLoading] = useState(false);
+
+  useEffect(() => {
+    if (tab !== 'usage') return;
+    setBreakdownLoading(true);
+    fetchUsageBreakdown({
+      group_by: groupBy,
+      start_date: startDate || undefined,
+      end_date: endDate || undefined,
+    })
+      .then(setBreakdown)
+      .catch(console.error)
+      .finally(() => setBreakdownLoading(false));
+  }, [tab, groupBy, startDate, endDate]);
 
   // Fetch summary when date range changes
   useEffect(() => {
@@ -428,37 +596,157 @@ export function Usage() {
             Monitor your API usage across all models
           </p>
         </div>
-        <DateFilter
-          startDate={startDate}
-          endDate={endDate}
-          setStartDate={setStartDate}
-          setEndDate={setEndDate}
-        />
+        {tab === 'usage' && (
+          <DateFilter
+            startDate={startDate}
+            endDate={endDate}
+            setStartDate={setStartDate}
+            setEndDate={setEndDate}
+          />
+        )}
       </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center py-20 text-text-muted">
-          Loading usage data...
+      {/* Credit balance panel */}
+      {credits && (
+        <div className="mb-6 rounded-lg border border-border bg-bg-card p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-xs uppercase tracking-wider text-text-muted">
+                Your Credits
+              </div>
+              <div className="mt-1 flex items-baseline gap-2">
+                <span className="text-3xl font-bold text-text-primary">
+                  {credits.balance.toLocaleString()}
+                </span>
+                {credits.monthly_allowance > 0 && (
+                  <span className="text-sm text-text-muted">
+                    / {credits.monthly_allowance.toLocaleString()} monthly
+                  </span>
+                )}
+              </div>
+              <div className="mt-1 text-xs text-text-muted">
+                Plan: <span className="text-text-primary">{credits.plan}</span>
+                {credits.resets_at && (
+                  <>
+                    {' '}
+                    · Resets{' '}
+                    <span className="text-text-primary">
+                      {new Date(credits.resets_at).toLocaleDateString()}
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+            {credits.monthly_allowance > 0 && (
+              <div className="w-40">
+                <div className="h-2 w-full overflow-hidden rounded-full bg-bg-page">
+                  <div
+                    className="h-full bg-accent"
+                    style={{
+                      width: `${Math.max(0, Math.min(100, (credits.balance / credits.monthly_allowance) * 100))}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-      ) : summary ? (
-        <div className="space-y-6">
-          <SummaryCards summary={summary} />
-          <ModelBreakdown items={summary.items} />
-          <HistoryTable
-            history={
-              history || { items: [], total: 0, limit: pageSize, offset: 0 }
-            }
-            loading={historyLoading}
-            filterAction={filterAction}
-            setFilterAction={setFilterAction}
-            page={page}
-            setPage={setPage}
-            pageSize={pageSize}
-          />
-        </div>
-      ) : (
-        <div className="flex items-center justify-center py-20 text-text-muted">
-          Failed to load usage data
+      )}
+
+      {/* Tabs */}
+      <div className="mb-4 flex gap-1 border-b border-border">
+        <button
+          onClick={() => setTab('usage')}
+          className={`px-4 py-2 text-sm font-medium ${
+            tab === 'usage'
+              ? 'border-b-2 border-accent text-text-primary'
+              : 'text-text-muted hover:text-text-primary'
+          }`}
+        >
+          Usage & Models
+        </button>
+        <button
+          onClick={() => setTab('transactions')}
+          className={`px-4 py-2 text-sm font-medium ${
+            tab === 'transactions'
+              ? 'border-b-2 border-accent text-text-primary'
+              : 'text-text-muted hover:text-text-primary'
+          }`}
+        >
+          Credit Transactions
+        </button>
+      </div>
+
+      {tab === 'usage' &&
+        (loading ? (
+          <div className="flex items-center justify-center py-20 text-text-muted">
+            Loading usage data...
+          </div>
+        ) : summary ? (
+          <div className="space-y-6">
+            <SummaryCards summary={summary} />
+            <BreakdownPanel
+              groupBy={groupBy}
+              setGroupBy={setGroupBy}
+              data={breakdown}
+              loading={breakdownLoading}
+            />
+            <ModelBreakdown items={summary.items} />
+            <HistoryTable
+              history={
+                history || { items: [], total: 0, limit: pageSize, offset: 0 }
+              }
+              loading={historyLoading}
+              filterAction={filterAction}
+              setFilterAction={setFilterAction}
+              page={page}
+              setPage={setPage}
+              pageSize={pageSize}
+            />
+          </div>
+        ) : (
+          <div className="flex items-center justify-center py-20 text-text-muted">
+            Failed to load usage data
+          </div>
+        ))}
+
+      {tab === 'transactions' && (
+        <div className="rounded-lg border border-border bg-bg-card">
+          {txLoading && <div className="p-6 text-text-muted">Loading…</div>}
+          {!txLoading && creditTx.length === 0 && (
+            <div className="p-6 text-text-muted">No transactions yet.</div>
+          )}
+          {!txLoading && creditTx.length > 0 && (
+            <table className="w-full text-sm">
+              <thead className="bg-bg-elevated text-left text-xs text-text-muted">
+                <tr>
+                  <th className="px-3 py-2">When</th>
+                  <th className="px-3 py-2">Reason</th>
+                  <th className="px-3 py-2">Delta</th>
+                  <th className="px-3 py-2">Balance After</th>
+                </tr>
+              </thead>
+              <tbody>
+                {creditTx.map((t) => (
+                  <tr key={t.id} className="border-t border-border">
+                    <td className="px-3 py-2 text-text-muted">
+                      {new Date(t.created_at).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-2 text-text-primary">{t.reason}</td>
+                    <td
+                      className={`px-3 py-2 font-mono ${
+                        t.delta < 0 ? 'text-red-400' : 'text-green-400'
+                      }`}
+                    >
+                      {t.delta > 0 ? '+' : ''}
+                      {t.delta}
+                    </td>
+                    <td className="px-3 py-2">{t.balance_after.toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       )}
     </div>

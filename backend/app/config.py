@@ -62,6 +62,19 @@ CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
 LANGSMITH_API_KEY = os.getenv("LANGSMITH_API_KEY", "")
 LANGSMITH_PROJECT = os.getenv("LANGSMITH_PROJECT", "agent-factory-v4")
 
+# --- Credits / Billing ---
+# Internal cost is in USD (from VERTEX_PRICING). User-facing credits are in INR (1 credit = ₹1).
+CREDIT_USD_TO_INR = float(os.getenv("CREDIT_USD_TO_INR", "83.0"))
+# Admin allow-list (comma-separated UUIDs). Either this OR Cognito "ADMIN" group grants access.
+ADMIN_USER_IDS = [
+    s.strip() for s in os.getenv("ADMIN_USER_IDS", "").split(",") if s.strip()
+]
+# Default credits granted on first wallet creation (signup bonus for free tier).
+DEFAULT_FREE_CREDITS = int(os.getenv("DEFAULT_FREE_CREDITS", "50"))
+# Stripe placeholders (populated when real integration ships).
+STRIPE_API_KEY = os.getenv("STRIPE_API_KEY", "")
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+
 
 # --- Vertex AI / Gemini Pricing (USD, March 2026) ---
 # Source: https://cloud.google.com/vertex-ai/generative-ai/pricing

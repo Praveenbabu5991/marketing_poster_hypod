@@ -15,7 +15,10 @@ from langchain_core.outputs import ChatResult, LLMResult
 
 from app.config import calculate_cost
 from app.database import async_session_factory
+from app.models.credit import CreditTransaction, UserCredits
 from app.models.usage import UsageLog
+from app.services.pricing import ACTION_CREDITS, credits_for_video
+from sqlalchemy import select
 
 logger = logging.getLogger(__name__)
 
@@ -46,10 +49,59 @@ class UsageMonitoringHandler(AsyncCallbackHandler):
             self.main_loop = None
 
     async def _log_usage(self, log_entry: UsageLog):
-        """Helper to log usage using a fresh DB session."""
+        """Helper to log usage AND deduct credits from the user's wallet.
+
+        We post-deduct here (rather than pre-deduct) because:
+          - LLM token counts are only known once the response comes back
+          - Tool results (image/video) already pre-deducted in the tool wrapper;
+            this callback's log row just records the final credits_charged.
+
+        For LLM calls, we also write a CreditTransaction so the admin dashboard
+        can reconcile spend per user.
+        """
         try:
+            credits = log_entry.credits_charged or 0
             async with async_session_factory() as db_session:
                 db_session.add(log_entry)
+                await db_session.flush()  # get log_entry.id
+
+                if credits > 0 and log_entry.action_type == "text":
+                    # LLM calls: post-deduct from wallet + audit row
+                    # (Image/video tools handle their own deduction.)
+                    wallet = await db_session.scalar(
+                        select(UserCredits)
+                        .where(UserCredits.user_id == log_entry.user_id)
+                        .with_for_update()
+                    )
+                    if wallet is None:
+                        # Create default wallet lazily
+                        from app.config import DEFAULT_FREE_CREDITS
+                        from datetime import datetime, timedelta, timezone
+                        wallet = UserCredits(
+                            user_id=log_entry.user_id,
+                            plan="free",
+                            balance=DEFAULT_FREE_CREDITS,
+                            monthly_allowance=DEFAULT_FREE_CREDITS,
+                            resets_at=datetime.now(timezone.utc) + timedelta(days=30),
+                        )
+                        db_session.add(wallet)
+                        await db_session.flush()
+
+                    overdraft = wallet.balance < credits
+                    wallet.balance -= credits
+                    meta = {"node": (log_entry.metadata_json or {}).get("node", "")}
+                    if overdraft:
+                        meta["overdraft"] = True
+                    db_session.add(
+                        CreditTransaction(
+                            user_id=log_entry.user_id,
+                            delta=-credits,
+                            balance_after=wallet.balance,
+                            reason="llm_call",
+                            usage_log_id=log_entry.id,
+                            metadata_json=meta,
+                        )
+                    )
                 await db_session.commit()
         except Exception as e:
             logger.warning("[Usage] Failed to log: %s", e)
@@ -158,6 +210,7 @@ class UsageMonitoringHandler(AsyncCallbackHandler):
                 prompt_tokens=prompt_tokens,
                 completion_tokens=completion_tokens,
                 unit_count=1,
+                credits_charged=ACTION_CREDITS["llm_text"],
                 metadata_json={"node": node_name},
             )
             self._schedule_log(log)
@@ -218,6 +271,17 @@ class UsageMonitoringHandler(AsyncCallbackHandler):
                 video_duration_seconds=duration,
             )
 
+            # Credits were already deducted pre-call inside the tool itself
+            # (see image_gen.py / video_gen.py). Here we just record it on the log.
+            credits = 0
+            if status == "success":
+                if action_type == "image":
+                    credits = ACTION_CREDITS["image"]
+                elif action_type == "video":
+                    credits = credits_for_video(duration or 8)
+                elif action_type == "search":
+                    credits = ACTION_CREDITS["search"]
+
             log = UsageLog(
                 user_id=self.user_id,
                 session_id=self.session_id,
@@ -231,6 +295,7 @@ class UsageMonitoringHandler(AsyncCallbackHandler):
                 unit_count=1,
                 video_duration_seconds=duration if duration else None,
                 error_message=error_msg[:500] if error_msg else None,
+                credits_charged=credits,
                 metadata_json={"tool": tool_name},
             )
             self._schedule_log(log)

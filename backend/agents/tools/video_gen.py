@@ -6,19 +6,63 @@ Native audio generation via generate_audio=True (dialogue + SFX + ambient).
 Video extension API for 15s videos (8s + 7s continuation).
 """
 
+import asyncio
+import concurrent.futures
 import io
 import logging
 import os
 import subprocess
+import sys as _sys_top
 import uuid
 import time
 from datetime import datetime
 from pathlib import Path
+from uuid import UUID
 
 from langchain_core.tools import tool
 from PIL import Image, ImageDraw
 
+from app.services import credit_service
+from app.services.credit_service import InsufficientCreditsError
+from app.services.pricing import credits_for_video
+
 logger = logging.getLogger(__name__)
+
+
+def _run_async_video(coro):
+    """Run async coroutine from sync tool body (see same helper in image_gen.py)."""
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+    if loop is not None:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
+            return ex.submit(lambda: asyncio.run(coro)).result()
+    return asyncio.run(coro)
+
+
+def _video_pre_deduct(user_id: str, credits: int, reason: str) -> bool:
+    if not user_id or credits <= 0:
+        return False
+    try:
+        uid = UUID(str(user_id))
+    except Exception:
+        return False
+    _run_async_video(credit_service.check_and_deduct_standalone(uid, credits, reason))
+    return True
+
+
+def _video_refund(user_id: str, credits: int, reason: str) -> None:
+    if not user_id or credits <= 0:
+        return
+    try:
+        uid = UUID(str(user_id))
+    except Exception:
+        return
+    try:
+        _run_async_video(credit_service.refund_standalone(uid, credits, reason))
+    except Exception as e:
+        logger.warning("[VIDEO] Refund failed: %s", e)
 
 
 def _get_config():
@@ -1477,6 +1521,8 @@ def generate_video(
     output_dir: str = "",
     person_generation: str = "allow_all",
     overlay_texts: str = "",
+    _user_id: str = "",
+    _session_id: str = "",
 ) -> dict:
     """Generate a video using Veo 3.1 with native audio and reference images.
 
@@ -1511,6 +1557,19 @@ def generate_video(
 
     clamped_duration = max(5, min(15, duration_seconds))
 
+    # --- Pre-deduct credits BEFORE calling Veo (most expensive API; must gate) ---
+    video_credits = credits_for_video(clamped_duration)
+    credits_deducted = False
+    try:
+        credits_deducted = _video_pre_deduct(_user_id, video_credits, "video_gen")
+    except InsufficientCreditsError as e:
+        return {
+            "status": "error",
+            "message": f"Insufficient credits. Need {e.required}, have {e.balance}.",
+            "error_code": "insufficient_credits",
+            "model": _get_config()[1],
+        }
+
     # Merge image_path and reference_image_paths into a single reference list.
     effective_image_path = image_path
     if reference_image_paths and not image_path:
@@ -1529,6 +1588,8 @@ def generate_video(
             person_generation=person_generation,
         )
         res.pop("veo_video", None)
+        if res.get("status") != "success" and credits_deducted:
+            _video_refund(_user_id, video_credits, "video_gen_failed")
     else:
         # 15s video: Part 1 (8s) + extension (7s) = 15s combined
         part1_duration = 8
@@ -1547,6 +1608,9 @@ def generate_video(
 
         if part1_res.get("status") != "success":
             part1_res.pop("veo_video", None)
+            # Full failure — refund entire reservation
+            if credits_deducted:
+                _video_refund(_user_id, video_credits, "video_gen_failed")
             return part1_res
 
         # Get the Veo video object for extension
@@ -1554,6 +1618,11 @@ def generate_video(
         if not veo_video:
             print(f"[VIDEO] No veo_video object from Part 1 — cannot extend", file=_sys2.stderr, flush=True)
             part1_res.pop("veo_video", None)
+            # Delivered only 8s — refund the 7s-extension portion
+            if credits_deducted:
+                delta = video_credits - credits_for_video(part1_duration)
+                if delta > 0:
+                    _video_refund(_user_id, delta, "video_extension_skipped")
             return part1_res
 
         # Extend Part 1 by 7s using the Veo extension API
@@ -1570,6 +1639,11 @@ def generate_video(
             print(f"[VIDEO] Extension failed, returning Part 1 only (8s)", file=_sys2.stderr, flush=True)
             part1_res.pop("veo_video", None)
             part1_res["duration_seconds"] = part1_duration
+            # Partial refund: user got 8s, charge for 8s, refund the rest
+            if credits_deducted:
+                delta = video_credits - credits_for_video(part1_duration)
+                if delta > 0:
+                    _video_refund(_user_id, delta, "video_extension_failed")
             return part1_res
 
         # Extension returns the combined video (Part 1 + extension as one file)

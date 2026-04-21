@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useChat } from '../hooks/useChat';
 import { ChatMessage } from '../components/ChatMessage';
 import { ChatInput } from '../components/ChatInput';
@@ -7,7 +7,66 @@ import { getSession } from '../api/sessions';
 import { getBrand } from '../api/brands';
 import { listAgents } from '../api/agents';
 import { uploadProductInChat } from '../api/client';
+import { useStore } from '../store/useStore';
 import type { Session, Brand, Agent } from '../types';
+
+const IMAGE_AGENTS = new Set([
+  'single_post',
+  'carousel',
+  'sales_poster',
+  'quick_image',
+]);
+const VIDEO_AGENTS = new Set([
+  'product_ugc',
+  'ugc',
+  'motion_graphics',
+  'advertisement',
+]);
+
+/** Credit costs per user-facing action (mirrors backend ACTION_CREDITS). */
+const CREDITS = {
+  image: 10,
+  video_8s: 400,
+  video_16s: 800,
+};
+
+/** Decide if a button label triggers an expensive (image/video) action.
+ * Returns the expected credit cost, or 0 for cheap/non-expensive actions.
+ */
+function costForChoice(
+  label: string,
+  agentType: string | undefined,
+  videoDurationSec: number,
+): number {
+  if (!agentType) return 0;
+  const l = label.toLowerCase().trim();
+
+  // Expensive keywords that trigger fresh generation
+  const isGen =
+    l.includes('generate') ||
+    l.includes('create image') ||
+    l.includes('create video') ||
+    l.includes('approve and generate') ||
+    l === 'looks good' ||
+    l === 'use this image' ||
+    l === 'use this prompt' ||
+    l === 'use this idea and generate';
+
+  // Regenerations of the actual asset (NOT regenerating ideas/prompts)
+  const isRegenAsset =
+    l.includes('regenerate image') ||
+    l.includes('regenerate video') ||
+    l.includes('retry image') ||
+    l.includes('retry video');
+
+  if (!isGen && !isRegenAsset) return 0;
+
+  if (VIDEO_AGENTS.has(agentType)) {
+    return videoDurationSec >= 16 ? CREDITS.video_16s : CREDITS.video_8s;
+  }
+  if (IMAGE_AGENTS.has(agentType)) return CREDITS.image;
+  return 0;
+}
 
 /** All agents auto-send "start" to trigger a welcome message from the backend. */
 const AUTO_START_AGENTS = new Set([
@@ -30,6 +89,13 @@ export function Chat() {
   const [brand, setBrand] = useState<Brand | null>(null);
   const [agent, setAgent] = useState<Agent | null>(null);
   const sentStartRef = useRef(false);
+  const { credits, refreshCredits } = useStore();
+
+  // Low-balance modal: set to required cost when user clicks but can't afford
+  const [insufficientModal, setInsufficientModal] = useState<{
+    required: number;
+    balance: number;
+  } | null>(null);
 
   // Poster Settings State
   const [posterSize, setPosterSize] = useState('1080x1080 (Square)');
@@ -38,6 +104,11 @@ export function Chat() {
   // Video Settings State
   const [videoSize, setVideoSize] = useState('1080x1920 (Reels / Shorts)');
   const [videoDuration, setVideoDuration] = useState('8');
+
+  // Refresh credits whenever streaming completes (so the badge reflects the latest deduction)
+  useEffect(() => {
+    if (!streaming) refreshCredits();
+  }, [streaming]);
 
   // Helper to get settings context
   const getSettingsContext = () => {
@@ -94,7 +165,20 @@ export function Chat() {
     return -1;
   })();
 
+  const videoDurationSec = parseInt(videoDuration, 10) || 8;
+
+  /** Cost helper used by InteractiveCard to render the "N credits" chip. */
+  function costForLabel(label: string): number | null {
+    const c = costForChoice(label, session?.agent_type, videoDurationSec);
+    return c > 0 ? c : null;
+  }
+
   function handleInteractiveSelect(value: string) {
+    const cost = costForChoice(value, session?.agent_type, videoDurationSec);
+    if (cost > 0 && credits && credits.balance < cost) {
+      setInsufficientModal({ required: cost, balance: credits.balance });
+      return;
+    }
     sendMessage(value, getSettingsContext());
   }
 
@@ -225,6 +309,7 @@ export function Chat() {
             message={msg}
             isLastInteractive={idx === lastInteractiveIdx && !streaming}
             onInteractiveSelect={handleInteractiveSelect}
+            costForLabel={costForLabel}
           />
         ))}
         <div ref={bottomRef} />
@@ -237,6 +322,49 @@ export function Chat() {
         disabled={streaming || uploading}
         showUpload={showUpload}
       />
+
+      {/* Insufficient credits modal */}
+      {insufficientModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+          onClick={() => setInsufficientModal(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-xl border border-border bg-bg-card p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-semibold text-text-primary">
+              Not enough credits
+            </h2>
+            <p className="mt-2 text-sm text-text-muted">
+              This action needs{' '}
+              <span className="font-semibold text-text-primary">
+                {insufficientModal.required.toLocaleString()}
+              </span>{' '}
+              credits. You currently have{' '}
+              <span className="font-semibold text-text-primary">
+                {insufficientModal.balance.toLocaleString()}
+              </span>
+              .
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                onClick={() => setInsufficientModal(null)}
+                className="rounded-lg border border-border px-3 py-1.5 text-sm text-text-muted hover:border-accent hover:text-text-primary"
+              >
+                Close
+              </button>
+              <Link
+                to="/usage"
+                onClick={() => setInsufficientModal(null)}
+                className="rounded-lg bg-accent px-3 py-1.5 text-sm text-white no-underline hover:bg-accent-hover"
+              >
+                View plans
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

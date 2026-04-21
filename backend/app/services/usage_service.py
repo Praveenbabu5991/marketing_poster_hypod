@@ -7,6 +7,7 @@ from uuid import UUID
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.session import Session
 from app.models.usage import UsageLog
 
 
@@ -78,6 +79,112 @@ async def get_usage_summary(
         total_cost += float(row.total_cost_usd)
 
     return {"items": items, "total_cost_usd": round(total_cost, 6)}
+
+
+async def get_usage_breakdown(
+    db: AsyncSession,
+    user_id: UUID,
+    group_by: str = "action",
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+) -> dict:
+    """Aggregate usage pivoted by the requested dimension.
+
+    group_by:
+      - "action"  → rows keyed by action_type (text/image/video/search)
+      - "agent"   → rows keyed by session.agent_type (joins sessions)
+      - "session" → rows keyed by session_id with session title
+      - "model"   → rows keyed by model_name
+
+    Each row returns: calls, cost_usd, credits_charged, (optional) title/label.
+    """
+    base_filters = [UsageLog.user_id == user_id, UsageLog.refunded.is_(False)]
+    if start_date:
+        base_filters.append(UsageLog.created_at >= datetime.combine(start_date, time.min))
+    if end_date:
+        base_filters.append(UsageLog.created_at <= datetime.combine(end_date, time.max))
+
+    if group_by == "agent":
+        stmt = (
+            select(
+                Session.agent_type.label("key"),
+                func.count().label("calls"),
+                func.coalesce(func.sum(UsageLog.cost_usd), 0.0).label("cost_usd"),
+                func.coalesce(func.sum(UsageLog.credits_charged), 0).label("credits"),
+            )
+            .join(Session, Session.id == UsageLog.session_id, isouter=True)
+            .where(*base_filters)
+            .group_by(Session.agent_type)
+        )
+    elif group_by == "session":
+        stmt = (
+            select(
+                UsageLog.session_id.label("key"),
+                Session.title.label("label"),
+                Session.agent_type.label("agent_type"),
+                func.count().label("calls"),
+                func.coalesce(func.sum(UsageLog.cost_usd), 0.0).label("cost_usd"),
+                func.coalesce(func.sum(UsageLog.credits_charged), 0).label("credits"),
+            )
+            .join(Session, Session.id == UsageLog.session_id, isouter=True)
+            .where(*base_filters)
+            .group_by(UsageLog.session_id, Session.title, Session.agent_type)
+            .order_by(func.coalesce(func.sum(UsageLog.credits_charged), 0).desc())
+            .limit(50)
+        )
+    elif group_by == "model":
+        stmt = (
+            select(
+                UsageLog.model_name.label("key"),
+                func.count().label("calls"),
+                func.coalesce(func.sum(UsageLog.cost_usd), 0.0).label("cost_usd"),
+                func.coalesce(func.sum(UsageLog.credits_charged), 0).label("credits"),
+            )
+            .where(*base_filters)
+            .group_by(UsageLog.model_name)
+        )
+    else:  # action (default)
+        stmt = (
+            select(
+                UsageLog.action_type.label("key"),
+                func.count().label("calls"),
+                func.coalesce(func.sum(UsageLog.cost_usd), 0.0).label("cost_usd"),
+                func.coalesce(func.sum(UsageLog.credits_charged), 0).label("credits"),
+            )
+            .where(*base_filters)
+            .group_by(UsageLog.action_type)
+        )
+
+    rows = (await db.execute(stmt)).all()
+
+    items = []
+    total_credits = 0
+    total_cost_usd = 0.0
+    for row in rows:
+        credits_v = int(row.credits or 0)
+        cost_v = float(row.cost_usd or 0.0)
+        entry = {
+            "key": str(row.key) if row.key is not None else "unknown",
+            "calls": int(row.calls),
+            "credits": credits_v,
+            "cost_usd": round(cost_v, 6),
+        }
+        if group_by == "session":
+            entry["label"] = getattr(row, "label", None) or "(untitled)"
+            entry["agent_type"] = getattr(row, "agent_type", None)
+        items.append(entry)
+        total_credits += credits_v
+        total_cost_usd += cost_v
+
+    # Sort by credits desc
+    items.sort(key=lambda x: x["credits"], reverse=True)
+
+    return {
+        "group_by": group_by,
+        "items": items,
+        "total_credits": total_credits,
+        "total_cost_usd": round(total_cost_usd, 6),
+    }
 
 
 async def get_usage_history(

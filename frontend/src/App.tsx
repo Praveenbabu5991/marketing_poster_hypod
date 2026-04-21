@@ -5,6 +5,7 @@ import { BrandSetup } from './pages/BrandSetup';
 import { Chat } from './pages/Chat';
 import { Calendar } from './pages/Calendar';
 import { Usage } from './pages/Usage';
+import { Admin } from './pages/Admin';
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
           <Route path="chat/:sessionId" element={<Chat />} />
           <Route path="calendar" element={<Calendar />} />
           <Route path="usage" element={<Usage />} />
+          <Route path="admin" element={<Admin />} />
         </Route>
       </Routes>
     </BrowserRouter>
