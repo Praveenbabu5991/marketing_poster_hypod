@@ -6,14 +6,25 @@ race conditions when concurrent requests hit the same user.
 
 from datetime import datetime, timedelta, timezone
 from typing import Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 
-from sqlalchemy import select
+from sqlalchemy import create_engine, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session as SyncSession, sessionmaker
 
-from app.config import DEFAULT_FREE_CREDITS
+from app.config import DATABASE_URL, DEFAULT_FREE_CREDITS
 from app.database import async_session_factory
 from app.models.credit import CreditTransaction, UserCredits
+
+# Sync engine used by standalone helpers invoked from sync tools (image_gen,
+# video_gen). Tools run inside LangGraph's event loop — spinning up a new
+# asyncio loop inside a thread conflicts with the asyncpg connection pool
+# ("Future attached to a different loop"). Sync psycopg3 sidesteps that.
+#
+# Convert the async URL to the psycopg3 sync driver (already in deps per uv.lock).
+_SYNC_URL = DATABASE_URL.replace("postgresql+asyncpg://", "postgresql+psycopg://")
+_sync_engine = create_engine(_SYNC_URL, pool_pre_ping=True)
+_sync_session_factory = sessionmaker(bind=_sync_engine, expire_on_commit=False)
 
 
 class InsufficientCreditsError(Exception):
@@ -243,7 +254,100 @@ async def set_plan(
     return wallet
 
 
-# --- Helpers that open their own session (for callbacks / tools) ---
+# --- SYNC helpers for sync tool bodies (image_gen / video_gen) -------------
+#
+# Tools are sync functions; using async SQLAlchemy from inside a fresh thread
+# conflicts with the main asyncpg loop. These helpers use a separate sync
+# engine (psycopg2) so they can safely be called from any thread.
+
+def _sync_get_or_create_wallet(db: SyncSession, user_id: UUID) -> UserCredits:
+    wallet = db.execute(
+        select(UserCredits).where(UserCredits.user_id == user_id).with_for_update()
+    ).scalar_one_or_none()
+    if wallet is not None:
+        return wallet
+    wallet = UserCredits(
+        user_id=user_id,
+        plan="free",
+        balance=DEFAULT_FREE_CREDITS,
+        monthly_allowance=DEFAULT_FREE_CREDITS,
+        resets_at=datetime.now(timezone.utc) + timedelta(days=30),
+    )
+    db.add(wallet)
+    db.flush()
+    if DEFAULT_FREE_CREDITS > 0:
+        db.add(
+            CreditTransaction(
+                id=uuid4(),
+                user_id=user_id,
+                delta=DEFAULT_FREE_CREDITS,
+                balance_after=DEFAULT_FREE_CREDITS,
+                reason="signup_bonus",
+                metadata_json={"plan": "free"},
+            )
+        )
+        db.flush()
+    return wallet
+
+
+def check_and_deduct_sync(
+    user_id: UUID,
+    credits: int,
+    reason: str,
+    *,
+    metadata: Optional[dict] = None,
+) -> int:
+    """Sync pre-deduct. Raises InsufficientCreditsError if balance too low."""
+    with _sync_session_factory() as db:
+        wallet = _sync_get_or_create_wallet(db, user_id)
+        if credits <= 0:
+            return wallet.balance
+        if wallet.balance < credits:
+            raise InsufficientCreditsError(wallet.balance, credits)
+        wallet.balance -= credits
+        db.add(
+            CreditTransaction(
+                id=uuid4(),
+                user_id=user_id,
+                delta=-credits,
+                balance_after=wallet.balance,
+                reason=reason,
+                metadata_json=metadata or {},
+            )
+        )
+        db.commit()
+        return wallet.balance
+
+
+def refund_sync(
+    user_id: UUID,
+    credits: int,
+    reason: str,
+    *,
+    metadata: Optional[dict] = None,
+) -> int:
+    """Sync refund — restores credits to the wallet after a failed call."""
+    with _sync_session_factory() as db:
+        if credits <= 0:
+            wallet = _sync_get_or_create_wallet(db, user_id)
+            return wallet.balance
+        wallet = _sync_get_or_create_wallet(db, user_id)
+        wallet.balance += credits
+        db.add(
+            CreditTransaction(
+                id=uuid4(),
+                user_id=user_id,
+                delta=credits,
+                balance_after=wallet.balance,
+                reason=reason,
+                metadata_json=metadata or {},
+            )
+        )
+        db.commit()
+        return wallet.balance
+
+
+# --- Backwards-compatible async standalone helpers (kept for any caller) ---
 
 async def check_and_deduct_standalone(
     user_id: UUID,
@@ -252,7 +356,6 @@ async def check_and_deduct_standalone(
     *,
     metadata: Optional[dict] = None,
 ) -> int:
-    """Same as check_and_deduct but opens its own session. Used by tools."""
     async with async_session_factory() as db:
         return await check_and_deduct(
             db, user_id, credits, reason, metadata=metadata
@@ -268,18 +371,3 @@ async def refund_standalone(
 ) -> int:
     async with async_session_factory() as db:
         return await refund(db, user_id, credits, reason, metadata=metadata)
-
-
-async def post_deduct_standalone(
-    user_id: UUID,
-    credits: int,
-    reason: str,
-    *,
-    usage_log_id: Optional[UUID] = None,
-    metadata: Optional[dict] = None,
-) -> tuple[int, bool]:
-    async with async_session_factory() as db:
-        return await post_deduct(
-            db, user_id, credits, reason,
-            usage_log_id=usage_log_id, metadata=metadata,
-        )

@@ -18,10 +18,10 @@ import uuid
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Annotated, Optional
 from uuid import UUID
 
-from langchain_core.tools import tool
+from langchain_core.tools import InjectedToolArg, tool
 from PIL import Image
 
 from app.services import credit_service
@@ -32,25 +32,12 @@ logger = logging.getLogger(__name__)
 _REQUEST_TIMEOUT = 120  # Image gen can be slower, especially under quota pressure
 
 
-def _run_async(coro):
-    """Run a coroutine from a sync tool. Uses a dedicated thread to avoid conflicts
-    with any outer event loop that LangGraph may be running.
-    """
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = None
-    if loop is not None:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
-            return ex.submit(lambda: asyncio.run(coro)).result()
-    return asyncio.run(coro)
-
-
 def _maybe_deduct_credits(user_id: str, credits: int, reason: str) -> bool:
     """Pre-deduct credits before an expensive API call. Returns True if deducted.
 
-    If user_id is empty (e.g. callbacks/tests without wallet), skip silently.
-    Raises on insufficient credits so the caller can convert it into a user error.
+    Uses the SYNC helper (psycopg2) because the async pool is bound to the
+    FastAPI event loop and threads can't safely re-enter it.
+    Raises InsufficientCreditsError on low balance so caller can short-circuit.
     """
     if not user_id or credits <= 0:
         return False
@@ -58,9 +45,7 @@ def _maybe_deduct_credits(user_id: str, credits: int, reason: str) -> bool:
         uid = UUID(str(user_id))
     except Exception:
         return False
-    _run_async(credit_service.check_and_deduct_standalone(
-        uid, credits, reason,
-    ))
+    credit_service.check_and_deduct_sync(uid, credits, reason)
     return True
 
 
@@ -73,7 +58,7 @@ def _maybe_refund_credits(user_id: str, credits: int, reason: str) -> None:
     except Exception:
         return
     try:
-        _run_async(credit_service.refund_standalone(uid, credits, reason))
+        credit_service.refund_sync(uid, credits, reason)
     except Exception as e:
         logger.warning("[IMAGE] Refund failed: %s", e)
 
@@ -287,8 +272,8 @@ def generate_image(
     aspect_ratio: str = "1:1",
     output_dir: str = "",
     font_style: str = "bold sans-serif",
-    _user_id: str = "",
-    _session_id: str = "",
+    _user_id: Annotated[str, InjectedToolArg] = "",
+    _session_id: Annotated[str, InjectedToolArg] = "",
 ) -> dict:
     """Generate a social media post image using Gemini.
 

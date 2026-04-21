@@ -17,9 +17,10 @@ import uuid
 import time
 from datetime import datetime
 from pathlib import Path
+from typing import Annotated
 from uuid import UUID
 
-from langchain_core.tools import tool
+from langchain_core.tools import InjectedToolArg, tool
 from PIL import Image, ImageDraw
 
 from app.services import credit_service
@@ -29,26 +30,15 @@ from app.services.pricing import credits_for_video
 logger = logging.getLogger(__name__)
 
 
-def _run_async_video(coro):
-    """Run async coroutine from sync tool body (see same helper in image_gen.py)."""
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = None
-    if loop is not None:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
-            return ex.submit(lambda: asyncio.run(coro)).result()
-    return asyncio.run(coro)
-
-
 def _video_pre_deduct(user_id: str, credits: int, reason: str) -> bool:
+    """Sync pre-deduct — see image_gen.py._maybe_deduct_credits for rationale."""
     if not user_id or credits <= 0:
         return False
     try:
         uid = UUID(str(user_id))
     except Exception:
         return False
-    _run_async_video(credit_service.check_and_deduct_standalone(uid, credits, reason))
+    credit_service.check_and_deduct_sync(uid, credits, reason)
     return True
 
 
@@ -60,7 +50,7 @@ def _video_refund(user_id: str, credits: int, reason: str) -> None:
     except Exception:
         return
     try:
-        _run_async_video(credit_service.refund_standalone(uid, credits, reason))
+        credit_service.refund_sync(uid, credits, reason)
     except Exception as e:
         logger.warning("[VIDEO] Refund failed: %s", e)
 
@@ -1521,8 +1511,8 @@ def generate_video(
     output_dir: str = "",
     person_generation: str = "allow_all",
     overlay_texts: str = "",
-    _user_id: str = "",
-    _session_id: str = "",
+    _user_id: Annotated[str, InjectedToolArg] = "",
+    _session_id: Annotated[str, InjectedToolArg] = "",
 ) -> dict:
     """Generate a video using Veo 3.1 with native audio and reference images.
 
