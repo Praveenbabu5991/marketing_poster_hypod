@@ -75,6 +75,14 @@ DEFAULT_FREE_CREDITS = int(os.getenv("DEFAULT_FREE_CREDITS", "50"))
 STRIPE_API_KEY = os.getenv("STRIPE_API_KEY", "")
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
 
+# --- Hylancer Payment Service (source of truth for credit balance) ---
+# Marketing service is the local mirror; payment-svc owns the authoritative balance.
+PAYMENT_SERVICE_URL = os.getenv("PAYMENT_SERVICE_URL", "")
+PAYMENT_SERVICE_INTERNAL_KEY = os.getenv("PAYMENT_SERVICE_INTERNAL_KEY", "")
+PAYMENT_SERVICE_TIMEOUT = float(os.getenv("PAYMENT_SERVICE_TIMEOUT", "5.0"))
+# When false, the outbound debit call is skipped (useful for local dev / tests).
+PAYMENT_SERVICE_ENABLED = os.getenv("PAYMENT_SERVICE_ENABLED", "false").lower() == "true"
+
 
 # --- Vertex AI / Gemini Pricing (USD, March 2026) ---
 # Source: https://cloud.google.com/vertex-ai/generative-ai/pricing

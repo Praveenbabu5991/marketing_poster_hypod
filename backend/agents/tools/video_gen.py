@@ -23,6 +23,7 @@ from uuid import UUID
 from langchain_core.tools import InjectedToolArg, tool
 from PIL import Image, ImageDraw
 
+from app.integrations import payment_client
 from app.services import credit_service
 from app.services.credit_service import InsufficientCreditsError
 from app.services.pricing import credits_for_video
@@ -39,6 +40,10 @@ def _video_pre_deduct(user_id: str, credits: int, reason: str) -> bool:
     except Exception:
         return False
     credit_service.check_and_deduct_sync(uid, credits, reason)
+    try:
+        payment_client.report_usage_sync(uid, credits, description=f"video:{reason}")
+    except Exception as e:
+        logger.warning("[VIDEO] payment-svc debit failed: %s", e)
     return True
 
 
@@ -53,6 +58,11 @@ def _video_refund(user_id: str, credits: int, reason: str) -> None:
         credit_service.refund_sync(uid, credits, reason)
     except Exception as e:
         logger.warning("[VIDEO] Refund failed: %s", e)
+    try:
+        import asyncio
+        asyncio.run(payment_client.refund_usage(uid, credits, description=f"video-refund:{reason}"))
+    except Exception as e:
+        logger.warning("[VIDEO] payment-svc refund failed: %s", e)
 
 
 def _get_config():

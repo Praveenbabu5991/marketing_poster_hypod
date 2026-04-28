@@ -24,6 +24,7 @@ from uuid import UUID
 from langchain_core.tools import InjectedToolArg, tool
 from PIL import Image
 
+from app.integrations import payment_client
 from app.services import credit_service
 from app.services.credit_service import InsufficientCreditsError
 from app.services.pricing import ACTION_CREDITS
@@ -46,6 +47,11 @@ def _maybe_deduct_credits(user_id: str, credits: int, reason: str) -> bool:
     except Exception:
         return False
     credit_service.check_and_deduct_sync(uid, credits, reason)
+    # Mirror to authoritative balance in payment-svc (best-effort).
+    try:
+        payment_client.report_usage_sync(uid, credits, description=f"image:{reason}")
+    except Exception as e:
+        logger.warning("[IMAGE] payment-svc debit failed: %s", e)
     return True
 
 
@@ -61,6 +67,12 @@ def _maybe_refund_credits(user_id: str, credits: int, reason: str) -> None:
         credit_service.refund_sync(uid, credits, reason)
     except Exception as e:
         logger.warning("[IMAGE] Refund failed: %s", e)
+    # Roll the refund forward to payment-svc as well.
+    try:
+        import asyncio
+        asyncio.run(payment_client.refund_usage(uid, credits, description=f"image-refund:{reason}"))
+    except Exception as e:
+        logger.warning("[IMAGE] payment-svc refund failed: %s", e)
 
 
 def _get_config():

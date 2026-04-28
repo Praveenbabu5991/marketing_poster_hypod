@@ -15,6 +15,7 @@ from langchain_core.outputs import ChatResult, LLMResult
 
 from app.config import calculate_cost
 from app.database import async_session_factory
+from app.integrations import payment_client
 from app.models.credit import CreditTransaction, UserCredits
 from app.models.usage import UsageLog
 from app.services.pricing import ACTION_CREDITS, credits_for_video
@@ -106,6 +107,23 @@ class UsageMonitoringHandler(AsyncCallbackHandler):
                 await db_session.commit()
         except Exception as e:
             logger.warning("[Usage] Failed to log: %s", e)
+            return
+
+        # Mirror the deduction to the authoritative balance in payment-svc.
+        # Local tables stay as the debug/audit log; payment-svc owns the truth.
+        # Done after commit so a payment-svc outage never blocks local logging.
+        if credits > 0:
+            try:
+                description = (
+                    f"{log_entry.action_type}:{log_entry.tool_name or log_entry.model_name}"
+                )
+                await payment_client.report_usage(
+                    user_id=log_entry.user_id,
+                    credit_used=credits,
+                    description=description,
+                )
+            except Exception as e:
+                logger.warning("[Usage] payment-svc sync failed: %s", e)
 
     def _schedule_log(self, log_entry: UsageLog):
         """Schedule the logging task safely on the main event loop."""
