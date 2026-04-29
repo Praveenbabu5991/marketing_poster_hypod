@@ -29,6 +29,7 @@ import httpx
 
 from app.config import (
     PAYMENT_SERVICE_ENABLED,
+    PAYMENT_SERVICE_INTERNAL_KEY,
     PAYMENT_SERVICE_TIMEOUT,
     PAYMENT_SERVICE_URL,
 )
@@ -58,6 +59,10 @@ def _enabled() -> bool:
 def _headers(jwt: Optional[str]) -> Optional[dict]:
     """Build outbound headers. Returns None if no JWT is available
     (caller should skip the request — payment-svc will reject anyway).
+
+    Sends BOTH headers because payment-svc demands both:
+      * Authorization: Bearer <user-JWT>     -> Spring Security TokenFilter
+      * X-Internal-Service-Key: <key>        -> CreditsController @RequestHeader
     """
     token = jwt or get_current_jwt()
     if not token:
@@ -65,10 +70,13 @@ def _headers(jwt: Optional[str]) -> Optional[dict]:
             "[PaymentClient] No JWT available in current context; cannot call payment-svc"
         )
         return None
-    return {
+    headers = {
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json",
     }
+    if PAYMENT_SERVICE_INTERNAL_KEY:
+        headers["X-Internal-Service-Key"] = PAYMENT_SERVICE_INTERNAL_KEY
+    return headers
 
 
 async def _post_with_retry(

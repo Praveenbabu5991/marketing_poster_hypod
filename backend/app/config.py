@@ -77,10 +77,12 @@ STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
 
 # --- Hylancer Payment Service (source of truth for credit balance) ---
 # Marketing service is the local mirror; payment-svc owns the authoritative balance.
-# Auth model mirrors ai-service: the inbound user JWT is forwarded as
-# `Authorization: Bearer <token>` (payment-svc trusts the API gateway to have
-# already verified the signature), so no shared service key is needed here.
+# Auth: forwards the inbound user JWT as `Authorization: Bearer <token>` (passes
+# payment-svc's Spring Security TokenFilter) AND attaches X-Internal-Service-Key
+# (required by the controller's @RequestHeader). Both headers together are what
+# the payment-svc team's CreditsController demands.
 PAYMENT_SERVICE_URL = os.getenv("PAYMENT_SERVICE_URL", "")
+PAYMENT_SERVICE_INTERNAL_KEY = os.getenv("PAYMENT_SERVICE_INTERNAL_KEY", "")
 PAYMENT_SERVICE_TIMEOUT = float(os.getenv("PAYMENT_SERVICE_TIMEOUT", "5.0"))
 # When false, the outbound debit call is skipped (useful for local dev / tests).
 PAYMENT_SERVICE_ENABLED = os.getenv("PAYMENT_SERVICE_ENABLED", "false").lower() == "true"
