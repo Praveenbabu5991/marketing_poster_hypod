@@ -59,8 +59,7 @@ def _video_refund(user_id: str, credits: int, reason: str) -> None:
     except Exception as e:
         logger.warning("[VIDEO] Refund failed: %s", e)
     try:
-        import asyncio
-        asyncio.run(payment_client.refund_usage(uid, credits, description=f"video-refund:{reason}"))
+        payment_client.refund_usage_sync(uid, credits, description=f"video-refund:{reason}")
     except Exception as e:
         logger.warning("[VIDEO] payment-svc refund failed: %s", e)
 

@@ -4,6 +4,7 @@ from typing import Optional
 
 from fastapi import Header, HTTPException, status
 
+from app.security.jwt_context import set_current_jwt
 from app.security.models import UserDetails
 from app.security.token_util import TokenUtil
 
@@ -16,6 +17,9 @@ async def get_current_user(
         return None
     try:
         token = authorization.removeprefix("Bearer ")
+        # Stash the raw token so downstream interservice clients (e.g.
+        # payment_client) can forward it the same way ai-service does.
+        set_current_jwt(token)
         return TokenUtil.decode_token(token)
     except Exception:
         raise HTTPException(

@@ -69,8 +69,7 @@ def _maybe_refund_credits(user_id: str, credits: int, reason: str) -> None:
         logger.warning("[IMAGE] Refund failed: %s", e)
     # Roll the refund forward to payment-svc as well.
     try:
-        import asyncio
-        asyncio.run(payment_client.refund_usage(uid, credits, description=f"image-refund:{reason}"))
+        payment_client.refund_usage_sync(uid, credits, description=f"image-refund:{reason}")
     except Exception as e:
         logger.warning("[IMAGE] payment-svc refund failed: %s", e)
 
