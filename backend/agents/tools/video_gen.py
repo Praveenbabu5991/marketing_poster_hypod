@@ -32,18 +32,18 @@ logger = logging.getLogger(__name__)
 
 
 def _video_pre_deduct(user_id: str, credits: int, reason: str) -> bool:
-    """Sync pre-deduct — see image_gen.py._maybe_deduct_credits for rationale."""
+    """Pre-deduct credits via payment-svc.
+
+    Payment-svc gates AND debits in one call. On insufficient balance it
+    returns 409 → re-raised as InsufficientCreditsError by the client.
+    """
     if not user_id or credits <= 0:
         return False
     try:
         uid = UUID(str(user_id))
     except Exception:
         return False
-    credit_service.check_and_deduct_sync(uid, credits, reason)
-    try:
-        payment_client.report_usage_sync(uid, credits, description=f"video:{reason}")
-    except Exception as e:
-        logger.warning("[VIDEO] payment-svc debit failed: %s", e)
+    payment_client.report_usage_sync(uid, credits, description=f"video:{reason}")
     return True
 
 
@@ -54,10 +54,6 @@ def _video_refund(user_id: str, credits: int, reason: str) -> None:
         uid = UUID(str(user_id))
     except Exception:
         return
-    try:
-        credit_service.refund_sync(uid, credits, reason)
-    except Exception as e:
-        logger.warning("[VIDEO] Refund failed: %s", e)
     try:
         payment_client.refund_usage_sync(uid, credits, description=f"video-refund:{reason}")
     except Exception as e:

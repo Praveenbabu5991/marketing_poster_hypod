@@ -36,9 +36,10 @@ _REQUEST_TIMEOUT = 120  # Image gen can be slower, especially under quota pressu
 def _maybe_deduct_credits(user_id: str, credits: int, reason: str) -> bool:
     """Pre-deduct credits before an expensive API call. Returns True if deducted.
 
-    Uses the SYNC helper (psycopg2) because the async pool is bound to the
-    FastAPI event loop and threads can't safely re-enter it.
-    Raises InsufficientCreditsError on low balance so caller can short-circuit.
+    Payment-svc is the source of truth for credit balance — it gates and
+    debits in one call. On insufficient balance it returns 409 which
+    `report_usage_sync` re-raises as InsufficientCreditsError (caught by
+    the tool body and converted to a user-facing error response).
     """
     if not user_id or credits <= 0:
         return False
@@ -46,28 +47,18 @@ def _maybe_deduct_credits(user_id: str, credits: int, reason: str) -> bool:
         uid = UUID(str(user_id))
     except Exception:
         return False
-    credit_service.check_and_deduct_sync(uid, credits, reason)
-    # Mirror to authoritative balance in payment-svc (best-effort).
-    try:
-        payment_client.report_usage_sync(uid, credits, description=f"image:{reason}")
-    except Exception as e:
-        logger.warning("[IMAGE] payment-svc debit failed: %s", e)
+    payment_client.report_usage_sync(uid, credits, description=f"image:{reason}")
     return True
 
 
 def _maybe_refund_credits(user_id: str, credits: int, reason: str) -> None:
-    """Refund credits (called when pre-deducted call fails)."""
+    """Refund credits in payment-svc when a pre-deducted call fails."""
     if not user_id or credits <= 0:
         return
     try:
         uid = UUID(str(user_id))
     except Exception:
         return
-    try:
-        credit_service.refund_sync(uid, credits, reason)
-    except Exception as e:
-        logger.warning("[IMAGE] Refund failed: %s", e)
-    # Roll the refund forward to payment-svc as well.
     try:
         payment_client.refund_usage_sync(uid, credits, description=f"image-refund:{reason}")
     except Exception as e:

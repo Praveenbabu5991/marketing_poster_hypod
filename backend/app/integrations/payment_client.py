@@ -34,6 +34,7 @@ from app.config import (
     PAYMENT_SERVICE_URL,
 )
 from app.security.jwt_context import get_current_jwt
+from app.services.credit_service import InsufficientCreditsError
 
 logger = logging.getLogger(__name__)
 
@@ -224,6 +225,14 @@ def report_usage_sync(
                     return resp.json()
                 except ValueError:
                     return {}
+            # 409 Conflict from payment-svc means insufficient balance —
+            # raise so the calling tool can return a clean user-facing error.
+            if resp.status_code == 409:
+                logger.warning(
+                    "[PaymentClient] (sync) insufficient credits userId=%s creditUsed=%s body=%s",
+                    payload["userId"], payload["creditUsed"], resp.text[:200],
+                )
+                raise InsufficientCreditsError(0, int(payload["creditUsed"]))
             if 400 <= resp.status_code < 500:
                 logger.error(
                     "[PaymentClient] (sync) %s rejected status=%d body=%s",
