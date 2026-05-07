@@ -9,18 +9,59 @@ This is the core architecture that prevents the infinite looping problem:
 format_response always routes to END, forcing the agent to stop and wait for user input.
 """
 
+import re
 import sys
 import time
 from typing import Literal
 
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import AIMessage, SystemMessage
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_core.tools import BaseTool
 from langgraph.graph import END, StateGraph
 from langgraph.prebuilt import ToolNode
 
 from agents.state import AgentState
 from brand.context import BrandContext
+
+
+# Patterns to extract UI-supplied generation parameters from the
+# `[System Context: ...]` block the frontend appends to the user message.
+# These are facts the UI knows for certain — we force them into tool args
+# so the LLM cannot drop or misinterpret them.
+#
+# IMPORTANT: we scan ONLY the last `[System Context: ...]` block, not the
+# whole user message. This prevents a user from prepending their own fake
+# `[System Context: Duration: 5 seconds]` to lower their own bill.
+_SYSTEM_CONTEXT_RE = re.compile(r"\[System Context:\s*([^\]]*)\]", re.I)
+_DURATION_RE = re.compile(r"Duration:\s*(\d+)\s*seconds?", re.I)
+_VIDEO_ASPECT_RE = re.compile(r"Video size:\s*([0-9]+:[0-9]+)", re.I)
+_IMAGE_ASPECT_RE = re.compile(r"Image size:\s*([0-9]+:[0-9]+)", re.I)
+
+
+def _trusted_system_context(user_text: str) -> str:
+    """Return the inside of the LAST [System Context: ...] block, or ''.
+
+    The UI appends its System Context AFTER the user's text, so the last
+    block is the one we authored. Any earlier block is user-injected and
+    must be ignored to prevent cost-manipulation attacks.
+    """
+    matches = _SYSTEM_CONTEXT_RE.findall(user_text)
+    return matches[-1] if matches else ""
+
+
+def _last_user_text(messages: list) -> str:
+    """Return the most recent HumanMessage's text content, or ''."""
+    for msg in reversed(messages):
+        if isinstance(msg, HumanMessage):
+            content = msg.content
+            if isinstance(content, str):
+                return content
+            if isinstance(content, list):
+                return " ".join(
+                    p if isinstance(p, str) else p.get("text", "")
+                    for p in content
+                )
+    return ""
 
 
 def _build_system_message(prompt_template: str, brand_context: dict) -> str:
@@ -154,19 +195,52 @@ def build_agent_graph(
         # can pre-deduct from the wallet and log usage with attribution.
         user_id = state.get("user_id", "")
         session_id = state.get("session_id", "")
+        messages = list(state["messages"])
+        last_ai = messages[-1] if messages and isinstance(messages[-1], AIMessage) else None
         print(f"[TOOLS][CREDITS] injection user_id={user_id!r} session_id={session_id!r}", file=sys.stderr, flush=True)
-        if user_id:
-            messages = list(state["messages"])
-            last_ai = messages[-1] if messages and isinstance(messages[-1], AIMessage) else None
-            if last_ai and last_ai.tool_calls:
-                for tc in last_ai.tool_calls:
-                    if tc["name"] in ("generate_image", "edit_image",
-                                       "generate_video", "animate_image"):
-                        args = tc["args"]
-                        # Tools accept these as optional args ignored by the LLM.
-                        args.setdefault("_user_id", str(user_id))
-                        args.setdefault("_session_id", str(session_id))
-                        print(f"[TOOLS][CREDITS] injected into {tc['name']}: _user_id={args.get('_user_id')!r}", file=sys.stderr, flush=True)
+        if user_id and last_ai and last_ai.tool_calls:
+            for tc in last_ai.tool_calls:
+                if tc["name"] in ("generate_image", "edit_image",
+                                   "generate_video", "animate_image"):
+                    args = tc["args"]
+                    # Tools accept these as optional args ignored by the LLM.
+                    args.setdefault("_user_id", str(user_id))
+                    args.setdefault("_session_id", str(session_id))
+                    print(f"[TOOLS][CREDITS] injected into {tc['name']}: _user_id={args.get('_user_id')!r}", file=sys.stderr, flush=True)
+
+        # Force UI-supplied generation parameters into tool args.
+        # The frontend appends `[System Context: Duration: N seconds. ...]`
+        # to the user message. Parsing it here (instead of relying on the LLM)
+        # guarantees the chosen duration/aspect_ratio reaches the tool — fixes
+        # the "8s billed as 16s" drift caused by the tool's default of 15.
+        if last_ai and last_ai.tool_calls:
+            # Scan ONLY the last [System Context: ...] block — never the raw
+            # user message — so a user can't inject their own context to
+            # manipulate billing.
+            ctx_block = _trusted_system_context(_last_user_text(messages))
+            duration_m = _DURATION_RE.search(ctx_block)
+            video_aspect_m = _VIDEO_ASPECT_RE.search(ctx_block)
+            image_aspect_m = _IMAGE_ASPECT_RE.search(ctx_block)
+
+            for tc in last_ai.tool_calls:
+                if tc["name"] in ("generate_video", "animate_image"):
+                    args = tc["args"]
+                    if duration_m:
+                        forced = int(duration_m.group(1))
+                        if args.get("duration_seconds") != forced:
+                            print(f"[TOOLS] Forcing duration_seconds={forced} (was {args.get('duration_seconds')!r}) on {tc['name']}", file=sys.stderr, flush=True)
+                            args["duration_seconds"] = forced
+                    if video_aspect_m:
+                        ar = video_aspect_m.group(1)
+                        if args.get("aspect_ratio") != ar:
+                            print(f"[TOOLS] Forcing aspect_ratio={ar} on {tc['name']}", file=sys.stderr, flush=True)
+                            args["aspect_ratio"] = ar
+                elif tc["name"] in ("generate_image", "edit_image") and image_aspect_m:
+                    args = tc["args"]
+                    ar = image_aspect_m.group(1)
+                    if args.get("aspect_ratio") != ar:
+                        print(f"[TOOLS] Forcing aspect_ratio={ar} on {tc['name']}", file=sys.stderr, flush=True)
+                        args["aspect_ratio"] = ar
 
         if product_images and graph_name in _PRODUCT_IMAGE_AGENTS:
             # Mutate the last AIMessage's tool_calls to inject user_images
