@@ -110,9 +110,10 @@ class UsageMonitoringHandler(AsyncCallbackHandler):
             return
 
         # Mirror the deduction to the authoritative balance in payment-svc.
-        # Local tables stay as the debug/audit log; payment-svc owns the truth.
-        # Done after commit so a payment-svc outage never blocks local logging.
-        if credits > 0:
+        # ONLY for text + search — image/video tools already pre-deducted in
+        # their own bodies (see image_gen.py / video_gen.py). Calling here
+        # for image/video would double-charge.
+        if credits > 0 and log_entry.action_type in ("text", "search"):
             try:
                 description = (
                     f"{log_entry.action_type}:{log_entry.tool_name or log_entry.model_name}"
