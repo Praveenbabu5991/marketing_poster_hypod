@@ -32,10 +32,14 @@ from brand.context import BrandContext
 # IMPORTANT: we scan ONLY the last `[System Context: ...]` block, not the
 # whole user message. This prevents a user from prepending their own fake
 # `[System Context: Duration: 5 seconds]` to lower their own bill.
-_SYSTEM_CONTEXT_RE = re.compile(r"\[System Context:\s*([^\]]*)\]", re.I)
-_DURATION_RE = re.compile(r"Duration:\s*(\d+)\s*seconds?", re.I)
-_VIDEO_ASPECT_RE = re.compile(r"Video size:\s*([0-9]+:[0-9]+)", re.I)
-_IMAGE_ASPECT_RE = re.compile(r"Image size:\s*([0-9]+:[0-9]+)", re.I)
+# Match BOTH:
+#   [System Context: Duration: 8 seconds. Image size: 1:1.]   (old format)
+#   [system: video_duration=8 seconds]                         (new compact format)
+_SYSTEM_CONTEXT_RE = re.compile(r"\[system(?:\s+context)?:\s*([^\]]*)\]", re.I)
+# Duration matches: "Duration: 8 seconds" OR "video_duration=8 seconds" OR "video_duration=8"
+_DURATION_RE = re.compile(r"(?:video_)?duration[\s:=]+(\d+)", re.I)
+_VIDEO_ASPECT_RE = re.compile(r"video[_\s]size[\s:=]+([0-9]+:[0-9]+)", re.I)
+_IMAGE_ASPECT_RE = re.compile(r"image[_\s]size[\s:=]+([0-9]+:[0-9]+)", re.I)
 
 
 def _trusted_system_context(user_text: str) -> str:
