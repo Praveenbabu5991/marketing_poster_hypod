@@ -18,7 +18,7 @@ from app.config import CREDIT_USD_TO_INR, calculate_cost
 
 # Flat credit costs per user-facing action — kept explicit so pricing is easy to explain.
 ACTION_CREDITS = {
-    "llm_text": 3,       # per LLM call (orchestrator or sub-agent)
+    "llm_text": 2,       # per LLM call (orchestrator or sub-agent)
     "image": 10,         # per image generation
     "video_8s": 400,     # 8-second video
     "video_16s": 800,    # 16-second video
