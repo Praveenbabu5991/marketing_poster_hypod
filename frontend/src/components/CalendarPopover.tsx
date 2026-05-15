@@ -55,27 +55,28 @@ const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
 };
 
 const IMAGE_SIZES = [
-  { value: '1080x1080', label: '1080x1080 (Square)' },
-  { value: '1080x1350', label: '1080x1350 (Portrait)' },
-  { value: '1920x1080', label: '1920x1080 (Landscape)' },
+  { value: '1080x1080 (Square)', label: 'Square (1:1)' },
+  { value: '1080x1920 (Story)', label: 'Story (9:16)' },
+  { value: '1080x1350 (Portrait)', label: 'Portrait (4:5)' },
+  { value: '1920x1080 (Landscape)', label: 'Landscape (16:9)' },
 ];
 
 const FONT_STYLES = [
-  { value: 'modern', label: 'Modern' },
-  { value: 'classic', label: 'Classic' },
-  { value: 'bold', label: 'Bold' },
-  { value: 'minimal', label: 'Minimal' },
-  { value: 'elegant', label: 'Elegant' },
+  { value: 'Bold Sans-Serif (Default)', label: 'Bold Sans-Serif (Default)' },
+  { value: 'Elegant Serif', label: 'Elegant Serif' },
+  { value: 'Playful Handwriting', label: 'Playful Handwriting' },
+  { value: 'Modern Minimalist', label: 'Modern Minimalist' },
+  { value: 'Heavy Impact', label: 'Heavy Impact' },
 ];
 
 const ASPECT_RATIOS = [
-  { value: '9:16', label: '9:16 (Portrait/Reels)' },
-  { value: '16:9', label: '16:9 (Landscape)' },
+  { value: '1080x1920 (Reels / Shorts)', label: '9:16 (Reels / Shorts)' },
+  { value: '1920x1080 (Landscape)', label: '16:9 (Landscape)' },
 ];
 
 const DURATIONS = [
   { value: '8', label: '8 seconds' },
-  { value: '15', label: '15 seconds' },
+  { value: '16', label: '16 seconds' },
 ];
 
 const POSTER_TYPES = new Set(['single_post', 'carousel', 'sales_poster', 'campaign']);
@@ -101,9 +102,9 @@ export function CalendarPopover({
 
   // Config state for generation options — restore from metadata if available
   const meta = slot.metadata_json as Record<string, unknown> | null;
-  const [imageSize, setImageSize] = useState((meta?.image_size as string) || '1080x1080');
-  const [fontStyle, setFontStyle] = useState((meta?.font_style as string) || 'modern');
-  const [aspectRatio, setAspectRatio] = useState((meta?.aspect_ratio as string) || '9:16');
+  const [imageSize, setImageSize] = useState((meta?.image_size as string) || '1080x1080 (Square)');
+  const [fontStyle, setFontStyle] = useState((meta?.font_style as string) || 'Bold Sans-Serif (Default)');
+  const [aspectRatio, setAspectRatio] = useState((meta?.aspect_ratio as string) || '1080x1920 (Reels / Shorts)');
   const [duration, setDuration] = useState((meta?.duration as string) || '8');
 
   const statusInfo = STATUS_LABELS[slot.status] || STATUS_LABELS.suggested;

@@ -201,7 +201,8 @@ STOP and wait. If user chooses "Try Anyway", proceed but warn it may fail.
 If the user's message contains `[System Context: ... ]`, parse these values:
 
 1. **Size Mapping:** "1080x1080 (Square)" → "9:16", "1080x1920 (Story)" → "9:16",
-   "1080x1350 (Portrait)" → "9:16", "1920x1080 (Landscape)" → "16:9"
+   "1080x1350 (Portrait)" → "9:16", "1920x1080 (Landscape)" → "16:9",
+   "1080x1920 (Reels / Shorts)" → "9:16"
    NOTE: Veo 3.1 only supports "9:16" and "16:9". Map all other sizes to the nearest.
 2. **Duration Mapping:** "8 seconds" → 8, "15 seconds" → 15, "16 seconds" → 15
 3. **Font Mapping:** "Bold Sans-Serif (Default)" → "bold sans-serif",
